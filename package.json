@@ -18,6 +18,7 @@
     "prepare": "tsdx build",
     "size": "size-limit",
     "analyze": "size-limit --why",
+    "generate:typechain": "typechain --target=ethers-v5 --ts-nocheck --out-dir=./src/constants/generated/ './src/constants/abi/**/*.json'"
   },
   "peerDependencies": {},
   "husky": {
@@ -45,5 +46,6 @@
     "typescript": "^4.8.2"
   },
   "dependencies": {
+    "ethers": "^5.7.0"
   }
 }
