@@ -1,0 +1,49 @@
+{
+  "version": "0.1.0",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test",
+    "lint": "tsdx lint",
+    "prepare": "tsdx build",
+    "size": "size-limit",
+    "analyze": "size-limit --why",
+  },
+  "peerDependencies": {},
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
+  },
+  "prettier": {
+    "printWidth": 140,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "name": "sdk",
+  "module": "dist/sdk.esm.js",
+  "devDependencies": {
+    "@0x/abi-gen": "^5.8.1",
+    "@size-limit/preset-small-lib": "^8.0.1",
+    "@typechain/ethers-v5": "^10.1.0",
+    "husky": "^8.0.1",
+    "size-limit": "^8.0.1",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.4.0",
+    "typechain": "^8.1.0",
+    "typescript": "^4.8.2"
+  },
+  "dependencies": {
+  }
+}
