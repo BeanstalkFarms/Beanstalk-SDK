@@ -1,6 +1,6 @@
-import { Address } from "../lib/Address";
+import { Address } from "../classes/Address";
 
-export const ADDRESSES = {
+export const addresses = {
   // ----------------------------------------
   // Beanstalk Contracts
   // ----------------------------------------
@@ -33,6 +33,7 @@ export const ADDRESSES = {
   // ----------------------------------------
   // Common ERC-20 Tokens
   // ----------------------------------------
+  WETH: Address.make('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'),
   DAI: Address.make('0x6B175474E89094C44Da98b954EedeAC495271d0F'),
   USDC: Address.make('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'),
   USDT: Address.make('0xdAC17F958D2ee523a2206206994597C13D831ec7'),
@@ -96,4 +97,10 @@ export const ADDRESSES = {
 
   // zap
   CURVE_ZAP: Address.make('0xA79828DF1850E8a3A3064576f380D90aECDD3359'),
+
+  // BEAN_ETH_UNIV2_LP !! Deprecated
+  BEAN_ETH_UNIV2_LP: Address.make('0x87898263B6C5BABe34b4ec53F22d98430b91e371'),
+
+  // BEAN_LUSD_LP !! Deprecated
+  BEAN_LUSD_LP: Address.make('0xD652c40fBb3f06d6B58Cb9aa9CFF063eE63d465D')
 };

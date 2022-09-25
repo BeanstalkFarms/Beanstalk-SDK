@@ -1,33 +1,70 @@
-import { BeanstalkConfig, Provider } from '../types';
-
+import { BeanstalkConfig, Provider, Signer } from '../types';
+import { BigNumber as BNJS } from 'ethers';
+import { BigNumber } from '@ethersproject/bignumber';
 import { enumFromValue } from '../utils';
-import { ADDRESSES, Chain } from '../constants';
-import { Contracts } from './Contracts';
+import { addresses, Chain } from '../constants';
+import { Contracts } from './contracts';
+import { Tokens } from './tokens';
+import { Swap } from './swap';
 
 // import { ChainID } from './constants';
 
 export class BeanstalkSDK {
+  public DEBUG: boolean;
+  public signer?: Signer;
   public provider: Provider;
+  public providerOrSigner: Signer | Provider;
   public chain: Chain;
   public contracts: Contracts;
-  public addresses: typeof ADDRESSES;
-  // addresses: Address
+  public addresses: typeof addresses;
+  public tokens: Tokens;
+  public swap: Swap;
 
   constructor(config: BeanstalkConfig) {
     this.handleConfig(config);
-    this.provider = config.provider;
-    this.chain = enumFromValue(config.provider?.network?.chainId ?? 1, Chain);
-    this.addresses = ADDRESSES
 
-    console.log('Curve on Main: ', this.addresses.BEANSTALK.get(Chain.MAINNET));
+    // FIXME
+    // @ts-ignore
+    this.chain = enumFromValue(config.provider?.network?.chainId ?? 1, Chain);
+
+    this.addresses = addresses;
+    this.contracts = new Contracts(this);
+    this.tokens = new Tokens(this);
+    this.swap = new Swap(this);
+
+    // console.log('Curve on Main: ', this.addresses.BEANSTALK.get(Chain.MAINNET));
     // console.log('Curve on chainId: ', this.addresses.CURVE.get(this.chainId));
     // console.log('Bean on default: ', this.addresses.BEANSTALK.get());
+  }
 
-    this.contracts = new Contracts(this);
+  async tests() {
+    // import { BigNumber as BNJS } from 'ethers';
+    // import { BigNumber } from "@ethersproject/bignumber";
+
+    let a = BNJS.from('123');
+
+    // this method returns a BigNumber
+    let b = await this.provider.getBalance('0x70997970c51812dc3a010c7d01b50e0d17dc79c8');
+    let c = BigNumber.from('123');
+
+    // sanity check
+    console.log(a instanceof BNJS); // true
+    console.log(a instanceof BigNumber); // true
+
+    // wtf
+    console.log(b instanceof BNJS); // false -- wtf?
+    console.log(b instanceof BigNumber); // false -- wtf?
+
+    // Cross check different imports
+    console.log(c instanceof BNJS); // true
   }
 
   handleConfig(config: BeanstalkConfig) {
-    if (!config.provider) throw new Error('Provider not found in configuration');
+    if (!config.provider && !config.signer) throw new Error('Config must contain a provider or signer');
+    this.signer = config.signer;
+    this.provider = config.signer?.provider ?? config.provider!;
+    this.providerOrSigner = config.signer ? config.signer : config.provider!;
+    this.DEBUG = config.DEBUG ?? false;
   }
 
   async getAllBalances(account: string) {
@@ -64,5 +101,10 @@ export class BeanstalkSDK {
       balanceOfSop: balanceOfSop.status === 'fulfilled' ? balanceOfSop.value : balanceOfSop.reason,
       balanceOfStalk: balanceOfStalk.status === 'fulfilled' ? balanceOfStalk.value : balanceOfStalk.reason,
     };
+  }
+
+  debug(...args: any[]) {
+    if (!this.DEBUG) return;
+    console.debug(...args);
   }
 }

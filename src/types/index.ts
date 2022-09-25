@@ -1,7 +1,11 @@
-import { ethers } from 'ethers';
+import type { ethers } from 'ethers';
 
-export type Provider = ethers.providers.BaseProvider;
+export type Provider = ethers.providers.Provider;
+
+export type Signer = ethers.Signer;
 
 export type BeanstalkConfig = {
-  provider: Provider;
+  provider?: Provider;
+  signer?: Signer
+  DEBUG?: boolean;
 };

@@ -59,15 +59,15 @@ export class Contracts {
     const cryptoFactoryAddress= sdk.addresses.CRYPTO_FACTORY.get(this.sdk.chain);
     const zapAddress= sdk.addresses.CURVE_ZAP.get(this.sdk.chain);
 
-    // // Instances
-    this.beanstalk = Beanstalk__factory.connect(beanstalkAddress, this.sdk.provider);
-    const pool3 = Curve3Pool__factory.connect(pool3Address, this.sdk.provider);
-    const tricrypto2 = CurveTriCrypto2Pool__factory.connect(tricrypto2Address, this.sdk.provider);
-    const beanCrv3 = CurveMetaPool__factory.connect(beancrv3Address, this.sdk.provider);
-    const poolRegistry = CurveRegistry__factory.connect(poolRegistryAddress, this.sdk.provider);
-    const metaFactory = CurveMetaFactory__factory.connect(metaFactoryAddress, this.sdk.provider);
-    const cryptoFactory = CurveCryptoFactory__factory.connect(cryptoFactoryAddress, this.sdk.provider);
-    const zap = CurveZap__factory.connect(zapAddress, this.sdk.provider);
+    // Instances
+    this.beanstalk = Beanstalk__factory.connect(beanstalkAddress, this.sdk.providerOrSigner);
+    const pool3 = Curve3Pool__factory.connect(pool3Address, this.sdk.providerOrSigner);
+    const tricrypto2 = CurveTriCrypto2Pool__factory.connect(tricrypto2Address, this.sdk.providerOrSigner);
+    const beanCrv3 = CurveMetaPool__factory.connect(beancrv3Address, this.sdk.providerOrSigner);
+    const poolRegistry = CurveRegistry__factory.connect(poolRegistryAddress, this.sdk.providerOrSigner);
+    const metaFactory = CurveMetaFactory__factory.connect(metaFactoryAddress, this.sdk.providerOrSigner);
+    const cryptoFactory = CurveCryptoFactory__factory.connect(cryptoFactoryAddress, this.sdk.providerOrSigner);
+    const zap = CurveZap__factory.connect(zapAddress, this.sdk.providerOrSigner);
 
     this.curve = {
       pools: {
@@ -86,7 +86,7 @@ export class Contracts {
         cryptoFactory,
         [cryptoFactoryAddress]: cryptoFactory,
       },
-      zap,
+      zap
     };
   }
 }
