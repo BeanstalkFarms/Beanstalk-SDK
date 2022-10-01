@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js';
 import { BaseContract } from 'ethers';
-import { ZERO_BN, MAX_UINT256, Chain, NEW_BN } from '../constants';
+import { ZERO_BN, MAX_UINT256, ChainId, NEW_BN } from '../constants';
 import { ERC20__factory } from '../constants/generated';
 import type { BeanstalkSDK } from '../lib/BeanstalkSDK';
 import { Provider } from '../types';
@@ -88,7 +88,7 @@ export default abstract class Token {
     address: Address | null,
     decimals: number,
     metadata: {
-      name: string;
+      name?: string;
       symbol: string;
       logo?: string;
       color?: string;
@@ -119,7 +119,7 @@ export default abstract class Token {
   public get address (){ 
     if (!this.tokenAddress && this instanceof ERC20Token) throw new Error(`Token ${this.name} does not have an address`)
 
-    return this.tokenAddress?.get(this.sdk.chain) ?? '';
+    return this.tokenAddress?.get(this.sdk.chainId) ?? '';
   }
 
   /** Get the amount of Stalk rewarded per deposited BDV of this Token. */
@@ -215,7 +215,7 @@ export class NativeToken extends Token {
   }
 
   public equals(other: Token): boolean {
-    return this.sdk.chain === other.sdk.chain;
+    return this.sdk.chainId === other.sdk.chainId;
   }
 }
 

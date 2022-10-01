@@ -1,4 +1,4 @@
-import { Chain, TESTNET_CHAINS } from '../constants/chains';
+import { ChainId, TESTNET_CHAINS } from '../constants/chains';
 
 export type AddressDefinition = {
   [id: number]: string;
@@ -13,7 +13,7 @@ export class Address {
   static make<T extends string | AddressDefinition>(input: T): Address {
     const addresses: AddressDefinition = {};
     if (typeof input == 'string') {
-      addresses[Chain.MAINNET] = input;
+      addresses[ChainId.MAINNET] = input;
     } else {
       Object.assign(addresses, input);
     }
@@ -29,26 +29,26 @@ export class Address {
 
   constructor(addresses: AddressDefinition) {
     this.addresses = addresses;
-    this.MAINNET = this.addresses[Chain.MAINNET];
-    this.CUJO = this.addresses[Chain.CUJO];
-    this.LOCALHOST = this.addresses[Chain.LOCALHOST];
+    this.MAINNET = this.addresses[ChainId.MAINNET];
+    this.CUJO = this.addresses[ChainId.CUJO];
+    this.LOCALHOST = this.addresses[ChainId.LOCALHOST];
   }
 
   get(chainId?: number) {
     // Default to MAINNET if no chain is specified
     if (!chainId) {
-      return this.addresses[Chain.MAINNET];
+      return this.addresses[ChainId.MAINNET];
     }
 
     // Throw if user wants a specific chain which we don't support
-    if (!Chain[chainId]) {
+    if (!ChainId[chainId]) {
       throw new Error(`Chain ID ${chainId} is not supported`);
     }
 
     // If user wants an address on a TESTNET chain
     // return mainnet one if it's not found
     if (TESTNET_CHAINS.has(chainId)) {
-      return this.addresses[chainId] || this.addresses[Chain.MAINNET];
+      return this.addresses[chainId] || this.addresses[ChainId.MAINNET];
     }
 
     return this.addresses[chainId];

@@ -181,24 +181,24 @@ export default class Farm {
     this.exchange(
       this.contracts.curve.pools.tricrypto2.address,
       this.contracts.curve.registries.cryptoFactory.address,
-      this.sdk.addresses.WETH.get(this.sdk.chain),
-      this.sdk.addresses.USDT.get(this.sdk.chain),
+      this.sdk.addresses.WETH.get(this.sdk.chainId),
+      this.sdk.addresses.USDT.get(this.sdk.chainId),
       _initialFromMode
     ),
     // USDT -> BEAN via bean3crv exchange_underlying
     this.exchangeUnderlying(
       this.contracts.curve.pools.beanCrv3.address,
-      this.sdk.addresses.USDT.get(this.sdk.chain),
-      this.sdk.addresses.BEAN.get(this.sdk.chain)
+      this.sdk.addresses.USDT.get(this.sdk.chainId),
+      this.sdk.addresses.BEAN.get(this.sdk.chainId)
     ),
   ];
 
   pair = {
     WETH_BEAN: (_tokenIn: 'WETH' | 'BEAN', _fromMode?: FarmFromMode, _toMode?: FarmToMode) => {
       // default: WETH -> BEAN; flip if input is BEAN
-      const Weth = this.sdk.addresses.WETH.get(this.sdk.chain);
-      const Usdt = this.sdk.addresses.USDT.get(this.sdk.chain);
-      const Bean = this.sdk.addresses.BEAN.get(this.sdk.chain);
+      const Weth = this.sdk.addresses.WETH.get(this.sdk.chainId);
+      const Usdt = this.sdk.addresses.USDT.get(this.sdk.chainId);
+      const Bean = this.sdk.addresses.BEAN.get(this.sdk.chainId);
 
       return _tokenIn === 'WETH'
         ? [

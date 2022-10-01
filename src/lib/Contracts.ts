@@ -50,14 +50,14 @@ export class Contracts {
 
     // Addressses
     
-    const beanstalkAddress = sdk.addresses.BEANSTALK.get(this.sdk.chain)
-    const pool3Address= sdk.addresses.POOL3.get(this.sdk.chain);
-    const tricrypto2Address= sdk.addresses.TRICRYPTO2.get(this.sdk.chain);
-    const beancrv3Address= sdk.addresses.BEAN_CRV3.get(this.sdk.chain);
-    const poolRegistryAddress= sdk.addresses.POOL_REGISTRY.get(this.sdk.chain);
-    const metaFactoryAddress= sdk.addresses.META_FACTORY.get(this.sdk.chain);
-    const cryptoFactoryAddress= sdk.addresses.CRYPTO_FACTORY.get(this.sdk.chain);
-    const zapAddress= sdk.addresses.CURVE_ZAP.get(this.sdk.chain);
+    const beanstalkAddress = sdk.addresses.BEANSTALK.get(this.sdk.chainId)
+    const pool3Address= sdk.addresses.POOL3.get(this.sdk.chainId);
+    const tricrypto2Address= sdk.addresses.TRICRYPTO2.get(this.sdk.chainId);
+    const beancrv3Address= sdk.addresses.BEAN_CRV3.get(this.sdk.chainId);
+    const poolRegistryAddress= sdk.addresses.POOL_REGISTRY.get(this.sdk.chainId);
+    const metaFactoryAddress= sdk.addresses.META_FACTORY.get(this.sdk.chainId);
+    const cryptoFactoryAddress= sdk.addresses.CRYPTO_FACTORY.get(this.sdk.chainId);
+    const zapAddress= sdk.addresses.CURVE_ZAP.get(this.sdk.chainId);
 
     // Instances
     this.beanstalk = Beanstalk__factory.connect(beanstalkAddress, this.sdk.providerOrSigner);
