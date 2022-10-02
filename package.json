@@ -20,7 +20,6 @@
     "analyze": "size-limit --why",
     "generate:typechain": "typechain --target=ethers-v5 --ts-nocheck --out-dir=./src/constants/generated/ './src/constants/abi/**/*.json'"
   },
-  "peerDependencies": {},
   "husky": {
     "hooks": {
       "pre-commit": "tsdx lint"
@@ -34,6 +33,9 @@
   },
   "name": "sdk",
   "module": "dist/sdk.esm.js",
+  "peerDependencies": {
+    "ethers": ">=5.6.8"
+  },
   "devDependencies": {
     "@0x/abi-gen": "^5.8.1",
     "@size-limit/preset-small-lib": "^8.0.1",
@@ -43,10 +45,10 @@
     "tsdx": "^0.14.1",
     "tslib": "^2.4.0",
     "typechain": "^8.1.0",
-    "typescript": "^4.8.2"
+    "typescript": "^4.8.2",
+    "ethers": ">=5.6.8"
   },
   "dependencies": {
-    "bignumber.js": "^9.1.0",
-    "ethers": "^5.7.0"
+    "bignumber.js": "^9.1.0"
   }
 }

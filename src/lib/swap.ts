@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers';
-import Token from '../classes/Token';
+import Token, { ERC20Token, NativeToken } from '../classes/Token';
 import type { BeanstalkSDK } from './BeanstalkSDK';
 import Farm, { FarmEstimate, FarmFromMode, FarmToMode } from './farm';
 
@@ -44,8 +44,8 @@ export class Swap {
     forward: boolean,
     amountIn: BigNumber,
     _account: string,
-    _tokenIn: Token,
-    _tokenOut: Token,
+    _tokenIn: NativeToken | ERC20Token,
+    _tokenOut: NativeToken | ERC20Token,
     _fromMode: FarmFromMode,
     _toMode: FarmToMode
   ): Promise<FarmEstimate> {
