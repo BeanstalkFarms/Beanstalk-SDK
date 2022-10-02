@@ -23,7 +23,7 @@ export default abstract class Token {
   /**
    * The contract address on the chain on which this token lives
    */
-  private tokenAddress: Address | null;
+  public readonly address: string;
 
   /**
    * The decimals used in representing currency amounts
@@ -85,7 +85,7 @@ export default abstract class Token {
    */
   constructor(
     sdk: BeanstalkSDK,
-    address: Address | null,
+    address: string | null,
     decimals: number,
     metadata: {
       name?: string;
@@ -104,7 +104,7 @@ export default abstract class Token {
     this.sdk = sdk;
 
     if (!address && !(this instanceof NativeToken) && !(this instanceof BeanstalkToken)) throw new Error('address must be supplied for non-native and non-beanstalk tokens')
-    this.tokenAddress = address;
+    this.address = address ?? '';
     this.decimals = decimals;
     this.symbol = metadata.symbol;
     this.name = metadata.name || metadata.symbol;
@@ -114,12 +114,6 @@ export default abstract class Token {
     this.isLP = metadata.isLP || false;
     this.isUnripe = metadata.isUnripe || false;
     this.rewards = rewards;
-  }
-
-  public get address (){ 
-    if (!this.tokenAddress && this instanceof ERC20Token) throw new Error(`Token ${this.name} does not have an address`)
-
-    return this.tokenAddress?.get(this.sdk.chainId) ?? '';
   }
 
   /** Get the amount of Stalk rewarded per deposited BDV of this Token. */

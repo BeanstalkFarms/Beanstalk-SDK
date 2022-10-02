@@ -6,6 +6,7 @@ export type Signer = ethers.Signer;
 
 export type BeanstalkConfig = {
   provider?: Provider;
-  signer?: Signer
+  signer?: Signer;
+  rpcUrl?: string;
   DEBUG?: boolean;
 };

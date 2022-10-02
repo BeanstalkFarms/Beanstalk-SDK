@@ -1,5 +1,5 @@
 import { BeanstalkConfig, Provider, Signer } from '../types';
-import {  ethers } from 'ethers';
+import { ethers } from 'ethers';
 import { enumFromValue } from '../utils';
 import { addresses, ChainId } from '../constants';
 import { Contracts } from './contracts';
@@ -20,7 +20,7 @@ export class BeanstalkSDK {
   public swap: Swap;
 
   constructor(config?: BeanstalkConfig) {
-    this.handleConfig(config ?? {});
+    this.handleConfig(config);
 
     // FIXME
     // @ts-ignore
@@ -32,7 +32,11 @@ export class BeanstalkSDK {
     this.swap = new Swap(this);
   }
 
-  handleConfig(config: BeanstalkConfig) {
+  handleConfig(config: BeanstalkConfig = {}) {
+    if (config.rpcUrl) {
+      config.provider = this.getProviderFromUrl(config.rpcUrl);
+    }
+
     this.signer = config.signer;
     if (!config.provider && !config.signer) {
       console.log('WARNING: No provider or signer specified, using DefaultProvider.');
@@ -47,5 +51,16 @@ export class BeanstalkSDK {
   debug(...args: any[]) {
     if (!this.DEBUG) return;
     console.debug(...args);
+  }
+
+  getProviderFromUrl(url: string): Provider {
+    if (url.startsWith('ws')) {
+      return new ethers.providers.WebSocketProvider(url);
+    }
+    if (url.startsWith('http')) {
+      return new ethers.providers.JsonRpcProvider();
+    }
+
+    throw new Error('rpcUrl is invalid');
   }
 }
