@@ -208,7 +208,7 @@ export class NativeToken extends Token {
     return undefined;
   }
 
-  public equals(other: Token): boolean {
+  public equals(other: NativeToken): boolean {
     return this.sdk.chainId === other.sdk.chainId;
   }
 }
