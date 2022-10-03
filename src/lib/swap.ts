@@ -1,4 +1,4 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, ContractTransaction } from 'ethers';
 import Token, { ERC20Token, NativeToken } from '../classes/Token';
 import type { BeanstalkSDK } from './BeanstalkSDK';
 import Farm, { FarmEstimate, FarmFromMode, FarmToMode } from './farm';
@@ -172,7 +172,8 @@ export class Swap {
     throw new Error('Unsupported swap mode.');
   }
 
-  async execute(estimate: FarmEstimate, slippage: number){
+  async execute(estimate: FarmEstimate, slippage: number):Promise<ContractTransaction>{
+    this.sdk.debug('[swap.execute] Executing swap', {estimate, slippage})
     if (!estimate.steps) throw new Error('Unable to generate a transaction sequence');
     const data = this.farm.encodeStepsWithSlippage(
       estimate.steps,
@@ -180,6 +181,7 @@ export class Swap {
     );
 
     const txn = await this.sdk.contracts.beanstalk.farm(data, { value: estimate.value });
-    await txn.wait();
+    this.sdk.debug('[swap.execute] transaction sent', {transaction: txn})
+    return txn;
   }
 }

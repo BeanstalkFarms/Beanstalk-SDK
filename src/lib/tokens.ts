@@ -1,6 +1,6 @@
 import { addresses } from '../constants';
 import Token, { BeanstalkToken, ERC20Token, NativeToken } from '../classes/Token';
-import type { BeanstalkSDK } from './BeanstalkSDK';
+import { BeanstalkSDK } from './BeanstalkSDK';
 
 export class Tokens {
   private sdk: BeanstalkSDK;
@@ -29,7 +29,7 @@ export class Tokens {
   public balanceTokens: Set<Token>;
   public crv3Underlying: Set<Token>;
 
-  private map:Map<string, Token>
+  private map: Map<string, Token>;
 
   constructor(sdk: BeanstalkSDK) {
     this.sdk = sdk;
@@ -40,13 +40,11 @@ export class Tokens {
       symbol: 'ETH',
       displayDecimals: 4,
     });
-    this.map.set('native', this.ETH);
 
     this.WETH = new ERC20Token(this.sdk, addresses.WETH.get(this.sdk.chainId), 18, {
       name: 'Wrapped Ether',
       symbol: 'WETH',
     });
-    this.map.set('WETH', this.WETH);
 
     this.BEAN = new ERC20Token(
       this.sdk,
@@ -61,38 +59,32 @@ export class Tokens {
         seeds: 2,
       }
     );
-    this.map.set('BEAN', this.BEAN);
 
     this.CRV3 = new ERC20Token(this.sdk, addresses.CRV3.get(this.sdk.chainId), 18, {
       name: '3CRV',
       symbol: '3CRV',
       isLP: true,
     });
-    this.map.set('CRV3', this.CRV3);
 
     this.DAI = new ERC20Token(this.sdk, addresses.DAI.get(this.sdk.chainId), 18, {
       name: 'Dai',
       symbol: 'DAI',
     });
-    this.map.set('DAI', this.DAI);
 
     this.USDC = new ERC20Token(this.sdk, addresses.USDC.get(this.sdk.chainId), 6, {
       name: 'USD Coin',
       symbol: 'USDC',
     });
-    this.map.set('USDC', this.USDC);
 
     this.USDT = new ERC20Token(this.sdk, addresses.USDT.get(this.sdk.chainId), 6, {
       name: 'Tether',
       symbol: 'USDT',
     });
-    this.map.set('USDT', this.USDT);
 
     this.LUSD = new ERC20Token(this.sdk, addresses.LUSD.get(this.sdk.chainId), 6, {
       name: 'LUSD',
       symbol: 'LUSD',
     });
-    this.map.set('LUSD', this.LUSD);
 
     this.BEAN_CRV3_LP = new ERC20Token(
       this.sdk,
@@ -109,7 +101,6 @@ export class Tokens {
         seeds: 4,
       }
     );
-    this.map.set('BEAN_CRV3_LP', this.BEAN_CRV3_LP);
 
     this.UNRIPE_BEAN = new ERC20Token(
       this.sdk,
@@ -126,7 +117,6 @@ export class Tokens {
         seeds: 2,
       }
     );
-    this.map.set('UNRIPE_BEAN', this.UNRIPE_BEAN);
 
     this.UNRIPE_BEAN_CRV3 = new ERC20Token(
       this.sdk,
@@ -143,37 +133,31 @@ export class Tokens {
         seeds: 4,
       }
     );
-    this.map.set('UNRIPE_BEAN_CRV3', this.UNRIPE_BEAN_CRV3);
 
     this.STALK = new BeanstalkToken(this.sdk, null, 10, {
       name: 'Stalk',
       symbol: 'STALK',
     });
-    this.map.set('STALK', this.STALK);
 
     this.SEEDS = new BeanstalkToken(this.sdk, null, 6, {
       name: 'Seeds',
       symbol: 'SEED',
     });
-    this.map.set('SEEDS', this.SEEDS);
 
     this.PODS = new BeanstalkToken(this.sdk, null, 6, {
       name: 'Pods',
       symbol: 'PODS',
     });
-    this.map.set('PODS', this.PODS);
 
     this.SPROUTS = new BeanstalkToken(this.sdk, null, 6, {
       name: 'Sprouts',
       symbol: 'SPROUT',
     });
-    this.map.set('SPROUTS', this.SPROUTS);
 
     this.RINSABLE_SPROUTS = new BeanstalkToken(this.sdk, null, 6, {
       name: 'Rinsable Sprouts',
       symbol: 'rSPROUT',
     });
-    this.map.set('RINSABLE_SPROUTS', this.RINSABLE_SPROUTS);
 
     // TEMP
     // Keep the old BEAN_ETH and BEAN_LUSD tokens to let
@@ -194,7 +178,26 @@ export class Tokens {
         seeds: 4,
       }
     );
-    this.map.set('BEAN_ETH_UNIV2_LP', this.BEAN_ETH_UNIV2_LP);
+
+    // create a map of address -> Token
+    // this will help in the UI migration to SDK use
+    this.map.set('eth', this.ETH);
+    this.map.set(addresses.WETH.get(this.sdk.chainId), this.WETH);
+    this.map.set(addresses.BEAN.get(this.sdk.chainId), this.BEAN);
+    this.map.set(addresses.CRV3.get(this.sdk.chainId), this.CRV3);
+    this.map.set(addresses.DAI.get(this.sdk.chainId), this.DAI);
+    this.map.set(addresses.USDC.get(this.sdk.chainId), this.USDC);
+    this.map.set(addresses.USDT.get(this.sdk.chainId), this.USDT);
+    this.map.set(addresses.LUSD.get(this.sdk.chainId), this.LUSD);
+    this.map.set(addresses.BEAN_CRV3.get(this.sdk.chainId), this.BEAN_CRV3_LP);
+    this.map.set(addresses.UNRIPE_BEAN.get(this.sdk.chainId), this.UNRIPE_BEAN);
+    this.map.set(addresses.UNRIPE_BEAN_CRV3.get(this.sdk.chainId), this.UNRIPE_BEAN_CRV3);
+    this.map.set('STALK', this.STALK);
+    this.map.set('SEED', this.SEEDS);
+    this.map.set('PODS', this.PODS);
+    this.map.set('SPROUT', this.SPROUTS);
+    this.map.set('rSPROUT', this.RINSABLE_SPROUTS);
+    this.map.set(addresses.BEAN_ETH_UNIV2_LP.get(this.sdk.chainId), this.BEAN_ETH_UNIV2_LP);
 
     this.unripeTokens = new Set([this.UNRIPE_BEAN, this.UNRIPE_BEAN_CRV3]);
     this.unripeUnderlyingTokens = new Set([this.BEAN, this.BEAN_CRV3_LP]);
@@ -204,10 +207,10 @@ export class Tokens {
     this.crv3Underlying = new Set([this.DAI, this.USDC, this.USDT]);
   }
 
-   /**
+  /**
    * Find a Token by address
    */
-  findByAddress(address:string):Token | undefined{
-    return this.map.get(address)
+  findByAddress(address: string): Token | undefined {
+    return this.map.get(address.toLowerCase());
   }
 }
