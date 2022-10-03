@@ -7,7 +7,7 @@ A utility class for handling tokens. Token is a baseclass used by the following:
 - `NativeToken` - for representing chain native token that isn't an ERCO20; ex ETH or AVAX or MATIC
 
 ```javascript
-new ERC20Token(sdk, Address.make('0x123'), 18, { symbol: 'FOO' });
+new ERC20Token(sdk, '0x123', 18, { symbol: 'FOO' });
 new NativeToken(sdk, null, 18, { symbol: 'ETH' });
 ```
 
@@ -17,7 +17,7 @@ Constructor options:
 type TokenConstructor = {
   new (
     sdk: BeanstalkSDK,
-    address: Address | null,
+    address: string,
     decimals: number,
     metadata: {
       name?: string;

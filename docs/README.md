@@ -42,12 +42,18 @@ const options = {
   // etherjs Provider. Optional
   provider,
 
+  // rpcUrl
+  rpcUrl,
+
   // bool, print debug output. default `false`
   DEBUG,
 };
 ```
 
-- A `signer` **or** `provider` is requried. Both _may_ be specified, but at least one of them _must_ be.
+- `options` object is optional. If ommited, SDK will use an `ethers.getDefaultProvider()`
+- If `rpcUrl` is provided, SDK will use a `WebSocketProvider` or `JsonRpcProvider`, depending on the protocol in the url (`ws` vs `http`)
+- If `signer` is provided, `sdk.provider` will be set to `signer.provider`
+
 
 ## SDK properties and methods
 
