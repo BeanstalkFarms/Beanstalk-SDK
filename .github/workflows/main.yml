@@ -1,5 +1,8 @@
 name: Test on Anvil
 on: [push]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 jobs:
   test:
     name: Build and test on Node ${{ matrix.node }} and ${{ matrix.os }}
