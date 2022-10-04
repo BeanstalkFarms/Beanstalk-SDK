@@ -45,13 +45,13 @@ jobs:
       - name: Build
         run: yarn build
 
-      - name: Install rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
-          profile: minimal
-          override: true
+      # - name: Install rust
+      #   uses: actions-rs/toolchain@v1
+      #   with:
+      #     toolchain: stable
+      #     target: wasm32-unknown-unknown
+      #     profile: minimal
+      #     override: true
       - name: Install Anvil
         uses: foundry-rs/foundry-toolchain@v1
         with:
