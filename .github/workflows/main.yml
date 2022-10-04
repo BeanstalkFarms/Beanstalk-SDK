@@ -1,31 +1,44 @@
-name: CI
+name: Test on Anvil
 on: [push]
 jobs:
-  build:
-    name: Build, lint, and test on Node ${{ matrix.node }} and ${{ matrix.os }}
+  test:
+    name: Build and test on Node ${{ matrix.node }} and ${{ matrix.os }}
 
     runs-on: ${{ matrix.node }}
     strategy:
       matrix:
-        node: ['16', '18']
+        node: ["16"]
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      - name: Use Node ${{ matrix.node }}
-        uses: actions/setup-node@v1
+      - name: Install Node ${{ matrix.node }}
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
 
-      - name: Install deps and build (with cache)
-        uses: bahmutov/npm-install@v1
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: |
+          echo "::set-output name=dir::$(yarn cache dir)"
+          echo "::set-output name=version::$(yarn -v)"
 
-      - name: Lint
-        run: yarn lint
+      - name: node_module cache
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: |
+            **/node_modules
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
 
-      - name: Test
-        run: yarn test --ci --coverage --maxWorkers=2
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
 
+      - run: yarn install --frozen-lockfile
       - name: Build
         run: yarn build
+
+      - name: Test
+        run: yarn test:anvil
