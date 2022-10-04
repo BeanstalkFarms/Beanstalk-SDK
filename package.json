@@ -16,7 +16,6 @@
     "test": "tsdx test",
     "test:anvil": "npx --node-options=\"--no-warnings\" hardhat test",
     "lint": "tsdx lint",
-    "prepare": "tsdx build",
     "size": "size-limit",
     "analyze": "size-limit --why",
     "generate:typechain": "typechain --target=ethers-v5 --ts-nocheck --out-dir=./src/constants/generated/ './src/constants/abi/**/*.json'"
