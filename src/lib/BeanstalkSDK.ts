@@ -2,8 +2,8 @@ import { BeanstalkConfig, Provider, Signer } from '../types';
 import { ethers } from 'ethers';
 import { enumFromValue } from '../utils';
 import { addresses, ChainId } from '../constants';
-import { Contracts } from './contracts';
 import { Tokens } from './tokens';
+import { Contracts } from './contracts';
 import { Swap } from './swap';
 
 // import { ChainID } from './constants';
