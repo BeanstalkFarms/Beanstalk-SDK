@@ -1,17 +1,15 @@
-name: Test on Anvil
+name: T
 on: [push]
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 jobs:
   test:
-    name: Build and test on Node ${{ matrix.node }} and ${{ matrix.os }}
-
+    name: Build and test on Node ${{ matrix.node }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["16"]
-
+        node: ["16", "18"]
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -45,23 +43,10 @@ jobs:
       - name: Build
         run: yarn build
 
-      # - name: Install rust
-      #   uses: actions-rs/toolchain@v1
-      #   with:
-      #     toolchain: stable
-      #     target: wasm32-unknown-unknown
-      #     profile: minimal
-      #     override: true
       - name: Install Anvil
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
-      # TODO: Cache Anvil RPC calls between runs to speed up tests
-      # - name: Launch Anvil
-      #   run: anvil --fork-url $ANVIL_FORK_URL --fork-block-number $ANVIL_BLOCK_NUMBER &
-      #   env:
-      #     ANVIL_FORK_URL: ${{ secrets.ANVIL_FORK_URL }}
-      #     ANVIL_BLOCK_NUMBER: 15577000
 
       - name: Test
         run: yarn test:anvil
