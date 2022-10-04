@@ -1,4 +1,4 @@
-name: Anvil Tests
+name: Anvil Test
 on:   
   push:
   pull_request:
