@@ -1,10 +1,10 @@
-name: Anvil Tests
+name: Anvil Test
 on:   
   push:
   pull_request:
     types: [opened, synchronize]
 concurrency:
-  group: ${{ github.head_ref}}
+  group: ${{ github.head_ref }}
   cancel-in-progress: true
 jobs:
   test:
