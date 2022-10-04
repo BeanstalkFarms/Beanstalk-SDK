@@ -41,7 +41,7 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Yarn install
-        run: yarn install --frozen-lockfile --production=false
+        run: yarn install
 
       - name: Build
         run: yarn build
