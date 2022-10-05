@@ -1,5 +1,5 @@
 name: Anvil Tests
-on:   
+on:
   push:
   pull_request:
     types: [opened, synchronize]
@@ -11,8 +11,9 @@ jobs:
     name: Build and test on Node ${{ matrix.node }}
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: 1
       matrix:
-        node: ["16", "18"]
+        node: ["16"]
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
