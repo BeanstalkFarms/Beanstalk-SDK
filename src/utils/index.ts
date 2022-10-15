@@ -1,4 +1,5 @@
 import * as tokens from './Tokens';
+export * from './DecimalBigNumber'
 export { tokens };
   
 export const enumFromValue = <T extends Record<number, string>>(val: number, _enum: T) => {

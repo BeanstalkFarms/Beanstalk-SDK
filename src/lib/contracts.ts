@@ -17,7 +17,8 @@ import {
   CurveMetaPool,
   CurveRegistry,
   CurveTriCrypto2Pool,
-  CurveZap
+  CurveZap,
+  BeanstalkFertilizer__factory
 } from '../constants/generated';
 import { BaseContract } from 'ethers';
 
@@ -38,10 +39,11 @@ type CurveContracts = {
 };
 
 export class Contracts {
-  private sdk: BeanstalkSDK;
-  public beanstalk: Beanstalk;
+  private readonly sdk: BeanstalkSDK;
+  public readonly beanstalk: Beanstalk;
+  public readonly fertilizer: import("/Users/alex/0xalecks/Beanstalk/sdk/src/constants/generated/index").BeanstalkFertilizer;
 
-  public curve: CurveContracts;
+  public readonly curve: CurveContracts;
 
   // private chain: string;
 
@@ -51,6 +53,7 @@ export class Contracts {
     // Addressses
     
     const beanstalkAddress = sdk.addresses.BEANSTALK.get(this.sdk.chainId)
+    const beanstalkFertilizerAddress = sdk.addresses.BEANSTALK_FERTILIZER.get(this.sdk.chainId)
     const pool3Address= sdk.addresses.POOL3.get(this.sdk.chainId);
     const tricrypto2Address= sdk.addresses.TRICRYPTO2.get(this.sdk.chainId);
     const beancrv3Address= sdk.addresses.BEAN_CRV3.get(this.sdk.chainId);
@@ -61,6 +64,7 @@ export class Contracts {
 
     // Instances
     this.beanstalk = Beanstalk__factory.connect(beanstalkAddress, this.sdk.providerOrSigner);
+    this.fertilizer = BeanstalkFertilizer__factory.connect(beanstalkFertilizerAddress, this.sdk.providerOrSigner);
     const pool3 = Curve3Pool__factory.connect(pool3Address, this.sdk.providerOrSigner);
     const tricrypto2 = CurveTriCrypto2Pool__factory.connect(tricrypto2Address, this.sdk.providerOrSigner);
     const beanCrv3 = CurveMetaPool__factory.connect(beancrv3Address, this.sdk.providerOrSigner);

@@ -1,5 +1,5 @@
 import { addresses } from '../constants';
-import Token, { BeanstalkToken, ERC20Token, NativeToken } from '../classes/Token';
+import { Token, BeanstalkToken, ERC20Token, NativeToken } from '../classes/Token';
 import { BeanstalkSDK } from './BeanstalkSDK';
 
 export class Tokens {

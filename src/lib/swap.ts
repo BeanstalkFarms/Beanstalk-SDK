@@ -1,5 +1,5 @@
 import { BigNumber, ContractTransaction } from 'ethers';
-import Token, { ERC20Token, NativeToken } from '../classes/Token';
+import { Token, ERC20Token, NativeToken } from '../classes/Token';
 import type { BeanstalkSDK } from './BeanstalkSDK';
 import Farm, { FarmEstimate, FarmFromMode, FarmToMode } from './farm';
 
@@ -14,11 +14,9 @@ enum Pathway {
 
 export class Swap {
   private readonly sdk: BeanstalkSDK;
-  public readonly farm: Farm;
 
   constructor(sdk: BeanstalkSDK) {
     this.sdk = sdk;
-    this.farm = new Farm(this.sdk);
   }
 
   isPair(_tokenIn: Token, _tokenOut: Token, _pair: [Token, Token]) {
@@ -82,18 +80,18 @@ export class Swap {
     /// Token <-> Token
     if (pathway === Pathway.TRANSFER) {
       this.sdk.debug('[handleEstimate] estimating: transferToken');
-      const thing = this.farm.transferToken(_tokenIn.address, _account, _fromMode, _toMode);
+      const thing = this.sdk.farm.transferToken(_tokenIn.address, _account, _fromMode, _toMode);
       const _fns = [thing]
       const _args = [amountIn]
-      const est = this.farm.estimate(_fns, _args, forward);
+      const est = this.sdk.farm.estimate(_fns, _args, forward);
       return est;
     }
 
     /// ETH <-> WETH
     if (pathway === Pathway.ETH_WETH) {
       this.sdk.debug(`[handleEstimate] estimating: ${startToken === this.sdk.tokens.ETH ? 'wrap' : 'unwrap'}`);
-      return this.farm.estimate(
-        [startToken === this.sdk.tokens.ETH ? this.farm.wrapEth(_toMode) : this.farm.unwrapEth(_fromMode)],
+      return this.sdk.farm.estimate(
+        [startToken === this.sdk.tokens.ETH ? this.sdk.farm.wrapEth(_toMode) : this.sdk.farm.unwrapEth(_fromMode)],
         [amountIn],
         forward
       );
@@ -102,11 +100,11 @@ export class Swap {
     /// BEAN <-> 3CRV
     if (pathway === Pathway.BEAN_CRV3) {
       this.sdk.debug('[handleEstimate] estimating: BEAN <-> CRV3');
-      return this.farm.estimate(
+      return this.sdk.farm.estimate(
         [
-          this.farm.exchange(
-            this.farm.contracts.curve.pools.beanCrv3.address,
-            this.farm.contracts.curve.registries.metaFactory.address,
+          this.sdk.farm.exchange(
+            this.sdk.farm.contracts.curve.pools.beanCrv3.address,
+            this.sdk.farm.contracts.curve.registries.metaFactory.address,
             _tokenIn.address,
             _tokenOut.address,
             _fromMode,
@@ -121,16 +119,16 @@ export class Swap {
     /// BEAN <-> ETH
     if (pathway === Pathway.BEAN_ETH) {
       this.sdk.debug('[handleEstimate] estimating: BEAN <-> ETH');
-      return this.farm.estimate(
+      return this.sdk.farm.estimate(
         startToken === this.sdk.tokens.ETH
-          ? [this.farm.wrapEth(FarmToMode.INTERNAL), ...this.farm.pair.WETH_BEAN('WETH', FarmFromMode.INTERNAL, _toMode)]
+          ? [this.sdk.farm.wrapEth(FarmToMode.INTERNAL), ...this.sdk.farm.pair.WETH_BEAN('WETH', FarmFromMode.INTERNAL, _toMode)]
           : [
-              ...this.farm.pair.WETH_BEAN(
+              ...this.sdk.farm.pair.WETH_BEAN(
                 'BEAN',
                 _fromMode,
                 FarmToMode.INTERNAL // send WETH to INTERNAL
               ), // amountOut is not exact
-              this.farm.unwrapEth(
+              this.sdk.farm.unwrapEth(
                 FarmFromMode.INTERNAL_TOLERANT // unwrap WETH from INTERNAL
               ), // always goes to EXTERNAL because ETH is not ERC20 and therefore not circ. bal. compatible
             ],
@@ -142,10 +140,10 @@ export class Swap {
     /// BEAN <-> WETH
     if (pathway === Pathway.BEAN_WETH) {
       this.sdk.debug('[handleEstimate] estimating: BEAN <-> WETH');
-      return this.farm.estimate(
+      return this.sdk.farm.estimate(
         startToken === this.sdk.tokens.WETH
-          ? this.farm.pair.WETH_BEAN('WETH', _fromMode, _toMode)
-          : this.farm.pair.WETH_BEAN('BEAN', _fromMode, _toMode),
+          ? this.sdk.farm.pair.WETH_BEAN('WETH', _fromMode, _toMode)
+          : this.sdk.farm.pair.WETH_BEAN('BEAN', _fromMode, _toMode),
         [amountIn],
         forward
       );
@@ -154,10 +152,10 @@ export class Swap {
     /// BEAN <-> CRV3 Underlying
     if (pathway === Pathway.BEAN_CRV3_UNDERLYING) {
       this.sdk.debug('[handleEstimate] estimating: BEAN <-> 3CRV Underlying');
-      return this.farm.estimate(
+      return this.sdk.farm.estimate(
         [
-          this.farm.exchangeUnderlying(
-            this.farm.contracts.curve.pools.beanCrv3.address,
+          this.sdk.farm.exchangeUnderlying(
+            this.sdk.farm.contracts.curve.pools.beanCrv3.address,
             _tokenIn.address,
             _tokenOut.address,
             _fromMode,
@@ -175,7 +173,7 @@ export class Swap {
   async execute(estimate: FarmEstimate, slippage: number):Promise<ContractTransaction>{
     this.sdk.debug('[swap.execute] Executing swap', {estimate, slippage})
     if (!estimate.steps) throw new Error('Unable to generate a transaction sequence');
-    const data = this.farm.encodeStepsWithSlippage(
+    const data = this.sdk.farm.encodeStepsWithSlippage(
       estimate.steps,
       slippage / 100,
     );

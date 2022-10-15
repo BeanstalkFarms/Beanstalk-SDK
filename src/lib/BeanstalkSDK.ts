@@ -5,6 +5,11 @@ import { addresses, ChainId } from '../constants';
 import { Tokens } from './tokens';
 import { Contracts } from './contracts';
 import { Swap } from './swap';
+import Farm from './farm';
+
+import { EventManager } from './events/EventManager';
+import { Silo } from './silo';
+import { Sun } from './sun';
 
 // import { ChainID } from './constants';
 
@@ -13,15 +18,18 @@ export class BeanstalkSDK {
   public signer?: Signer;
   public provider: Provider;
   public providerOrSigner: Signer | Provider;
-  public chainId: ChainId;
-  public contracts: Contracts;
-  public addresses: typeof addresses;
-  public tokens: Tokens;
-  public swap: Swap;
+  public readonly chainId: ChainId;
+  public readonly contracts: Contracts;
+  public readonly addresses: typeof addresses;
+  public readonly tokens: Tokens;
+  public readonly swap: Swap;
+  public readonly farm: Farm;
+  public readonly events: EventManager;
+  public readonly silo: Silo;
+  public readonly sun: Sun;
 
   constructor(config?: BeanstalkConfig) {
     this.handleConfig(config);
-
     // FIXME
     // @ts-ignore
     this.chainId = enumFromValue(this.provider?.network?.chainId ?? 1, ChainId);
@@ -29,7 +37,11 @@ export class BeanstalkSDK {
     this.addresses = addresses;
     this.contracts = new Contracts(this);
     this.tokens = new Tokens(this);
+    this.farm = new Farm(this);
     this.swap = new Swap(this);
+    this.silo = new Silo(this);
+    this.events = new EventManager(this);
+    this.sun = new Sun(this);
   }
 
   handleConfig(config: BeanstalkConfig = {}) {

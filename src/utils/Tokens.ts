@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js';
-// import Token from '../classes/Token';
+// import {Token} from '../classes/Token';
 // import { ZERO_BN } from '../constants';
 // import { bigNumberResult } from './Ledger';
 // // import { STALK } from '~/constants/tokens';
@@ -201,7 +201,7 @@ export function toTokenUnitsBN(tokenAmt: BigNumber.Value, decimals: BigNumber.Va
   const base = new BigNumber(10);
   const decimalsBN = new BigNumber(decimals);
   const digits = base.pow(decimalsBN);
-   return amt.dividedBy(digits);
+  return amt.dividedBy(digits);
 }
 
 /**

@@ -1,7 +1,8 @@
 import BigNumber from 'bignumber.js';
-import { BaseContract } from 'ethers';
+import { BaseContract, ContractTransaction } from 'ethers';
 import { ZERO_BN, MAX_UINT256, ChainId, NEW_BN } from '../constants';
 import { ERC20__factory } from '../constants/generated';
+import { PromiseOrValue } from '../constants/generated/common';
 import type { BeanstalkSDK } from '../lib/BeanstalkSDK';
 import { Provider } from '../types';
 import { bigNumberResult } from '../utils/Ledger';
@@ -9,12 +10,11 @@ import { toStringBaseUnitBN, toTokenUnitsBN } from '../utils/Tokens';
 // import { erc20TokenContract } from '~/util/Contracts';
 
 // import { toStringBaseUnitBN } from '~/util/Tokens';
-import { Address } from './Address';
 
 /**
  * A currency is any fungible financial instrument, including Ether, all ERC20 tokens, and other chain-native currencies
  */
-export default abstract class Token {
+export abstract class Token {
   /**
    * Refernce to the SDK
    */
@@ -242,6 +242,10 @@ export class ERC20Token extends Token {
     // console.debug(`[ERC20Token] ${this.symbol} (${this.chainId} / ${this.address}) -> totalSupply()`);
     return this.getContract().totalSupply()
     .then(bigNumberResult);
+  }
+
+  public approve(spender: PromiseOrValue<string>, value: PromiseOrValue<BigNumber>):Promise<ContractTransaction> {
+    return this.getContract().approve(spender, value.toString())
   }
 }
 
