@@ -7,8 +7,6 @@ export { BigNumber } from 'ethers';
 import * as Utils from './utils';
 export { Utils };
 
-export * from './utils/DecimalBigNumber';
-
 export { FarmFromMode, FarmToMode } from './lib/farm';
 
-import './BigNumberExtend';
+
