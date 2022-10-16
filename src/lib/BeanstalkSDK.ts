@@ -1,4 +1,4 @@
-import { BeanstalkConfig, Provider, Signer } from '../types';
+import { BeanstalkConfig, DataSource, Provider, Reconfigurable, Signer } from '../types';
 import { ethers } from 'ethers';
 import { enumFromValue } from '../utils';
 import { addresses, ChainId } from '../constants';
@@ -18,6 +18,8 @@ export class BeanstalkSDK {
   public signer?: Signer;
   public provider: Provider;
   public providerOrSigner: Signer | Provider;
+  public source: DataSource;
+
   public readonly chainId: ChainId;
   public readonly contracts: Contracts;
   public readonly addresses: typeof addresses;
@@ -58,6 +60,8 @@ export class BeanstalkSDK {
     }
     this.providerOrSigner = config.signer ?? config.provider!;
     this.DEBUG = config.DEBUG ?? false;
+
+    this.source = DataSource.LEDGER; // FIXME
   }
 
   debug(...args: any[]) {
@@ -74,5 +78,20 @@ export class BeanstalkSDK {
     }
 
     throw new Error('rpcUrl is invalid');
+  }
+
+  async getAccount() : Promise<string> {
+    if (!this.signer) throw new Error('Cannot get account without a signer');
+    const account = await this.signer.getAddress();
+    if (!account) throw new Error('Failed to get account from signer');
+    return account;
+  }
+
+  deriveSource<T extends { source?: DataSource }>(config?: T) : DataSource {
+    return config?.source || this.source;
+  } 
+
+  deriveConfig<T extends BeanstalkConfig>(key: keyof Reconfigurable, _config?: T) : BeanstalkConfig[typeof key] {
+    return _config?.[key] || this[key];
   }
 }

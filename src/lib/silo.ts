@@ -1,7 +1,7 @@
 import { BigNumber } from 'bignumber.js';
 import { Token } from '../classes/Token';
 import { ZERO_BN } from '../constants';
-import { StringMap } from '../types';
+import { DataSource, StringMap } from '../types';
 
 import { BeanstalkSDK } from './BeanstalkSDK';
 import EventProcessor from './events/EventProcessor';
@@ -59,8 +59,6 @@ export type TokenSiloBalance = {
     /** All Claimable crates. */
     crates: Crate[];
   };
-  wrapped: BigNumber;
-  circulating: BigNumber;
 };
 
 export type UpdateFarmerSiloBalancesPayload = StringMap<Partial<TokenSiloBalance>>;
@@ -230,54 +228,82 @@ export class Silo {
     console.log('not implemented');
   }
 
-  public async getBalances(_account: string, _fromBlock?: number, _toBlock?: number) {
-    const account = _account ?? (await this.sdk.signer?.getAddress());
-    if (!account) {
-      throw new Error('Cannot get balances, no address');
+  public async getBalances(
+    _account: string,
+    _config?: {
+      source: DataSource.LEDGER,
+    } | {
+      source: DataSource.SUBGRAPH,
+      // _fromBlock?: number,
+      // _toBlock?: number
+    }
+  ) : Promise<Map<Token, TokenSiloBalance>> {
+    const account = _account ?? await this.sdk.getAccount();
+    const source = this.sdk.deriveConfig("source", _config);
+
+    //
+    if (source === DataSource.LEDGER) {
+      const season = await this.sdk.sun.getSeason();
+      const seasonBN = new BigNumber(season)
+      const whitelist = this.sdk.tokens.siloWhitelist;
+
+      const events = await this.sdk.events.getSiloEvents(account);
+      const p = new EventProcessor(this.sdk, account, { season: seasonBN, whitelist });
+      const results = p.ingestAll(events);
+
+      const balances = Array.from(this.sdk.tokens.siloWhitelist).reduce<
+        Map<Token, TokenSiloBalance>
+      >((map, token) => {
+        map.set(token, {
+          deposited: {
+            ...Object.keys(results.deposits.get(token) ?? {}).reduce(
+              (deposit, s) => {
+                const crate = results.deposits.get(token)![s];
+                const bdv = crate.bdv;
+                deposit.amount = deposit.amount.plus(crate.amount);
+                deposit.bdv = deposit.bdv.plus(bdv);
+                deposit.crates.push({
+                  season: new BigNumber(s),
+                  amount: crate.amount,
+                  bdv: bdv,
+                  stalk: token.getStalk(bdv),
+                  seeds: token.getSeeds(bdv),
+                });
+                return deposit;
+              },
+              {
+                amount: ZERO_BN,
+                bdv: ZERO_BN,
+                crates: [] as DepositCrate[],
+              }
+            ),
+          },
+          // Splits into 'withdrawn' and 'claimable'
+          ...p.parseWithdrawals(token, seasonBN),
+        });
+        return map;
+      }, new Map());
+      
+      return balances;
     }
 
-    const season = await this.sdk.sun.getSeason();
-    const whitelist = this.sdk.tokens.siloWhitelist;
+    //
+    if (source === DataSource.SUBGRAPH) {
+      /**
+       * const results = await siloBalancesQuery(_account); // subgraph schema
+       * const balances = (morph subgraph response to the sdk's schema, incl. parsing decimals)
+       */
+    } 
 
-    const events = await this.sdk.events.getSiloEvents(account);
-    const p = new EventProcessor(this.sdk, account, { season: new BigNumber(season), whitelist });
-    const results = p.ingestAll(events);
-
-    const balances = Array.from(this.sdk.tokens.siloWhitelist).reduce<
-      Map<Token, Pick<TokenSiloBalance, 'deposited' | 'withdrawn' | 'claimable'>>
-    >((map, token) => {
-      map.set(token, {
-        deposited: {
-          ...Object.keys(results.deposits.get(token) ?? {}).reduce(
-            (dep, s) => {
-              const crate = results.deposits.get(token)![s];
-              const bdv = crate.bdv;
-              dep.amount = dep.amount.plus(crate.amount);
-              dep.bdv = dep.bdv.plus(bdv);
-              dep.crates.push({
-                season: new BigNumber(s),
-                amount: crate.amount,
-                bdv: bdv,
-                stalk: token.getStalk(bdv),
-                seeds: token.getSeeds(bdv),
-              });
-              return dep;
-            },
-            {
-              amount: ZERO_BN,
-              bdv: ZERO_BN,
-              crates: [] as DepositCrate[],
-            }
-          ),
-        },
-        // Splits into 'withdrawn' and 'claimable'
-        ...p.parseWithdrawals(token, new BigNumber(season)),
-      });
-      return map;
-    }, new Map());
-
-    return balances;
+    throw new Error(`Unsupported source: ${source}`);
   }
+
+  /**
+   * Integration test:
+   * should be able to assert that 
+   *    sdk.silo.getBalances(0xADDR, { source: DataSource.SUBGRAPH })
+   *    == sdk.silo.getBalances(0xADDR, { source: DataSource.LEDGER })
+   */
 
   // public async getDeposits() {
   //   console.log('not implemented');
