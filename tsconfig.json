@@ -3,6 +3,9 @@
     "src",
     "types"
   ],
+  "exclude": [
+    "./src/generated/**/*"
+  ],
   "compilerOptions": {
     "target": "ES6",
     "module": "esnext",

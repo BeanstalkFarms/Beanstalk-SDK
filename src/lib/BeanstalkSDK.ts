@@ -1,5 +1,6 @@
-import { BeanstalkConfig, DataSource, Provider, Reconfigurable, Signer } from '../types';
+import { GraphQLClient } from 'graphql-request';
 import { ethers } from 'ethers';
+import { BeanstalkConfig, DataSource, Provider, Reconfigurable, Signer } from '../types';
 import { enumFromValue } from '../utils';
 import { addresses, ChainId } from '../constants';
 import { Tokens } from './tokens';
@@ -10,6 +11,7 @@ import Farm from './farm';
 import { EventManager } from './events/EventManager';
 import { Silo } from './silo';
 import { Sun } from './sun';
+import { Sdk as Queries, getSdk as getQueries } from '../generated/graphql';
 
 // import { ChainID } from './constants';
 
@@ -20,25 +22,38 @@ export class BeanstalkSDK {
   public providerOrSigner: Signer | Provider;
   public source: DataSource;
 
+  //
   public readonly chainId: ChainId;
-  public readonly contracts: Contracts;
+
+  //
   public readonly addresses: typeof addresses;
+  public readonly contracts: Contracts;
   public readonly tokens: Tokens;
-  public readonly swap: Swap;
+  public readonly graphql: GraphQLClient;
+  public readonly queries: Queries;
+
+  //
   public readonly farm: Farm;
-  public readonly events: EventManager;
+  public readonly swap: Swap;
   public readonly silo: Silo;
+  public readonly events: EventManager;
   public readonly sun: Sun;
 
   constructor(config?: BeanstalkConfig) {
     this.handleConfig(config);
+
     // FIXME
     // @ts-ignore
     this.chainId = enumFromValue(this.provider?.network?.chainId ?? 1, ChainId);
 
+    // Globals
     this.addresses = addresses;
     this.contracts = new Contracts(this);
     this.tokens = new Tokens(this);
+    this.graphql = new GraphQLClient('https://graph.node.bean.money/subgraphs/name/beanstalk');
+    this.queries = getQueries(this.graphql);
+
+    // Facets
     this.farm = new Farm(this);
     this.swap = new Swap(this);
     this.silo = new Silo(this);

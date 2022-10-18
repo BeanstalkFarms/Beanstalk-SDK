@@ -116,7 +116,7 @@ export default class EventProcessor {
   // ----------------------------
 
   plots: EventProcessorData['plots'];
-  deposits: EventProcessorData['deposits']; // token => season => amount
+  deposits: EventProcessorData['deposits'];       // token => season => amount
   withdrawals: EventProcessorData['withdrawals']; // token => season => amount
   listings: EventProcessorData['listings'];
   orders: EventProcessorData['orders'];
@@ -126,12 +126,14 @@ export default class EventProcessor {
   constructor(sdk: BeanstalkSDK, account: string, epp: EventProcessingParameters, initialState?: Partial<EventProcessorData>) {
     if (!epp.whitelist || typeof epp !== 'object') throw new Error('EventProcessor: Missing whitelist.');
     this.sdk = sdk;
+    // Setup
     this.account = account.toLowerCase();
     this.epp = epp;
-    this.plots = initialState?.plots || {};
-    // @ts-ignore
+    // Silo
     this.deposits = initialState?.deposits || setToMap(this.epp.whitelist);
     this.withdrawals = initialState?.withdrawals || setToMap(this.epp.whitelist);
+    // Field
+    this.plots = initialState?.plots || {};
     this.listings = initialState?.listings || {};
     this.orders = initialState?.orders || {};
   }
@@ -427,7 +429,6 @@ export default class EventProcessor {
     return {
       withdrawn: {
         amount: transitBalance,
-        bdv: new BigNumber(0),
         crates: transitWithdrawals,
       },
       claimable: {

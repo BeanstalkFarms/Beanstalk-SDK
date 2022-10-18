@@ -1,0 +1,20 @@
+query getSiloBalances($account: ID!, $season: Int!) {
+  farmer(id: $account) {
+    deposited: deposits(orderBy: season, orderDirection: asc) {
+      season
+      token
+      amount: tokenAmount
+      bdv
+    }
+    withdrawn: withdraws(orderBy: withdrawSeason, orderDirection: asc, where: { claimableSeason_gt: $season, claimed: false }) {
+      season: withdrawSeason
+      token
+      amount
+    }
+    claimable: withdraws(orderBy: withdrawSeason, orderDirection: asc, where: { claimableSeason_lte: $season, claimed: false }) {
+      season: withdrawSeason
+      token
+      amount
+    }
+  }
+}
