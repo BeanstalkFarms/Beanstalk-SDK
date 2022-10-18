@@ -13,8 +13,6 @@ import { Silo } from './silo';
 import { Sun } from './sun';
 import { Sdk as Queries, getSdk as getQueries } from '../generated/graphql';
 
-// import { ChainID } from './constants';
-
 export class BeanstalkSDK {
   public DEBUG: boolean;
   public signer?: Signer;

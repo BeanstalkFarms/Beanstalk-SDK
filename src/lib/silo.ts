@@ -229,24 +229,6 @@ export class Silo {
     console.log('not implemented');
   }
 
-  private _makeTokenSiloBalance() : TokenSiloBalance {
-    return {
-      deposited: {
-        amount: ZERO_BN,
-        bdv: ZERO_BN, 
-        crates: [] as DepositCrate[],
-      },
-      withdrawn: {
-        amount: ZERO_BN,
-        crates: [] as WithdrawalCrate[]
-      },
-      claimable: { 
-        amount: ZERO_BN,
-        crates: [] as WithdrawalCrate[]
-      },
-    }
-  }
-
   // private _sortTokenMapByAddress<T extends any>(map: Map<Token, T>) {
     // return Array.from(map.keys()).sort((a, b) => a.address < b.address ? 1 : -1).reduce((prev, curr) => {
     //   const v = map.get(curr);
@@ -254,6 +236,8 @@ export class Silo {
     //   return prev;
     // }, new Map<Token, T>())
   // }
+
+  //////////////////////// UTILITIES ////////////////////////
 
   /**
    * Sort the incoming map so that tokens are ordered in the same order
@@ -282,6 +266,8 @@ export class Silo {
     return ordered;
   }
 
+  //////////////////////// WHITELIST ////////////////////////
+
   /**
    * Return a list of tokens that are currently whitelisted in the Silo.
    * 
@@ -305,6 +291,104 @@ export class Silo {
     throw new Error(`Unsupported source: ${source}`);
   }
 
+  //////////////////////// BALANCES ////////////////////////
+
+  private _makeTokenSiloBalance() : TokenSiloBalance {
+    return {
+      deposited: {
+        amount: ZERO_BN,
+        bdv: ZERO_BN, 
+        crates: [] as DepositCrate[],
+      },
+      withdrawn: {
+        amount: ZERO_BN,
+        crates: [] as WithdrawalCrate[]
+      },
+      claimable: { 
+        amount: ZERO_BN,
+        crates: [] as WithdrawalCrate[]
+      },
+    }
+  }
+
+  private _applyDeposit(
+    state: TokenSiloBalance['deposited'],
+    token: Token,
+    crate: {
+      season: string | number;
+      amount: string;
+      bdv: string;
+    },
+  ) {
+    const season = new BigNumber(crate.season);
+    const amount = toTokenUnitsBN(crate.amount, token.decimals);
+    const bdv    = toTokenUnitsBN(crate.bdv, this.sdk.tokens.BEAN.decimals);
+
+    state.amount = state.amount.plus(amount);
+    state.bdv    = state.bdv.plus(bdv);
+    state.crates.push({
+      season:   season,
+      amount:   amount,
+      bdv:      bdv,
+      stalk:    token.getStalk(bdv), // FIXME: include grown stalk?
+      seeds:    token.getSeeds(bdv),
+    });
+  }
+
+  private _applyWithdrawal(
+    state: TokenSiloBalance['withdrawn' | 'claimable'],
+    token: Token,
+    crate: {
+      season: string | number;
+      amount: string;
+    }
+  ) {
+    const season = new BigNumber(crate.season);
+    const amount = toTokenUnitsBN(crate.amount, token.decimals);
+
+    state.amount = state.amount.plus(amount); // convert decimals
+    state.crates.push({
+      season:   season,
+      amount:   amount,
+    });
+  }
+
+  /**
+   * Return the balance of a single whitelisted token.
+   */
+  public async getBalance(
+    _token: Token,
+    _account?: string,
+    options?: (
+      { source: DataSource.LEDGER } | 
+      { source: DataSource.SUBGRAPH }
+    )
+  ) {
+    const source = this.sdk.deriveConfig("source", options);
+    const [account, season] = await Promise.all([
+      _account ?? this.sdk.getAccount(),
+      this.sdk.sun.getSeason(),
+    ]);
+
+    // FIXME: doesn't work if _token is an instance of a token created by the SDK consumer
+    if (!this.sdk.tokens.siloWhitelist.has(_token)) throw new Error(`${_token.address} is not whitelisted in the Silo`)
+
+    const balance : TokenSiloBalance = this._makeTokenSiloBalance();
+
+    //
+    if (source === DataSource.SUBGRAPH) {
+      const query = await this.sdk.queries.getSiloBalances({ account, season }); // crates ordered in asc order
+      if (!query.farmer) return balance;
+      const { deposited, withdrawn, claimable } = query.farmer!;
+      deposited.forEach((crate) => this._applyDeposit(balance.deposited, _token, crate));
+      withdrawn.forEach((crate) => this._applyWithdrawal(balance.withdrawn, _token, crate));
+      claimable.forEach((crate) => this._applyWithdrawal(balance.claimable, _token, crate));
+      return balance;
+    }
+
+    throw new Error(`Unsupported source: ${source}`);
+  }
+
   /**
    * Return a Farmer's Silo balances.
    * 
@@ -324,7 +408,7 @@ export class Silo {
    * @fixme "deposits" vs "deposited"
    */
   public async getBalances(
-    _account: string,
+    _account?: string,
     options?: (
       { source: DataSource.LEDGER } | 
       { source: DataSource.SUBGRAPH }
@@ -402,41 +486,20 @@ export class Silo {
       // Handle deposits.
       type DepositEntity = (typeof deposited)[number];
       const handleDeposit = (crate: DepositEntity) => {
-        const token  = prep(crate.token);
+        const token = prep(crate.token);
         if (!token) return;
-        const state  = balances.get(token)!.deposited;
-
-        const season = new BigNumber(crate.season);
-        const amount = toTokenUnitsBN(crate.amount, token.decimals);
-        const bdv    = toTokenUnitsBN(crate.bdv, this.sdk.tokens.BEAN.decimals);
-
-        state.amount = state.amount.plus(amount);
-        state.bdv    = state.bdv.plus(bdv);
-        state.crates.push({
-          season:   season,
-          amount:   amount,
-          bdv:      bdv,
-          stalk:    token.getStalk(bdv), // FIXME: include grown stalk?
-          seeds:    token.getSeeds(bdv),
-        });
+        const state = balances.get(token)!.deposited;
+        this._applyDeposit(state, token, crate);
       };
 
       // Handle withdrawals.
       // Claimable = withdrawals from the past. The GraphQL query enforces this.
       type WithdrawalEntity = (typeof withdrawn)[number];
       const handleWithdrawal = (key: 'withdrawn' | 'claimable') => (crate: WithdrawalEntity) => {
-        const token  = prep(crate.token);
+        const token = prep(crate.token);
         if (!token) return;
         const state = balances.get(token)![key];
-
-        const season = new BigNumber(crate.season);
-        const amount = toTokenUnitsBN(crate.amount, token.decimals);
-
-        state.amount = state.amount.plus(amount); // convert decimals
-        state.crates.push({
-          season:   season,
-          amount:   amount,
-        });
+        this._applyWithdrawal(state, token, crate)
       };
 
       deposited.forEach(handleDeposit);
