@@ -5,11 +5,16 @@ export type Provider = ethers.providers.Provider;
 export type Signer = ethers.Signer;
 
 export type BeanstalkConfig = Partial<{
+  // Ledger
   provider: Provider;
   signer: Signer;
   rpcUrl: string;
-  DEBUG: boolean;
+  // Subgraph
+  subgraphUrl: string;
+  // Defaults
   source: DataSource;
+  // Debug
+  DEBUG: boolean;
 }>;
 
 export type Reconfigurable = Pick<

@@ -3,7 +3,7 @@ import type { CodegenConfig } from '@graphql-codegen/cli';
 
 const config: CodegenConfig = {
   overwrite: true,
-  schema: "https://graph.node.bean.money/subgraphs/name/beanstalk",
+  schema: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing",
   documents: "src/queries/**/*.graphql",
   generates: {
     "src/generated/graphql.ts": {

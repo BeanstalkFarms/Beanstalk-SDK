@@ -50,7 +50,7 @@ export class BeanstalkSDK {
     this.addresses = addresses;
     this.contracts = new Contracts(this);
     this.tokens = new Tokens(this);
-    this.graphql = new GraphQLClient('https://graph.node.bean.money/subgraphs/name/beanstalk');
+    this.graphql = new GraphQLClient(config?.subgraphUrl || 'https://graph.node.bean.money/subgraphs/name/beanstalk');
     this.queries = getQueries(this.graphql);
 
     // Facets

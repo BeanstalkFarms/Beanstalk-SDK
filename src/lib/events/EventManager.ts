@@ -50,7 +50,11 @@ export class EventManager {
     switch (eventType) {
       case EventType.SILO:
         return Promise.all([
-          this.sdk.contracts.beanstalk.queryFilter(this.sdk.contracts.beanstalk.filters.AddDeposit(_account), fromBlockOrGenesis, toBlock),
+          this.sdk.contracts.beanstalk.queryFilter(
+            this.sdk.contracts.beanstalk.filters.AddDeposit(_account),
+            fromBlockOrGenesis,
+            toBlock
+          ),
           this.sdk.contracts.beanstalk.queryFilter(
             this.sdk.contracts.beanstalk.filters.AddWithdrawal(_account),
             fromBlockOrGenesis,

@@ -1,4 +1,5 @@
 import { BigNumber } from 'bignumber.js';
+import _ from 'lodash';
 import { Test } from 'mocha';
 import { Token } from '../classes/Token';
 import { ZERO_BN } from '../constants';
@@ -246,6 +247,41 @@ export class Silo {
     }
   }
 
+  // private _sortTokenMapByAddress<T extends any>(map: Map<Token, T>) {
+    // return Array.from(map.keys()).sort((a, b) => a.address < b.address ? 1 : -1).reduce((prev, curr) => {
+    //   const v = map.get(curr);
+    //   if (v) prev.set(curr, v);
+    //   return prev;
+    // }, new Map<Token, T>())
+  // }
+
+  /**
+   * Sort the incoming map so that tokens are ordered in the same order
+   * they appear on the Silo Whitelist. 
+   * 
+   * @note the Silo Whitelist is sorted by the order in which tokens were
+   * whitelisted in Beanstalk. Unclear if the ordering shown on the
+   * Beanstalk UI will change at some point in the future.
+   */
+  private _sortTokenMapByWhitelist<T extends any>(map: Map<Token, T>) {
+    const whitelist = this.sdk.tokens.siloWhitelist;
+    const copy = new Map<Token, T>(map);
+    const ordered = new Map<Token, T>();
+    // by default, order by whitelist
+    whitelist.forEach((token) => {
+      const v = copy.get(token)
+      if (v) {
+        ordered.set(token, v);
+        copy.delete(token);
+      }
+    });
+    // add remaining tokens
+    copy.forEach((_, token) => {
+      ordered.set(token, copy.get(token)!);
+    });
+    return ordered;
+  }
+
   /**
    * Return a list of tokens that are currently whitelisted in the Silo.
    * 
@@ -300,12 +336,12 @@ export class Silo {
       this.sdk.sun.getSeason(),
     ]);
 
+    const whitelist = this.sdk.tokens.siloWhitelist;
     const balances = new Map<Token, TokenSiloBalance>();
 
     /// LEDGER
     if (source === DataSource.LEDGER) {
       const seasonBN = new BigNumber(season);
-      const whitelist = this.sdk.tokens.siloWhitelist;
 
       // Fetch and process events.
       const events = await this.sdk.events.getSiloEvents(account);
@@ -346,14 +382,13 @@ export class Silo {
         balances.get(token)!.claimable = claimable;
       });
 
-      return balances;
+      return this._sortTokenMapByWhitelist(balances);
     }
 
     /// SUBGRAPH
     if (source === DataSource.SUBGRAPH) {
       const query = await this.sdk.queries.getSiloBalances({ account, season }); // crates ordered in asc order
       if (!query.farmer) return balances;
-
       const { deposited, withdrawn, claimable } = query.farmer!;
 
       // Lookup token by address and create a TokenSiloBalance entity.
@@ -379,10 +414,10 @@ export class Silo {
         state.bdv    = state.bdv.plus(bdv);
         state.crates.push({
           season:   season,
-          amount:   crate.amount,
-          bdv:      crate.bdv,
-          stalk:    token.getStalk(crate.bdv), // FIXME: include grown stalk?
-          seeds:    token.getSeeds(crate.bdv),
+          amount:   amount,
+          bdv:      bdv,
+          stalk:    token.getStalk(bdv), // FIXME: include grown stalk?
+          seeds:    token.getSeeds(bdv),
         });
       };
 
@@ -400,15 +435,15 @@ export class Silo {
         state.amount = state.amount.plus(amount); // convert decimals
         state.crates.push({
           season:   season,
-          amount:   crate.amount,
+          amount:   amount,
         });
       };
 
-      query.farmer.deposited.forEach(handleDeposit);
-      query.farmer.withdrawn.forEach(handleWithdrawal('withdrawn'));
-      query.farmer.claimable.forEach(handleWithdrawal('claimable'));
+      deposited.forEach(handleDeposit);
+      withdrawn.forEach(handleWithdrawal('withdrawn'));
+      claimable.forEach(handleWithdrawal('claimable'));
 
-      return balances;
+      return this._sortTokenMapByWhitelist(balances);
     }
 
     throw new Error(`Unsupported source: ${source}`);
