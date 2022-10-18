@@ -8,7 +8,7 @@ module.exports = {
     anvil: {
       url: 'http://127.0.0.1:8545/',
       launch: true,
-      forkurl: process.env.FORK_URL,
+      forkUrl: process.env.FORK_URL,
       forkBlockNumber: 15577000,
       chainId: 1337,
     },

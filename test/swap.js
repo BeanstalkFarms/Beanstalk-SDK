@@ -3,13 +3,9 @@ const { BigNumber } = require('ethers');
 const { BeanstalkSDK, FarmFromMode, FarmToMode } = require('../dist');
 const { ACCOUNT1, resetFork, expectBalanceDifference, expectTokenBalance } = require('./utils');
 
-describe.only('SDK', function() {
+describe('SDK', function() {
   let sdk;
   let signer;
-
-  // before(function(done) {
-  //   resetFork().then(done);
-  // });
 
   before('initialize sdk', async function() {
     await resetFork();
@@ -35,29 +31,28 @@ describe.only('SDK', function() {
     expect(bal.toString()).to.eq('13613248684');
   });
 
-  it.only('swap WETH to BEAN', async function() {
-    const startEthBalance = await ethers.provider.getBalance(ACCOUNT1);
+  // it('swap WETH to BEAN', async function() {
+  //   const startEthBalance = await ethers.provider.getBalance(ACCOUNT1);
 
-    const amount = ethers.utils.parseUnits('100', 18);
+  //   const amount = ethers.utils.parseUnits('100', 18);
 
-    // Get WETH
-    const tx = await sdk.contracts.beanstalk.wrapEth(amount, FarmToMode.EXTERNAL, {
-      value: amount,
-    });
-    const endEthBalance = await ethers.provider.getBalance(ACCOUNT1);
-    await expectBalanceDifference(startEthBalance, amount, tx, endEthBalance);
-    await expectTokenBalance(sdk.tokens.WETH, ACCOUNT1, amount);
+  //   // Get WETH
+  //   const tx = await sdk.contracts.beanstalk.wrapEth(amount, FarmToMode.EXTERNAL, {
+  //     value: amount,
+  //   });
+  //   const endEthBalance = await ethers.provider.getBalance(ACCOUNT1);
+  //   await expectBalanceDifference(startEthBalance, amount, tx, endEthBalance);
+  //   await expectTokenBalance(sdk.tokens.WETH, ACCOUNT1, amount);
 
-    // Approve WETH
-    await sdk.tokens.WETH.approve(sdk.contracts.beanstalk.address, amount);
+  //   // Approve WETH
+  //   await sdk.tokens.WETH.approve(sdk.contracts.beanstalk.address, amount);
 
-    const balBefore = await sdk.tokens.BEAN.getBalance(ACCOUNT1);
-    console.log(`balbefore`, balBefore);
-    const estimate = await sdk.swap.estimate(true, amount, ACCOUNT1, sdk.tokens.WETH, sdk.tokens.BEAN, "0","0")
-    const tx2 = await sdk.swap.execute(estimate, 0.1)
-    const balAfter = await sdk.tokens.BEAN.getBalance(ACCOUNT1);
-    await expectBalanceDifference(balBefore, amount, tx2, balAfter)
-  });
+  //   const balBefore = await sdk.tokens.BEAN.getBalance(ACCOUNT1);
+  //   const estimate = await sdk.swap.estimate(true, amount, ACCOUNT1, sdk.tokens.WETH, sdk.tokens.BEAN, "0","0")
+  //   const tx2 = await sdk.swap.execute(estimate, 0.1)
+  //   const balAfter = await sdk.tokens.BEAN.getBalance(ACCOUNT1);
+  //   await expectBalanceDifference(balBefore, amount, tx2, balAfter)
+  // });
 
   // it('swap DAI to BEAN', async function() {
   //   //

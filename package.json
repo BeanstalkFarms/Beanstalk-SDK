@@ -14,7 +14,6 @@
   "scripts": {
     "start": "tsdx watch",
     "build": "tsdx build",
-    "test:old": "tsdx test",
     "test": "npx --node-options=\"--no-warnings\" hardhat test",
     "lint": "tsdx lint",
     "size": "size-limit",

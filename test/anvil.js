@@ -52,10 +52,6 @@ describe('Anvil', function() {
         .toString()
     ).to.eq('10000000000000000000000');
 
-    3,000,001,627,968,848,856,000
-    3,000,001,755,093,288,711,000
-
-
     // expect(balanceSender.toString()).to.eq(ethers.BigNumber.from('6999998372031151144000').toString());
 
     // Reset the fork
