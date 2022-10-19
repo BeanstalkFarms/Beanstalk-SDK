@@ -67,16 +67,20 @@ export const setToMap = (tokens: Set<Token>): Map<Token, any> => {
 // ----------------------------------------
 
 export type EventProcessingParameters = {
-  season: BigNumber;
+  season: EBN;
   whitelist: Set<Token>;
 };
+
 export type Deposit = {
-  amount: BigNumber;
-  bdv: BigNumber;
+  amount: EBN;
+  bdv: EBN;
 };
-export type Withdrawl = Pick<Deposit, 'amount'>;
+export type Withdrawal = {
+  amount: EBN;
+};
+
 export type EventProcessorData = {
-  plots: StringMap<BigNumber>;
+  plots: StringMap<EBN>;
   deposits: Map<
     Token,
     {
@@ -86,14 +90,14 @@ export type EventProcessorData = {
   withdrawals: Map<
     Token,
     {
-      [season: string]: Withdrawl;
+      [season: string]: Withdrawal;
     }
   >;
   listings: {
-    [plotIndex: string]: PodListing;
+    [plotIndex: string]: PodListing; // FIXME: need to use EBN here
   };
   orders: {
-    [orderId: string]: PodOrder;
+    [orderId: string]: PodOrder; // FIXME: need to use EBN here
   };
 };
 
@@ -101,6 +105,8 @@ export type EventProcessorData = {
 export type EventKeys = 'event' | 'args' | 'blockNumber' | 'transactionIndex' | 'transactionHash' | 'logIndex';
 export type Simplify<T extends ethers.Event> = Pick<T, EventKeys> & { returnValues?: any };
 export type Event = Simplify<ethers.Event>;
+
+//
 
 export default class EventProcessor {
   private readonly sdk: BeanstalkSDK;
@@ -390,62 +396,69 @@ export default class EventProcessor {
 
   // /// /////////////////////// SILO: UTILS  //////////////////////////
 
-  parseWithdrawals(_token: Token, _season: BigNumber) {
-    return EventProcessor._parseWithdrawals(this.withdrawals.get(_token)!, _season || this.epp.season);
-  }
+  // parseWithdrawals(_token: Token, _season: EBN) {
+  //   return EventProcessor._parseWithdrawals(
+  //     this.withdrawals.get(_token)!,
+  //     _season || this.epp.season
+  //   );
+  // }
 
-  static _parseWithdrawals(
-    // withdrawals: EventProcessorData['withdrawals'] extends {[season:string]: infer I} ? I : undefined,
-    withdrawals: MapValueType<EventProcessorData['withdrawals']>,
-    currentSeason: BigNumber
-  ): {
-    withdrawn: TokenSiloBalance['withdrawn'];
-    claimable: TokenSiloBalance['claimable'];
-  } {
-    let transitBalance = new BigNumber(0);
-    let receivableBalance = new BigNumber(0);
-    const transitWithdrawals: WithdrawalCrate[] = [];
-    const receivableWithdrawals: WithdrawalCrate[] = [];
+  // static _parseWithdrawals(
+  //   // withdrawals: EventProcessorData['withdrawals'] extends {[season:string]: infer I} ? I : undefined,
+  //   withdrawals: MapValueType<EventProcessorData['withdrawals']>,
+  //   currentSeason: EBN
+  // ): {
+  //   withdrawn: TokenSiloBalance['withdrawn'];
+  //   claimable: TokenSiloBalance['claimable'];
+  // } {
+  //   let transitBalance = EBN.from(0);
+  //   let receivableBalance = EBN.from(0);
+  //   const transitWithdrawals: WithdrawalCrate[] = [];
+  //   const receivableWithdrawals: WithdrawalCrate[] = [];
 
-    // Split each withdrawal between `receivable` and `transit`.
-    Object.keys(withdrawals).forEach((season: string) => {
-      const v = withdrawals[season].amount;
-      const s = new BigNumber(season);
-      if (s.isLessThanOrEqualTo(currentSeason)) {
-        receivableBalance = receivableBalance.plus(v);
-        receivableWithdrawals.push({
-          amount: v,
-          season: s,
-        });
-      } else {
-        transitBalance = transitBalance.plus(v);
-        transitWithdrawals.push({
-          amount: v,
-          season: s,
-        });
-      }
-    });
+  //   // Split each withdrawal between `receivable` and `transit`.
+  //   Object.keys(withdrawals).forEach((season: string) => {
+  //     const v = withdrawals[season].amount;
+  //     const s = EBN.from(season);
+  //     if (s.lte(currentSeason)) {
+  //       receivableBalance = receivableBalance.add(v);
+  //       receivableWithdrawals.push({
+  //         amount: v,
+  //         season: s,
+  //       });
+  //     } else {
+  //       transitBalance = transitBalance.plus(v);
+  //       transitWithdrawals.push({
+  //         amount: v,
+  //         season: s,
+  //       });
+  //     }
+  //   });
 
-    return {
-      withdrawn: {
-        amount: transitBalance,
-        crates: transitWithdrawals,
-      },
-      claimable: {
-        amount: receivableBalance,
-        crates: receivableWithdrawals,
-      },
-    };
-  }
+  //   return {
+  //     withdrawn: {
+  //       amount: transitBalance,
+  //       crates: transitWithdrawals,
+  //     },
+  //     claimable: {
+  //       amount: receivableBalance,
+  //       crates: receivableWithdrawals,
+  //     },
+  //   };
+  // }
 
   // /// /////////////////////// SILO: DEPOSIT  //////////////////////////
 
   // eslint-disable-next-line class-methods-use-this
-  _upsertDeposit(existing: Deposit | undefined, amount: BigNumber, bdv: BigNumber) {
+  _upsertDeposit(
+    existing: Deposit | undefined,
+    amount: EBN,
+    bdv: EBN
+  ) {
     return existing
       ? {
-          amount: existing.amount.plus(amount),
-          bdv: existing.bdv.plus(bdv),
+          amount: existing.amount.add(amount),
+          bdv: existing.bdv.add(bdv),
         }
       : {
           amount,
@@ -453,20 +466,29 @@ export default class EventProcessor {
         };
   }
 
-  _removeDeposit(season: string, token: Token, _amount: EBN) {
+  _removeDeposit(
+    season: string,
+    token: Token,
+    amount: EBN
+  ) {
     if (!this.epp.whitelist.has(token)) throw new Error(`Attempted to process an event with an unknown token: ${token}`);
-    const amount = tokenBN(_amount, token);
     const existingDeposit = this.deposits.get(token)?.[season];
     if (!existingDeposit) throw new Error(`Received a 'RemoveDeposit' event for an unknown deposit: ${token.address} ${season}`);
 
     // BDV scales linearly with the amount of the underlying token.
     // Ex. if we remove 60% of the `amount`, we also remove 60% of the BDV.
     // Because of this, the `RemoveDeposit` event doesn't contain the BDV to save gas.
-    const bdv = existingDeposit.bdv.times(amount.dividedBy(existingDeposit.amount));
+    //
+    // @note order of mul/div matters here to prevent underflow
+    const bdv = amount.mul(existingDeposit.bdv).div(existingDeposit.amount);
 
     this.deposits.set(token, {
       ...this.deposits.get(token),
-      [season]: this._upsertDeposit(this.deposits.get(token)?.[season], amount.negated(), bdv.negated()),
+      [season]: this._upsertDeposit(
+        existingDeposit,
+        amount.mul(-1),
+        bdv.mul(-1)
+      ),
     });
 
     if (this.deposits.get(token)?.[season]?.amount?.eq(0)) {
@@ -477,36 +499,45 @@ export default class EventProcessor {
   AddDeposit(event: Simplify<AddDepositEvent>) {
     const token = this.getToken(event);
     if (!this.epp.whitelist.has(token)) throw new Error(`Attempted to process an event with an unknown token: ${token}`);
-    const seasonBN = BN(event.args.season);
-    const season = seasonBN.toString();
-    const amount = tokenBN(event.args.amount, token);
-    const bdv = tokenBN(event.args.bdv, this.sdk.tokens.BEAN);
 
+    const tokDeposits = this.deposits.get(token);
     this.deposits.set(token, {
-      ...this.deposits.get(token),
-      [season]: this._upsertDeposit(this.deposits.get(token)?.[season], amount, bdv),
+      ...tokDeposits,
+      [event.args.season]: this._upsertDeposit(
+        tokDeposits?.[event.args.season],
+        event.args.amount,
+        event.args.bdv
+      ),
     });
   }
 
   RemoveDeposit(event: Simplify<RemoveDepositEvent>) {
     const token = this.getToken(event);
-    this._removeDeposit(event.args.season.toString(), token, event.args.amount);
+    this._removeDeposit(
+      event.args.season.toString(),
+      token,
+      event.args.amount
+    );
   }
 
   RemoveDeposits(event: Simplify<RemoveDepositsEvent>) {
     const token = this.getToken(event);
-    event.args.seasons.forEach((seasonNum, index) => {
-      this._removeDeposit(seasonNum.toString(), token, event.args.amounts[index]);
+    event.args.seasons.forEach((season, index) => {
+      this._removeDeposit(
+        season.toString(),
+        token,
+        event.args.amounts[index]
+      );
     });
   }
 
   /// /////////////////////// SILO: WITHDRAW  //////////////////////////
 
   // eslint-disable-next-line class-methods-use-this
-  _upsertWithdrawal(existing: Withdrawl | undefined, amount: BigNumber) {
+  _upsertWithdrawal(existing: Withdrawal | undefined, amount: EBN) {
     return existing
       ? {
-          amount: existing.amount.plus(amount),
+          amount: existing.amount.add(amount),
         }
       : {
           amount,
@@ -532,25 +563,34 @@ export default class EventProcessor {
   AddWithdrawal(event: Simplify<AddWithdrawalEvent>) {
     const token = this.getToken(event);
     if (!this.epp.whitelist.has(token)) throw new Error(`Attempted to process an event with an unknown token: ${token}`);
-    const seasonBN = BN(event.args.season);
-    const season = seasonBN.toString();
-    const amount = tokenBN(event.args.amount, token);
 
+    const tokWithdrawals = this.withdrawals.get(token);
     this.withdrawals.set(token, {
-      ...this.withdrawals.get(token),
-      [season]: this._upsertWithdrawal(this.withdrawals.get(token)?.[season], amount),
+      ...tokWithdrawals,
+      [event.args.season]: this._upsertWithdrawal(
+        tokWithdrawals?.[event.args.season],
+        event.args.amount
+      ),
     });
   }
 
   RemoveWithdrawal(event: Simplify<RemoveWithdrawalEvent>) {
     const token = this.getToken(event);
-    this._removeWithdrawal(event.args.season.toString(), token, event.args.amount);
+    this._removeWithdrawal(
+      event.args.season.toString(),
+      token,
+      event.args.amount
+    );
   }
 
   RemoveWithdrawals(event: Simplify<RemoveWithdrawalsEvent>) {
     const token = this.getToken(event);
-    event.args.seasons.forEach(seasonNum => {
-      this._removeWithdrawal(seasonNum.toString(), token, event.args.amount);
+    event.args.seasons.forEach(season => {
+      this._removeWithdrawal(
+        season.toString(),
+        token,
+        event.args.amount
+      );
     });
   }
 

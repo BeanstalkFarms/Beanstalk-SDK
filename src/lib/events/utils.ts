@@ -1,6 +1,6 @@
 
 import { ethers } from 'ethers';
-import { Event } from './EventProcessor';
+import { Event } from './processor';
 
 export enum EventType {
   SILO = 'silo',

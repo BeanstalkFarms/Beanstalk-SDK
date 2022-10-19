@@ -1,13 +1,14 @@
 import { BigNumber } from 'bignumber.js';
+import { ethers } from 'ethers';
 import _ from 'lodash';
 import { Test } from 'mocha';
 import { Token } from '../classes/Token';
 import { ZERO_BN } from '../constants';
-import { DataSource, StringMap } from '../types';
+import { DataSource, MapValueType, StringMap } from '../types';
 import { toTokenUnitsBN } from '../utils/Tokens';
 
 import { BeanstalkSDK } from './BeanstalkSDK';
-import EventProcessor from './events/EventProcessor';
+import EventProcessor, { EventProcessorData } from './events/processor';
 
 /**
  * A Crate is an `amount` of a token Deposited or
@@ -293,6 +294,50 @@ export class Silo {
 
   //////////////////////// BALANCES ////////////////////////
 
+  private _parseWithdrawalCrates(
+    // withdrawals: EventProcessorData['withdrawals'] extends {[season:string]: infer I} ? I : undefined,
+    withdrawals: MapValueType<EventProcessorData['withdrawals']>,
+    currentSeason: BigNumber
+  ): {
+    withdrawn: TokenSiloBalance['withdrawn'];
+    claimable: TokenSiloBalance['claimable'];
+  } {
+    let transitBalance = ZERO_BN;
+    let receivableBalance = ZERO_BN;
+    const transitWithdrawals: WithdrawalCrate[] = [];
+    const receivableWithdrawals: WithdrawalCrate[] = [];
+
+    // Split each withdrawal between `receivable` and `transit`.
+    Object.keys(withdrawals).forEach((season: string) => {
+      const amt = new BigNumber(withdrawals[season].amount.toString());
+      const szn = new BigNumber(season);
+      if (szn.lte(currentSeason)) {
+        receivableBalance = receivableBalance.plus(amt);
+        receivableWithdrawals.push({
+          amount: amt,
+          season: szn,
+        });
+      } else {
+        transitBalance = transitBalance.plus(amt);
+        transitWithdrawals.push({
+          amount: amt,
+          season: szn,
+        });
+      }
+    });
+
+    return {
+      withdrawn: {
+        amount: transitBalance,
+        crates: transitWithdrawals,
+      },
+      claimable: {
+        amount: receivableBalance,
+        crates: receivableWithdrawals,
+      },
+    };
+  }
+
   private _makeTokenSiloBalance() : TokenSiloBalance {
     return {
       deposited: {
@@ -311,46 +356,71 @@ export class Silo {
     }
   }
 
+  /**
+   * Apply a Deposit to a TokenSiloBalance.
+   * 
+   * @note expects inputs to be stringified (no decimals).
+   */
   private _applyDeposit(
     state: TokenSiloBalance['deposited'],
     token: Token,
-    crate: {
+    event: {
       season: string | number;
       amount: string;
       bdv: string;
     },
   ) {
-    const season = new BigNumber(crate.season);
-    const amount = toTokenUnitsBN(crate.amount, token.decimals);
-    const bdv    = toTokenUnitsBN(crate.bdv, this.sdk.tokens.BEAN.decimals);
+    const season = new BigNumber(event.season);
+    const amount = toTokenUnitsBN(event.amount, token.decimals);
+    const bdv    = toTokenUnitsBN(event.bdv, this.sdk.tokens.BEAN.decimals);
 
-    state.amount = state.amount.plus(amount);
-    state.bdv    = state.bdv.plus(bdv);
-    state.crates.push({
+    const crate = {
       season:   season,
       amount:   amount,
       bdv:      bdv,
       stalk:    token.getStalk(bdv), // FIXME: include grown stalk?
       seeds:    token.getSeeds(bdv),
-    });
+    };
+
+    state.amount = state.amount.plus(amount);
+    state.bdv    = state.bdv.plus(bdv);
+    state.crates.push(crate);
+
+    return crate;
   }
 
+  /** 
+   * Apply a Deposit to a TokenSiloBalance.
+   * 
+   * @note expects inputs to be stringified (no decimals).
+   */
   private _applyWithdrawal(
     state: TokenSiloBalance['withdrawn' | 'claimable'],
     token: Token,
-    crate: {
+    event: {
       season: string | number;
       amount: string;
     }
   ) {
-    const season = new BigNumber(crate.season);
-    const amount = toTokenUnitsBN(crate.amount, token.decimals);
+    const season = new BigNumber(event.season);
+    const amount = toTokenUnitsBN(event.amount, token.decimals);
 
-    state.amount = state.amount.plus(amount); // convert decimals
-    state.crates.push({
+    const crate = {
       season:   season,
       amount:   amount,
-    });
+    };
+    state.amount = state.amount.plus(amount);
+    state.crates.push(crate);
+
+    return crate;
+  }
+
+  private _sortCrates(
+    state: TokenSiloBalance['deposited' | 'withdrawn' | 'claimable']
+  ) {
+    state.crates = state.crates.sort(
+      (a, b) => a.season.minus(b.season).toNumber() // sort by season asc
+    );
   }
 
   /**
@@ -425,11 +495,13 @@ export class Silo {
 
     /// LEDGER
     if (source === DataSource.LEDGER) {
-      const seasonBN = new BigNumber(season);
-
       // Fetch and process events.
+      const seasonBN = new BigNumber(season);
       const events = await this.sdk.events.getSiloEvents(account);
-      const processor = new EventProcessor(this.sdk, account, { season: seasonBN, whitelist });
+      const processor = new EventProcessor(this.sdk, account, { 
+        season: ethers.BigNumber.from(season.toString()), // FIXME: verbose
+        whitelist
+      });
       const { deposits, withdrawals } = processor.ingestAll(events);
 
       // Handle deposits.
@@ -439,20 +511,24 @@ export class Silo {
           balances.set(token, this._makeTokenSiloBalance());
         }
         const state = balances.get(token)!.deposited;
-        const crates = [];
+
         for (let s in _crates) {
           const crate = _crates[s];
-          state.amount = state.amount.plus(crate.amount);
-          state.bdv = state.bdv.plus(crate.bdv);
-          crates.push({
-            season:   new BigNumber(s),
-            amount:   crate.amount,
-            bdv:      crate.bdv,
-            stalk:    token.getStalk(crate.bdv), // FIXME: include grown stalk?
-            seeds:    token.getSeeds(crate.bdv),
-          });
+
+          // Update the total deposited of this token
+          // and return a parsed crate object
+          this._applyDeposit(
+            state,
+            token,
+            {
+              season: s.toString(),
+              amount: crate.amount.toString(),
+              bdv: crate.bdv.toString(),
+            }
+          );
         }
-        state.crates = crates.sort((a, b) => a.season.minus(b.season).toNumber()); // sort by season asc
+
+        this._sortCrates(state);
       });
 
       // Handle withdrawals.
@@ -461,11 +537,16 @@ export class Silo {
         if (!balances.has(token)) {
           balances.set(token, this._makeTokenSiloBalance());
         }
-        const { withdrawn, claimable } = processor.parseWithdrawals(token, seasonBN);
-        balances.get(token)!.withdrawn = withdrawn;
-        balances.get(token)!.claimable = claimable;
-      });
+        const { withdrawn, claimable } = this._parseWithdrawalCrates(_crates, seasonBN);
+        const tokenBalance = balances.get(token);
 
+        tokenBalance!.withdrawn = withdrawn;
+        tokenBalance!.claimable = claimable;
+
+        this._sortCrates(tokenBalance!.withdrawn);
+        this._sortCrates(tokenBalance!.claimable);
+      });
+      
       return this._sortTokenMapByWhitelist(balances);
     }
 
