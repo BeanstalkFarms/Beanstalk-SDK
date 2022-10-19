@@ -18,7 +18,8 @@ import {
   CurveRegistry,
   CurveTriCrypto2Pool,
   CurveZap,
-  BeanstalkFertilizer__factory
+  BeanstalkFertilizer__factory,
+  CurvePlainPool__factory
 } from '../constants/generated';
 import { BaseContract } from 'ethers';
 
@@ -80,7 +81,7 @@ export class Contracts {
         tricrypto2,
         [tricrypto2Address]: tricrypto2,
         beanCrv3,
-        [beancrv3Address]: beanCrv3,
+        [beancrv3Address]: beanCrv3
       },
       registries: {
         poolRegistry,
