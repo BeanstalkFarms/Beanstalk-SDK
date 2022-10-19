@@ -3,10 +3,10 @@ import { BeanstalkSDK } from '../../BeanstalkSDK';
 import { FarmToMode } from '../../farm';
 import { Action, ActionResult, BaseAction } from '../types';
 
-export class WrapEth extends BaseAction implements Action {
-  public name: string = 'wrapEth';
+export class UnwrapEth extends BaseAction implements Action {
+  public name: string = 'unwrapEth';
 
-  constructor(sdk: BeanstalkSDK, private toMode: FarmToMode = FarmToMode.INTERNAL) {
+  constructor(sdk: BeanstalkSDK, private toMode: FarmToMode = FarmToMode.EXTERNAL) {
     super(sdk);
   }
 
@@ -16,11 +16,11 @@ export class WrapEth extends BaseAction implements Action {
       amountOut: _amountInStep, // amountInStep should be an amount of ETH.
       value: _amountInStep, // need to use this amount in the txn.
       encode: (_: ethers.BigNumber) =>
-        this.sdk.contracts.beanstalk.interface.encodeFunctionData('wrapEth', [
+        this.sdk.contracts.beanstalk.interface.encodeFunctionData('unwrapEth', [
           _amountInStep, // ignore minAmountOut since there is no slippage
           this.toMode,
         ]),
-      decode: (data: string) => this.sdk.contracts.beanstalk.interface.decodeFunctionData('wrapEth', data),
+      decode: (data: string) => this.sdk.contracts.beanstalk.interface.decodeFunctionData('unwrapEth', data),
     };
   }
 }
