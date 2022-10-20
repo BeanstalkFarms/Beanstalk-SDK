@@ -13,6 +13,19 @@ export class Workflow {
     Workflow.sdk = sdk;
   }
 
+  //////////////////////// Utilities ////////////////////////
+
+  /**
+   * Apply slippage to an amount.
+   * @param _amount ethers.BigNumber
+   * @param _slippage slippage as a decimal; i.e. _slippage = 0.001 means 0.1%
+   */
+  private static slip(_amount: ethers.BigNumber, _slippage: number) {
+    return _amount.mul(Math.floor(Workflow.SLIPPAGE_PRECISION * (1 - _slippage))).div(Workflow.SLIPPAGE_PRECISION);
+  }
+
+  //////////////////////// Steps ////////////////////////
+
   addStep(action: Action) {
     action.setSDK(Workflow.sdk);
     this.steps.push(action);
@@ -30,7 +43,12 @@ export class Workflow {
     return copy;
   }
 
-  private async processAction(action: Action, input: ethers.BigNumber, forward: boolean) {
+  //////////////////////// Run Actions ////////////////////////
+
+  /**
+   * 
+   */
+  private async runAction(action: Action, input: ethers.BigNumber, forward: boolean) {
     try {
       const result = await action.run(input, forward);
       if (result.value) this.value = this.value.add(result.value);
@@ -43,23 +61,7 @@ export class Workflow {
     }
   }
 
-  private slip(_amount: ethers.BigNumber, _slippage: number) {
-    return _amount.mul(Math.floor(Workflow.SLIPPAGE_PRECISION * (1 - _slippage))).div(Workflow.SLIPPAGE_PRECISION);
-  }
-
-  private encodeStepsWithSlippage(_slippage: number) {
-    const fnData: string[] = [];
-    for (let i = 0; i < this.stepResults.length; i += 1) {
-      const amountOut = this.stepResults[i].amountOut;
-      const minAmountOut = this.slip(amountOut, _slippage);
-      /// If the step doesn't have slippage (for ex, wrapping ETH),
-      /// then `encode` should ignore minAmountOut
-      const encoded = this.stepResults[i].encode(minAmountOut);
-      fnData.push(encoded);
-      Workflow.sdk.debug(`[chain] encoding step ${i}: expected amountOut = ${amountOut}, minAmountOut = ${minAmountOut}`);
-    }
-    return fnData;
-  }
+  //////////////////////// Estimate ////////////////////////
 
   /**
    * Estimate what the workflow would output given this amountIn is the input.
@@ -75,7 +77,7 @@ export class Workflow {
     this.stepResults = [];
 
     for (let i = 0; i < this.steps.length; i += 1) {
-      nextAmount = await this.processAction(this.steps[i], nextAmount, true);
+      nextAmount = await this.runAction(this.steps[i], nextAmount, true);
     }
 
     return nextAmount;
@@ -95,11 +97,36 @@ export class Workflow {
     this.stepResults = [];
 
     for (let i = this.steps.length - 1; i >= 0; i -= 1) {
-      nextAmount = await this.processAction(this.steps[i], nextAmount, false);
+      nextAmount = await this.runAction(this.steps[i], nextAmount, false);
     }
 
     return nextAmount;
   }
+
+  //////////////////////// Encode ////////////////////////
+
+  /**
+   * Loop over a sequence of pre-estimated steps and encode their
+   * calldata with a slippage value applied to amountOut.
+   * 
+   * @fixme throw if this.stepResults is currently empty
+   * @fixme statelessness of individual workflows
+   */
+  private encodeStepsWithSlippage(_slippage: number) {
+    const fnData: string[] = [];
+    for (let i = 0; i < this.stepResults.length; i += 1) {
+      const amountOut = this.stepResults[i].amountOut;
+      const minAmountOut = Workflow.slip(amountOut, _slippage);
+      /// If the step doesn't have slippage (for ex, wrapping ETH),
+      /// then `encode` should ignore minAmountOut
+      const encoded = this.stepResults[i].encode(minAmountOut);
+      fnData.push(encoded);
+      Workflow.sdk.debug(`[chain] encoding step ${i}: expected amountOut = ${amountOut}, minAmountOut = ${minAmountOut}`);
+    }
+    return fnData;
+  }
+
+  //////////////////////// Execute ////////////////////////
 
   /**
    *
