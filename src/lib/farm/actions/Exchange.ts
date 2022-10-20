@@ -1,4 +1,4 @@
-import { BaseContract, ethers } from 'ethers';
+import { ethers } from 'ethers';
 import { Token } from '../../../classes/Token';
 import {
   Curve3Pool,
@@ -9,7 +9,6 @@ import {
   CurveRegistry,
   CurveTriCrypto2Pool,
 } from '../../../constants/generated';
-import { BeanstalkSDK } from '../../BeanstalkSDK';
 import { FarmFromMode, FarmToMode } from '../../farm';
 import { Action, ActionResult, BaseAction } from '../types';
 
@@ -17,7 +16,6 @@ export class Exchange extends BaseAction implements Action {
   public name: string = 'exchange';
 
   constructor(
-    sdk: BeanstalkSDK,
     private pool: Curve3Pool | CurveTriCrypto2Pool | CurveMetaPool | CurvePlainPool,
     private registry: CurveRegistry | CurveMetaFactory | CurveCryptoFactory,
     private tokenIn: Token,
@@ -25,10 +23,11 @@ export class Exchange extends BaseAction implements Action {
     private fromMode: FarmFromMode = FarmFromMode.INTERNAL_TOLERANT,
     private toMode: FarmToMode = FarmToMode.INTERNAL
   ) {
-    super(sdk);
+    super();
   }
 
   async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
+    this.sdk.debug(`[workflow:exchange] ${_amountInStep.toString()} ${this.tokenIn.symbol} -> ${this.tokenOut.symbol} ${_forward}`)
     const [tokenIn, tokenOut] = this.direction(this.tokenIn, this.tokenOut, _forward);
     const [i, j] = await this.registry.callStatic.get_coin_indices(this.pool.address, tokenIn.address, tokenOut.address, {
       gasLimit: 10000000,

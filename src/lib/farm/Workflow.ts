@@ -1,23 +1,34 @@
 import { ContractTransaction, ethers } from 'ethers';
-import { BeanstalkSDK } from '../lib/BeanstalkSDK';
-import { Action, ActionResult } from '../lib/farm/types';
+import { BeanstalkSDK } from '../BeanstalkSDK';
+import { Action, ActionResult } from './types';
 
 export class Workflow {
   static SLIPPAGE_PRECISION = 10 ** 6;
-  private readonly sdk: BeanstalkSDK;
+  static sdk: BeanstalkSDK;
   private steps: Action[] = [];
   private stepResults: ActionResult[] = [];
   private value: ethers.BigNumber = ethers.BigNumber.from(0);
+  private estimateAmountIn: ethers.BigNumber;
+  private estimateAmountOut: ethers.BigNumber;
+  private estimateForward: boolean = true;
 
   constructor(sdk: BeanstalkSDK) {
-    this.sdk = sdk;
+    Workflow.sdk = sdk;
   }
 
   addStep(action: Action) {
+    action.setSDK(Workflow.sdk);
     this.steps.push(action);
   }
 
-  private async executeAction(action: Action, input: ethers.BigNumber, forward: boolean) {
+  addSteps(actions: Action[]) {
+    for (const action of actions) {
+      this.addStep(action);
+    }
+  }
+
+  private async processAction(action: Action, input: ethers.BigNumber, forward: boolean) {
+    this.estimateForward = forward;
     try {
       const result = await action.run(input, forward);
       if (result.value) this.value = this.value.add(result.value);
@@ -48,41 +59,45 @@ export class Workflow {
       /// then `encode` should ignore minAmountOut
       const encoded = this.stepResults[i].encode(minAmountOut);
       fnData.push(encoded);
-      this.sdk.debug(`[chain] encoding step ${i}: expected amountOut = ${amountOut}, minAmountOut = ${minAmountOut}`);
+      Workflow.sdk.debug(`[chain] encoding step ${i}: expected amountOut = ${amountOut}, minAmountOut = ${minAmountOut}`);
     }
     return fnData;
   }
 
-  // FIXME: why is this an array in farm.estimate()??
-  async estimate(amountIn: ethers.BigNumber, _forward: boolean = true) {
+  async estimate(amountIn: ethers.BigNumber) {
     let nextAmount = amountIn;
 
-    if (_forward) {
-      for (let i = 0; i < this.steps.length; i += 1) {
-        nextAmount = await this.executeAction(this.steps[i], nextAmount, _forward);
-      }
-    } else {
-      for (let i = this.steps.length - 1; i >= 0; i -= 1) {
-        nextAmount = await this.executeAction(this.steps[i], nextAmount, _forward);
-      }
+    // clear any previous results
+    this.stepResults = [];
+
+    for (let i = 0; i < this.steps.length; i += 1) {
+      nextAmount = await this.processAction(this.steps[i], nextAmount, true);
     }
-    
+
     return nextAmount;
-    // return {
-    //   amountOut: ,
-    //   value: this.value,        // we prob don't need this here
-    //   steps: this.stepResults,  // we prob don't need this here
-    // };
   }
 
-  async execute(slippage: number): Promise<ContractTransaction> {
-    // FIXME: should we just run the estimate here if it hasn't already?
-    if (!this.stepResults.length) throw new Error('Estimate has not run yet');
+  async estimateReversed(desiredAmountOut: ethers.BigNumber) {
+    let nextAmount = desiredAmountOut;
+
+    // clear any previous results
+    this.stepResults = [];
+
+    for (let i = this.steps.length - 1; i >= 0; i -= 1) {
+      nextAmount = await this.processAction(this.steps[i], nextAmount, false);
+    }
+
+    return nextAmount;
+  }
+
+  async execute(amountIn: ethers.BigNumber, slippage: number): Promise<ContractTransaction> {
+    // For execution, we estimate forward, always
+    await this.estimate(amountIn);
 
     const data = this.encodeStepsWithSlippage(slippage / 100);
 
-    const txn = await this.sdk.contracts.beanstalk.farm(data, { value: this.value });
-    this.sdk.debug('[swap.execute] transaction sent', { transaction: txn });
+    const txn = await Workflow.sdk.contracts.beanstalk.farm(data, { value: this.value });
+    Workflow.sdk.debug('[swap.execute] transaction sent', { transaction: txn });
     return txn;
   }
 }

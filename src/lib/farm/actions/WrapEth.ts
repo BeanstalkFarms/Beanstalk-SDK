@@ -1,13 +1,12 @@
 import { ethers } from 'ethers';
-import { BeanstalkSDK } from '../../BeanstalkSDK';
 import { FarmToMode } from '../../farm';
 import { Action, ActionResult, BaseAction } from '../types';
 
 export class WrapEth extends BaseAction implements Action {
   public name: string = 'wrapEth';
 
-  constructor(sdk: BeanstalkSDK, private toMode: FarmToMode = FarmToMode.INTERNAL) {
-    super(sdk);
+  constructor(private toMode: FarmToMode = FarmToMode.INTERNAL) {
+    super();
   }
 
   async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {

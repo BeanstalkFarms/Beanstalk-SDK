@@ -1,8 +1,9 @@
-import { Workflow } from '../classes/Workflow';
+import { Workflow } from './farm/Workflow';
 
 import { BeanstalkSDK } from './BeanstalkSDK';
 import { ActionLibrary } from './farm/actions/Library';
 
+// This is the namespace holder for sdk.workflows.whatever
 export class Workflows {
   private readonly sdk: BeanstalkSDK;
   public readonly library: typeof ActionLibrary;

@@ -10,7 +10,7 @@ import Farm from './farm';
 import { EventManager } from './events/EventManager';
 import { Silo } from './silo';
 import { Sun } from './sun';
-import { Workflow } from '../classes/Workflow';
+import { Workflow } from './farm/Workflow';
 import { Workflows } from './workflows';
 
 // import { ChainID } from './constants';

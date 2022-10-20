@@ -1,22 +1,20 @@
 import { ethers } from 'ethers';
 import { Token } from '../../../classes/Token';
-import { CurveMetaPool, CurveMetaPool__factory } from '../../../constants/generated';
-import { BeanstalkSDK } from '../../BeanstalkSDK';
+import { CurveMetaPool,  } from '../../../constants/generated';
 import { FarmFromMode, FarmToMode } from '../../farm';
-import { Action, ActionResult, BaseAction, StringAddress } from '../types';
+import { Action, ActionResult, BaseAction } from '../types';
 
 export class ExchangeUnderlying extends BaseAction implements Action {
   public name: string = 'exchangeUnderlying';
 
   constructor(
-    sdk: BeanstalkSDK,
     private pool: CurveMetaPool,
     private tokenIn: Token,
     private tokenOut: Token,
     private fromMode: FarmFromMode = FarmFromMode.INTERNAL_TOLERANT,
     private toMode: FarmToMode = FarmToMode.INTERNAL
   ) {
-    super(sdk);
+    super();
   }
 
   async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {

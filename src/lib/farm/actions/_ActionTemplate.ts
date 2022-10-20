@@ -8,17 +8,15 @@ import { Action, ActionResult, BaseAction, StringAddress } from '../types';
 export class ActionTemplate extends BaseAction implements Action {
   public name: string = 'exchange';
 
-  constructor(sdk: BeanstalkSDK) {
-    super(sdk);
-  }
+  constructor() {}
 
   async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
     return {
-      name.
+      name,
       amountOut,
       encode: (minAmountOut: ethers.BigNumber) => {},
       decode: (data: string) => {},
       data,
-    }
+    };
   }
 }
