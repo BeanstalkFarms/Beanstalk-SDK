@@ -8,9 +8,6 @@ export class Workflow {
   private steps: Action[] = [];
   private stepResults: ActionResult[] = [];
   private value: ethers.BigNumber = ethers.BigNumber.from(0);
-  private estimateAmountIn: ethers.BigNumber;
-  private estimateAmountOut: ethers.BigNumber;
-  private estimateForward: boolean = true;
 
   constructor(sdk: BeanstalkSDK) {
     Workflow.sdk = sdk;
@@ -27,8 +24,13 @@ export class Workflow {
     }
   }
 
+  copy() {
+    const copy = new Workflow(Workflow.sdk);
+    copy.addSteps([...this.steps]);
+    return copy;
+  }
+
   private async processAction(action: Action, input: ethers.BigNumber, forward: boolean) {
-    this.estimateForward = forward;
     try {
       const result = await action.run(input, forward);
       if (result.value) this.value = this.value.add(result.value);
@@ -45,11 +47,6 @@ export class Workflow {
     return _amount.mul(Math.floor(Workflow.SLIPPAGE_PRECISION * (1 - _slippage))).div(Workflow.SLIPPAGE_PRECISION);
   }
 
-  /**
-   * Encode function calls with a predefined slippage amount.
-   * @param _slippage slippage passed as a percentage. ex. 0.1% slippage => 0.001
-   * @returns array of strings containing encoded function data.
-   */
   private encodeStepsWithSlippage(_slippage: number) {
     const fnData: string[] = [];
     for (let i = 0; i < this.stepResults.length; i += 1) {
@@ -97,7 +94,7 @@ export class Workflow {
     const data = this.encodeStepsWithSlippage(slippage / 100);
 
     const txn = await Workflow.sdk.contracts.beanstalk.farm(data, { value: this.value });
-    Workflow.sdk.debug('[swap.execute] transaction sent', { transaction: txn });
+
     return txn;
   }
 }
