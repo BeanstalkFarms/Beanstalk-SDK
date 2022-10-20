@@ -18,12 +18,17 @@ export abstract class Token {
   /**
    * Refernce to the SDK
    */
-  public readonly sdk: BeanstalkSDK;
+  static sdk: BeanstalkSDK;
 
   /**
    * The contract address on the chain on which this token lives
    */
   public readonly address: string;
+
+  /**
+   * The chain id of the chain this token lives on
+   */
+  public readonly chainId: number;
 
   /**
    * The decimals used in representing currency amounts
@@ -101,16 +106,17 @@ export abstract class Token {
       seeds: number;
     }
   ) {
-    this.sdk = sdk;
+    Token.sdk = sdk;
 
     if (!address && !(this instanceof NativeToken) && !(this instanceof BeanstalkToken)) throw new Error('address must be supplied for non-native and non-beanstalk tokens')
-    this.address = address ?? '';
-    this.decimals = decimals;
     this.symbol = metadata.symbol;
+    this.decimals = decimals;
+    this.address = address ?? '';
+    this.chainId = sdk.chainId;
     this.name = metadata.name || metadata.symbol;
+    this.displayDecimals = metadata.displayDecimals || 2;
     this.logo = metadata.logo;
     this.color = metadata.color;
-    this.displayDecimals = metadata.displayDecimals || 2;
     this.isLP = metadata.isLP || false;
     this.isUnripe = metadata.isUnripe || false;
     this.rewards = rewards;
@@ -189,7 +195,7 @@ export class NativeToken extends Token {
 
   public getBalance(account: string): Promise<BigNumber> {
     // console.debug(`[NativeToken] ${this.symbol} (${this.chainId} / ${this.address}) -> getBalance(${account})`);
-    return this.sdk.provider.getBalance(account)
+    return Token.sdk.provider.getBalance(account)
     .then(
       // No need to convert decimals because ethers does this already
       result => {
@@ -209,13 +215,13 @@ export class NativeToken extends Token {
   }
 
   public equals(other: NativeToken): boolean {
-    return this.sdk.chainId === other.sdk.chainId;
+    return this.chainId === other.chainId;
   }
 }
 
 export class ERC20Token extends Token {
   public getContract() {
-    return ERC20__factory.connect(this.address, this.sdk.providerOrSigner)
+    return ERC20__factory.connect(this.address, Token.sdk.providerOrSigner)
   }
 
   public getBalance(account: string) {

@@ -10,6 +10,8 @@ import Farm from './farm';
 import { EventManager } from './events/EventManager';
 import { Silo } from './silo';
 import { Sun } from './sun';
+import { Workflow } from './farm/Workflow';
+import { Workflows } from './workflows';
 
 // import { ChainID } from './constants';
 
@@ -27,6 +29,7 @@ export class BeanstalkSDK {
   public readonly events: EventManager;
   public readonly silo: Silo;
   public readonly sun: Sun;
+  public readonly workflows: Workflows;
 
   constructor(config?: BeanstalkConfig) {
     this.handleConfig(config);
@@ -42,6 +45,7 @@ export class BeanstalkSDK {
     this.silo = new Silo(this);
     this.events = new EventManager(this);
     this.sun = new Sun(this);
+    this.workflows = new Workflows(this);
   }
 
   handleConfig(config: BeanstalkConfig = {}) {
