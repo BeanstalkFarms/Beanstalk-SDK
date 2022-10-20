@@ -61,7 +61,14 @@ export class Workflow {
     return fnData;
   }
 
-  async estimate(amountIn: ethers.BigNumber) {
+  /**
+   * Estimate what the workflow would output given this amountIn is the input.
+   * For ex, if we are trading ETH -> BEAN, and you want to spend exactly 5 ETH, estimate()
+   * would tell how much BEAN you'd receive for 5 ETH
+   * @param amountIn Amount to send to workflow as input for estimation
+   * @returns Promise of BigNumber
+   */
+  async estimate(amountIn: ethers.BigNumber): Promise<ethers.BigNumber> {
     let nextAmount = amountIn;
 
     // clear any previous results
@@ -74,7 +81,14 @@ export class Workflow {
     return nextAmount;
   }
 
-  async estimateReversed(desiredAmountOut: ethers.BigNumber) {
+  /**
+   * Estimate the min amount to input to the workflow to receive the desiredAmountOut output
+   * For ex, if we are trading ETH -> Bean, and I want exactly 500 BEAN, estimateReversed()
+   * tell me how much ETH will result in 500 BEAN
+   * @param desiredAmountOut The end amount you want the workflow to output
+   * @returns Promise of BigNumber
+   */
+  async estimateReversed(desiredAmountOut: ethers.BigNumber): Promise<ethers.BigNumber> {
     let nextAmount = desiredAmountOut;
 
     // clear any previous results
@@ -87,12 +101,15 @@ export class Workflow {
     return nextAmount;
   }
 
+  /**
+   *
+   * @param amountIn Amount to use as first input to workflow
+   * @param slippage A human readable percent value. Ex: 0.1 would mean 0.1% slippage
+   * @returns Promise of a Transaction
+   */
   async execute(amountIn: ethers.BigNumber, slippage: number): Promise<ContractTransaction> {
-    // For execution, we estimate forward, always
     await this.estimate(amountIn);
-
     const data = this.encodeStepsWithSlippage(slippage / 100);
-
     const txn = await Workflow.sdk.contracts.beanstalk.farm(data, { value: this.value });
 
     return txn;
