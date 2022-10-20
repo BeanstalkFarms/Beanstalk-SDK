@@ -12,6 +12,8 @@ import { EventManager } from './events/EventManager';
 import { Silo } from './silo';
 import { Sun } from './sun';
 import { Sdk as Queries, getSdk as getQueries } from '../generated/graphql';
+import { Workflow } from './farm/Workflow';
+import { Workflows } from './workflows';
 
 export class BeanstalkSDK {
   public DEBUG: boolean;
@@ -36,6 +38,7 @@ export class BeanstalkSDK {
   public readonly silo: Silo;
   public readonly events: EventManager;
   public readonly sun: Sun;
+  public readonly workflows: Workflows;
 
   constructor(config?: BeanstalkConfig) {
     this.handleConfig(config);
@@ -58,6 +61,7 @@ export class BeanstalkSDK {
     this.silo = new Silo(this);
     this.events = new EventManager(this);
     this.sun = new Sun(this);
+    this.workflows = new Workflows(this);
   }
 
   handleConfig(config: BeanstalkConfig = {}) {
