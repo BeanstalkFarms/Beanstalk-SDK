@@ -43,6 +43,7 @@ export class BeanstalkSDK {
     // FIXME
     // @ts-ignore
     this.chainId = enumFromValue(this.provider?.network?.chainId ?? 1, ChainId);
+    this.source = config?.source || DataSource.SUBGRAPH;
 
     // Globals
     this.addresses = addresses;

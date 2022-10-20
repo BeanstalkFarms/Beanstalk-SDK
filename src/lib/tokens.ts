@@ -1,6 +1,15 @@
 import { addresses } from '../constants';
 import { Token, BeanstalkToken, ERC20Token, NativeToken } from '../classes/Token';
 import { BeanstalkSDK } from './BeanstalkSDK';
+import BigNumber from 'bignumber.js';
+import { tokenBN } from './events/processor';
+import { TokenFacet } from '../constants/generated/Beanstalk/Beanstalk';
+
+export type TokenBalance = {
+  internal: BigNumber;
+  external: BigNumber;
+  total: BigNumber;
+}
 
 export class Tokens {
   private sdk: BeanstalkSDK;
@@ -213,4 +222,72 @@ export class Tokens {
   findByAddress(address: string): Token | undefined {
     return this.map.get(address.toLowerCase());
   }
+
+  _deriveAddress(value: string | Token) {
+    return typeof value === 'string' ? value : value.address;
+  }
+
+  _balanceStructToTokenBalance(token: Token, result: TokenFacet.BalanceStructOutput) : TokenBalance {
+    return {
+      internal: token.stringifyToDecimal(result.internalBalance.toString()),
+      external: token.stringifyToDecimal(result.externalBalance.toString()),
+      total:    token.stringifyToDecimal(result.totalBalance.toString()),
+    }
+  }
+
+  /**
+   * Return a TokenBalance struct for a requested token.
+   * Includes the Farmer's INTERNAL and EXTERNAL balance in one item.
+   * This is the typical representation of balances within Beanstalk.
+   */
+  public async getBalance(
+    _token: (string | Token),
+    _account?: string,
+  ) : Promise<TokenBalance> {
+    const account = await this.sdk.getAccount(_account);
+    const tokenAddress = this._deriveAddress(_token);
+    const token = this.findByAddress(tokenAddress);
+
+    // FIXME: use the ERC20 token contract directly to load decimals for parsing?
+    if (!token) throw new Error(`Unknown token: ${tokenAddress}`);
+
+    const balance = await this.sdk.contracts.beanstalk.getAllBalance(
+      account,
+      tokenAddress,
+    );
+
+    return this._balanceStructToTokenBalance(token, balance);
+  }
+
+  /**
+   * Return a TokenBalance struct for each requested token.
+   * Includes the Farmer's INTERNAL and EXTERNAL balance in one item.
+   * This is the typical representation of balances within Beanstalk.
+   */
+  public async getBalances(
+    _account?: string,
+    _tokens?: (string | Token)[],
+  ) : Promise<Map<Token, TokenBalance>> {
+    const account = await this.sdk.getAccount(_account);
+    const tokens = _tokens || Array.from(this.erc20Tokens);
+    const tokenAddresses = tokens.map(this._deriveAddress);
+
+    const balances = new Map<Token, TokenBalance>();
+    const results = await this.sdk.contracts.beanstalk.getAllBalances(
+      account,
+      tokenAddresses,
+    );
+
+    results.forEach((result, index) => {
+      const token = this.findByAddress(tokenAddresses[index]);
+      
+      // FIXME: use the ERC20 token contract directly to load decimals for parsing?
+      if (!token) throw new Error(`Unknown token: ${tokenAddresses}`);
+
+      balances.set(token, this._balanceStructToTokenBalance(token, result));
+    })
+
+    return balances;
+  }
+  
 }

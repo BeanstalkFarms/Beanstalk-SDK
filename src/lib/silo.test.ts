@@ -48,7 +48,6 @@ describe('Utilities', function () {
       },
       new BigNumber(6074)
     );
-    console.log(result.claimable.amount, result.withdrawn.amount)
     expect(result.claimable.amount).to.be.instanceOf(BigNumber);
     expect(result.withdrawn.amount).to.be.instanceOf(BigNumber);
     expect(result.claimable.amount.toString()).to.be.eq( new BigNumber(1000).toString() );

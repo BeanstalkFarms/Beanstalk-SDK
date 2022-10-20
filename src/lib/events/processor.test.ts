@@ -4,10 +4,13 @@ import { AddDepositEvent, AddWithdrawalEvent, PlotTransferEvent, RemoveDepositEv
 
 import EventProcessor, { BN, EventProcessingParameters } from './processor';
 import { BeanstalkSDK } from '../BeanstalkSDK';
+import { getProvider } from '../../../test/provider';
 
 // ------------------------------------------
 
-const sdk = new BeanstalkSDK();
+const sdk = new BeanstalkSDK({
+  provider: getProvider(),
+});
 const Bean = sdk.tokens.BEAN;
 const BeanCrv3 = sdk.tokens.BEAN_CRV3_LP;
 
