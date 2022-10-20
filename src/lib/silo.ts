@@ -8,33 +8,35 @@ import { DataSource, MapValueType, StringMap } from '../types';
 import { toTokenUnitsBN } from '../utils/Tokens';
 
 import { BeanstalkSDK } from './BeanstalkSDK';
-import EventProcessor, { EventProcessorData } from './events/processor';
+import EventProcessor, { EventProcessorData, WithdrawalCrateRaw } from './events/processor';
+import { _parseWithdrawalCrates } from './silo.utils';
 
 /**
  * A Crate is an `amount` of a token Deposited or
  * Withdrawn during a given `season`.
  */
-export type Crate = {
+type BigNumbers = BigNumber | ethers.BigNumber;
+export type Crate<T extends BigNumbers = BigNumber>  = {
   /** The amount of this Crate that was created, denominated in the underlying Token. */
-  amount: BigNumber;
+  amount: T;
   /** The Season that the Crate was created. */
-  season: BigNumber;
+  season: T;
 };
 
 /**
  * A "Deposit" represents an amount of a Whitelisted Silo Token
  * that has been added to the Silo.
  */
-export type DepositCrate = Crate & {
+export type DepositCrate<T extends BigNumbers = BigNumber> = Crate<T> & {
   /** The BDV of the Deposit, determined upon Deposit. */
-  bdv: BigNumber;
+  bdv: T;
   /** The amount of Stalk granted for this Deposit. */
-  stalk: BigNumber;
+  stalk: T;
   /** The amount of Seeds granted for this Deposit. */
-  seeds: BigNumber;
+  seeds: T;
 };
 
-export type WithdrawalCrate = Crate & {};
+export type WithdrawalCrate<T extends BigNumbers = BigNumber> = Crate<T> & {};
 
 /**
  * A "Silo Balance" provides all information
@@ -47,13 +49,13 @@ export type TokenSiloBalance = {
     /** The BDV of this Token currently in the Deposited state. */
     bdv: BigNumber;
     /** All Deposit crates. */
-    crates: DepositCrate[];
+    crates: DepositCrate<BigNumber>[];
   };
   withdrawn: {
     /** The total amount of this Token currently in the Withdrawn state. */
     amount: BigNumber;
     /** All Withdrawal crates. */
-    crates: WithdrawalCrate[];
+    crates: WithdrawalCrate<BigNumber>[];
   };
   claimable: {
     /** The total amount of this Token currently in the Claimable state. */
@@ -294,49 +296,16 @@ export class Silo {
 
   //////////////////////// BALANCES ////////////////////////
 
-  private _parseWithdrawalCrates(
-    // withdrawals: EventProcessorData['withdrawals'] extends {[season:string]: infer I} ? I : undefined,
-    withdrawals: MapValueType<EventProcessorData['withdrawals']>,
-    currentSeason: BigNumber
-  ): {
-    withdrawn: TokenSiloBalance['withdrawn'];
-    claimable: TokenSiloBalance['claimable'];
-  } {
-    let transitBalance = ZERO_BN;
-    let receivableBalance = ZERO_BN;
-    const transitWithdrawals: WithdrawalCrate[] = [];
-    const receivableWithdrawals: WithdrawalCrate[] = [];
-
-    // Split each withdrawal between `receivable` and `transit`.
-    Object.keys(withdrawals).forEach((season: string) => {
-      const amt = new BigNumber(withdrawals[season].amount.toString());
-      const szn = new BigNumber(season);
-      if (szn.lte(currentSeason)) {
-        receivableBalance = receivableBalance.plus(amt);
-        receivableWithdrawals.push({
-          amount: amt,
-          season: szn,
-        });
-      } else {
-        transitBalance = transitBalance.plus(amt);
-        transitWithdrawals.push({
-          amount: amt,
-          season: szn,
-        });
-      }
-    });
-
-    return {
-      withdrawn: {
-        amount: transitBalance,
-        crates: transitWithdrawals,
-      },
-      claimable: {
-        amount: receivableBalance,
-        crates: receivableWithdrawals,
-      },
-    };
-  }
+  // private _parseWithdrawalCrates(
+  //   token: Token,
+  //   withdrawals: MapValueType<EventProcessorData['withdrawals']>,
+  //   currentSeason: BigNumber
+  // ): {
+  //   withdrawn: TokenSiloBalance['withdrawn'];
+  //   claimable: TokenSiloBalance['claimable'];
+  // } {
+  // }
+  private _parseWithdrawalCrates = _parseWithdrawalCrates;
 
   private _makeTokenSiloBalance() : TokenSiloBalance {
     return {
@@ -364,15 +333,15 @@ export class Silo {
   private _applyDeposit(
     state: TokenSiloBalance['deposited'],
     token: Token,
-    event: {
+    rawCrate: {
       season: string | number;
       amount: string;
       bdv: string;
     },
   ) {
-    const season = new BigNumber(event.season);
-    const amount = toTokenUnitsBN(event.amount, token.decimals);
-    const bdv    = toTokenUnitsBN(event.bdv, this.sdk.tokens.BEAN.decimals);
+    const season = new BigNumber(rawCrate.season);
+    const amount = toTokenUnitsBN(rawCrate.amount, token.decimals);
+    const bdv    = toTokenUnitsBN(rawCrate.bdv, this.sdk.tokens.BEAN.decimals);
 
     const crate = {
       season:   season,
@@ -397,18 +366,19 @@ export class Silo {
   private _applyWithdrawal(
     state: TokenSiloBalance['withdrawn' | 'claimable'],
     token: Token,
-    event: {
+    rawCrate: {
       season: string | number;
       amount: string;
     }
   ) {
-    const season = new BigNumber(event.season);
-    const amount = toTokenUnitsBN(event.amount, token.decimals);
+    const season = new BigNumber(rawCrate.season);
+    const amount = toTokenUnitsBN(rawCrate.amount, token.decimals);
 
     const crate = {
       season:   season,
       amount:   amount,
     };
+
     state.amount = state.amount.plus(amount);
     state.crates.push(crate);
 
@@ -424,7 +394,7 @@ export class Silo {
   }
 
   /**
-   * Return the balance of a single whitelisted token.
+   * Return the Farmer's balance of a single whitelisted token.
    */
   public async getBalance(
     _token: Token,
@@ -433,10 +403,10 @@ export class Silo {
       { source: DataSource.LEDGER } | 
       { source: DataSource.SUBGRAPH }
     )
-  ) {
+  ) : Promise<TokenSiloBalance> {
     const source = this.sdk.deriveConfig("source", options);
     const [account, season] = await Promise.all([
-      _account ?? this.sdk.getAccount(),
+      this.sdk.getAccount(_account),
       this.sdk.sun.getSeason(),
     ]);
 
@@ -445,9 +415,13 @@ export class Silo {
 
     const balance : TokenSiloBalance = this._makeTokenSiloBalance();
 
-    //
+    /// SUBGRAPH
     if (source === DataSource.SUBGRAPH) {
-      const query = await this.sdk.queries.getSiloBalances({ account, season }); // crates ordered in asc order
+      const query = await this.sdk.queries.getSiloBalance({
+        token: _token.address.toLowerCase(),
+        account,
+        season,
+      }); // crates ordered in asc order
       if (!query.farmer) return balance;
       const { deposited, withdrawn, claimable } = query.farmer!;
       deposited.forEach((crate) => this._applyDeposit(balance.deposited, _token, crate));
@@ -486,12 +460,15 @@ export class Silo {
   ) : Promise<Map<Token, TokenSiloBalance>> {
     const source = this.sdk.deriveConfig("source", options);
     const [account, season] = await Promise.all([
-      _account ?? this.sdk.getAccount(),
+      this.sdk.getAccount(_account),
       this.sdk.sun.getSeason(),
     ]);
 
     const whitelist = this.sdk.tokens.siloWhitelist;
     const balances = new Map<Token, TokenSiloBalance>();
+
+    /// SETUP
+    whitelist.forEach((token) => balances.set(token, this._makeTokenSiloBalance()));
 
     /// LEDGER
     if (source === DataSource.LEDGER) {
@@ -513,19 +490,15 @@ export class Silo {
         const state = balances.get(token)!.deposited;
 
         for (let s in _crates) {
-          const crate = _crates[s];
+          const rawCrate = {
+            season: s.toString(),
+            amount: _crates[s].amount.toString(),
+            bdv:    _crates[s].bdv.toString(),
+          }
 
           // Update the total deposited of this token
           // and return a parsed crate object
-          this._applyDeposit(
-            state,
-            token,
-            {
-              season: s.toString(),
-              amount: crate.amount.toString(),
-              bdv: crate.bdv.toString(),
-            }
-          );
+          this._applyDeposit(state, token, rawCrate);
         }
 
         this._sortCrates(state);
@@ -537,9 +510,10 @@ export class Silo {
         if (!balances.has(token)) {
           balances.set(token, this._makeTokenSiloBalance());
         }
-        const { withdrawn, claimable } = this._parseWithdrawalCrates(_crates, seasonBN);
-        const tokenBalance = balances.get(token);
 
+        //
+        const { withdrawn, claimable } = this._parseWithdrawalCrates(token, _crates, seasonBN);
+        const tokenBalance = balances.get(token);
         tokenBalance!.withdrawn = withdrawn;
         tokenBalance!.claimable = claimable;
 
@@ -547,7 +521,7 @@ export class Silo {
         this._sortCrates(tokenBalance!.claimable);
       });
       
-      return this._sortTokenMapByWhitelist(balances);
+      return this._sortTokenMapByWhitelist(balances); // FIXME: sorting is redundant if this is instantiated
     }
 
     /// SUBGRAPH

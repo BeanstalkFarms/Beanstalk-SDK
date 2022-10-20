@@ -93,11 +93,12 @@ export class BeanstalkSDK {
     throw new Error('rpcUrl is invalid');
   }
 
-  async getAccount() : Promise<string> {
+  async getAccount(_account?: string) : Promise<string> {
+    if (_account) return _account.toLowerCase();
     if (!this.signer) throw new Error('Cannot get account without a signer');
     const account = await this.signer.getAddress();
     if (!account) throw new Error('Failed to get account from signer');
-    return account;
+    return account.toLowerCase();
   }
 
   deriveSource<T extends { source?: DataSource }>(config?: T) : DataSource {

@@ -71,11 +71,11 @@ export type EventProcessingParameters = {
   whitelist: Set<Token>;
 };
 
-export type Deposit = {
+export type DepositCrateRaw = {
   amount: EBN;
   bdv: EBN;
 };
-export type Withdrawal = {
+export type WithdrawalCrateRaw = {
   amount: EBN;
 };
 
@@ -84,13 +84,13 @@ export type EventProcessorData = {
   deposits: Map<
     Token,
     {
-      [season: string]: Deposit;
+      [season: string]: DepositCrateRaw;
     }
   >;
   withdrawals: Map<
     Token,
     {
-      [season: string]: Withdrawal;
+      [season: string]: WithdrawalCrateRaw;
     }
   >;
   listings: {
@@ -451,7 +451,7 @@ export default class EventProcessor {
 
   // eslint-disable-next-line class-methods-use-this
   _upsertDeposit(
-    existing: Deposit | undefined,
+    existing: DepositCrateRaw | undefined,
     amount: EBN,
     bdv: EBN
   ) {
@@ -534,7 +534,7 @@ export default class EventProcessor {
   /// /////////////////////// SILO: WITHDRAW  //////////////////////////
 
   // eslint-disable-next-line class-methods-use-this
-  _upsertWithdrawal(existing: Withdrawal | undefined, amount: EBN) {
+  _upsertWithdrawal(existing: WithdrawalCrateRaw | undefined, amount: EBN) {
     return existing
       ? {
           amount: existing.amount.add(amount),

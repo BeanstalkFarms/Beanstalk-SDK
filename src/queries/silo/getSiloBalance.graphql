@@ -1,4 +1,5 @@
-query getSiloBalances(
+query getSiloBalance(
+  $token: String,
   $account: ID!,
   $season: Int!
 ) {
@@ -8,6 +9,7 @@ query getSiloBalances(
       orderBy: season,
       orderDirection: asc,
       where: {
+        token: $token,
         amount_gt: 0
       }
     ) {
@@ -21,6 +23,7 @@ query getSiloBalances(
       orderBy: withdrawSeason,
       orderDirection: asc,
       where: {
+        token: $token,
         claimableSeason_gt: $season,
         claimed: false
       }
@@ -34,6 +37,7 @@ query getSiloBalances(
       orderBy: withdrawSeason,
       orderDirection: asc,
       where: {
+        token: $token,
         claimableSeason_lte: $season,
         claimed: false
       }
