@@ -42,7 +42,7 @@ type CurveContracts = {
 export class Contracts {
   static sdk: BeanstalkSDK;
   public readonly beanstalk: Beanstalk;
-  public readonly fertilizer: import("/Users/alex/0xalecks/Beanstalk/sdk/src/constants/generated/index").BeanstalkFertilizer;
+  public readonly fertilizer: import("../constants/generated/index").BeanstalkFertilizer;
 
   public readonly curve: CurveContracts;
 

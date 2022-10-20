@@ -8,5 +8,3 @@ import * as Utils from './utils';
 export { Utils };
 
 export { FarmFromMode, FarmToMode } from './lib/farm';
-
-
