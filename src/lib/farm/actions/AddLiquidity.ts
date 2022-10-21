@@ -18,7 +18,7 @@ export class AddLiquidity extends BaseAction implements Action {
   }
 
   async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
-    this.sdk.debug('[step@addLiquidity] run: ', {
+    AddLiquidity.sdk.debug('[step@addLiquidity] run: ', {
       _pool: this._pool,
       _registry: this._registry,
       _amounts: this._amounts,
@@ -32,7 +32,7 @@ export class AddLiquidity extends BaseAction implements Action {
 
     /// Get amount out based on the selected pool
     const poolAddr = this._pool.toLowerCase();
-    const pools = this.sdk.contracts.curve.pools;
+    const pools = AddLiquidity.sdk.contracts.curve.pools;
     let amountOut;
 
     /// Case: tricrypto2
@@ -56,16 +56,16 @@ export class AddLiquidity extends BaseAction implements Action {
     } 
     
     /// Case: Metapools
-    else if (this._registry === this.sdk.contracts.curve.registries.metaFactory.address) {
+    else if (this._registry === AddLiquidity.sdk.contracts.curve.registries.metaFactory.address) {
       assert(amountInStep.length === 2);
-      amountOut = await CurveMetaPool__factory.connect(this._pool, this.sdk.provider).callStatic['calc_token_amount(uint256[2],bool)'](
+      amountOut = await CurveMetaPool__factory.connect(this._pool, AddLiquidity.sdk.provider).callStatic['calc_token_amount(uint256[2],bool)'](
         amountInStep as [any, any],
         true, // _is_deposit
         { gasLimit: 10000000 }
       );
-    } else if (this._registry === this.sdk.contracts.curve.registries.cryptoFactory.address) {
+    } else if (this._registry === AddLiquidity.sdk.contracts.curve.registries.cryptoFactory.address) {
       assert(amountInStep.length === 2);
-      amountOut = await CurvePlainPool__factory.connect(this._pool, this.sdk.provider).callStatic.calc_token_amount(
+      amountOut = await CurvePlainPool__factory.connect(this._pool, AddLiquidity.sdk.provider).callStatic.calc_token_amount(
         amountInStep as [any, any],
         true, // _is_deposit
         { gasLimit: 10000000 }
@@ -73,7 +73,7 @@ export class AddLiquidity extends BaseAction implements Action {
     }
 
     if (!amountOut) throw new Error('No supported pool found');
-    this.sdk.debug('[step@addLiquidity] finish: ', {
+    AddLiquidity.sdk.debug('[step@addLiquidity] finish: ', {
       amountInStep: amountInStep.toString(),
       amountOut: amountOut.toString(),
     });
@@ -82,7 +82,7 @@ export class AddLiquidity extends BaseAction implements Action {
       name: this.name,
       amountOut,
       encode: (minAmountOut: ethers.BigNumber) =>
-        this.sdk.contracts.beanstalk.interface.encodeFunctionData('addLiquidity', [
+        AddLiquidity.sdk.contracts.beanstalk.interface.encodeFunctionData('addLiquidity', [
           this._pool,
           this._registry,
           amountInStep as any[], // could be 2 or 3 elems
@@ -90,7 +90,7 @@ export class AddLiquidity extends BaseAction implements Action {
           this._fromMode,
           this._toMode,
         ]),
-      decode: (data: string) => this.sdk.contracts.beanstalk.interface.decodeFunctionData('addLiquidity', data),
+      decode: (data: string) => AddLiquidity.sdk.contracts.beanstalk.interface.decodeFunctionData('addLiquidity', data),
       data: {
         pool: this._pool,
         registry: this._registry,
