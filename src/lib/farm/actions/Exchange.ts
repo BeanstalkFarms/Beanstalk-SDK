@@ -27,7 +27,7 @@ export class Exchange extends BaseAction implements Action {
   }
 
   async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
-    this.sdk.debug(`[workflow:exchange] ${_amountInStep.toString()} ${this.tokenIn.symbol} -> ${this.tokenOut.symbol} ${_forward}`)
+    Exchange.sdk.debug(`[workflow:exchange] ${_amountInStep.toString()} ${this.tokenIn.symbol} -> ${this.tokenOut.symbol} ${_forward}`)
     const [tokenIn, tokenOut] = this.direction(this.tokenIn, this.tokenOut, _forward);
     const [i, j] = await this.registry.callStatic.get_coin_indices(this.pool.address, tokenIn.address, tokenOut.address, {
       gasLimit: 10000000,
@@ -35,15 +35,15 @@ export class Exchange extends BaseAction implements Action {
 
     let amountOut: ethers.BigNumber;
     // if (pool === pools.tricrypto2.address.toLowerCase()) {
-    if (this.pool === this.sdk.contracts.curve.pools.tricrypto2) {
+    if (this.pool === Exchange.sdk.contracts.curve.pools.tricrypto2) {
       amountOut = await this.pool.callStatic.get_dy(i, j, _amountInStep, { gasLimit: 10000000 });
-    } else if (this.pool === this.sdk.contracts.curve.pools.pool3) {
+    } else if (this.pool === Exchange.sdk.contracts.curve.pools.pool3) {
       amountOut = await this.pool.callStatic.get_dy(i, j, _amountInStep, { gasLimit: 10000000 });
-    } else if (this.registry === this.sdk.contracts.curve.registries.metaFactory) {
+    } else if (this.registry === Exchange.sdk.contracts.curve.registries.metaFactory) {
       amountOut = await (this.pool as CurveMetaPool).callStatic['get_dy(int128,int128,uint256)'](i, j, _amountInStep, {
         gasLimit: 10000000,
       });
-    } else if (this.registry === this.sdk.contracts.curve.registries.cryptoFactory) {
+    } else if (this.registry === Exchange.sdk.contracts.curve.registries.cryptoFactory) {
       amountOut = await (this.pool as CurvePlainPool).callStatic.get_dy(i, j, _amountInStep, {
         gasLimit: 10000000,
       });
@@ -55,7 +55,7 @@ export class Exchange extends BaseAction implements Action {
       name: this.name,
       amountOut,
       encode: (minAmountOut: ethers.BigNumber) =>
-        this.sdk.contracts.beanstalk.interface.encodeFunctionData('exchange', [
+        Exchange.sdk.contracts.beanstalk.interface.encodeFunctionData('exchange', [
           this.pool.address,
           this.registry.address,
           tokenIn.address,
@@ -65,7 +65,7 @@ export class Exchange extends BaseAction implements Action {
           this.fromMode,
           this.toMode,
         ]),
-      decode: (data: string) => this.sdk.contracts.beanstalk.interface.decodeFunctionData('exchange', data),
+      decode: (data: string) => Exchange.sdk.contracts.beanstalk.interface.decodeFunctionData('exchange', data),
       data: {
         pool: this.pool.address,
         registry: this.registry.address,
