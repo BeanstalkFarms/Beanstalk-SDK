@@ -8,10 +8,10 @@ export interface Action extends BaseAction{
 }
 
 export class BaseAction {
-  protected sdk: BeanstalkSDK;
+  static sdk: BeanstalkSDK;
 
   public setSDK(sdk: BeanstalkSDK) {
-    this.sdk = sdk;
+    BaseAction.sdk = sdk;
   }
 
   protected direction(_x1: Token, _x2: Token, _forward: boolean): Token[] {

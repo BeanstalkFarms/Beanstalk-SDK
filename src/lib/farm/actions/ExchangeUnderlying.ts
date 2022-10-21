@@ -20,7 +20,7 @@ export class ExchangeUnderlying extends BaseAction implements Action {
   async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
     const [tokenIn, tokenOut] = this.direction(this.tokenIn, this.tokenOut, _forward);
 
-    const registry = this.sdk.contracts.curve.registries.metaFactory;
+    const registry = ExchangeUnderlying.sdk.contracts.curve.registries.metaFactory;
     const [i, j] = await registry.get_coin_indices(this.pool.address, tokenIn.address, tokenOut.address, { gasLimit: 1000000 });
 
     /// Only MetaPools have the ability to exchange_underlying
@@ -38,7 +38,7 @@ export class ExchangeUnderlying extends BaseAction implements Action {
       name: this.name,
       amountOut,
       encode: (minAmountOut: ethers.BigNumber) =>
-        this.sdk.contracts.beanstalk.interface.encodeFunctionData('exchangeUnderlying', [
+        ExchangeUnderlying.sdk.contracts.beanstalk.interface.encodeFunctionData('exchangeUnderlying', [
           this.pool.address,
           tokenIn.address,
           tokenOut.address,
@@ -47,7 +47,7 @@ export class ExchangeUnderlying extends BaseAction implements Action {
           this.fromMode,
           this.toMode,
         ]),
-      decode: (data: string) => this.sdk.contracts.beanstalk.interface.decodeFunctionData('exchangeUnderlying', data),
+      decode: (data: string) => ExchangeUnderlying.sdk.contracts.beanstalk.interface.decodeFunctionData('exchangeUnderlying', data),
       data: {
         pool: this.pool.address,
         tokenIn: this.tokenIn.address,

@@ -15,11 +15,11 @@ export class UnwrapEth extends BaseAction implements Action {
       amountOut: _amountInStep, // amountInStep should be an amount of ETH.
       value: _amountInStep, // need to use this amount in the txn.
       encode: (_: ethers.BigNumber) =>
-        this.sdk.contracts.beanstalk.interface.encodeFunctionData('unwrapEth', [
+        UnwrapEth.sdk.contracts.beanstalk.interface.encodeFunctionData('unwrapEth', [
           _amountInStep, // ignore minAmountOut since there is no slippage
           this.toMode,
         ]),
-      decode: (data: string) => this.sdk.contracts.beanstalk.interface.decodeFunctionData('unwrapEth', data),
+      decode: (data: string) => UnwrapEth.sdk.contracts.beanstalk.interface.decodeFunctionData('unwrapEth', data),
     };
   }
 }
