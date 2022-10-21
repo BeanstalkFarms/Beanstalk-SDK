@@ -17,7 +17,7 @@ export class Exchange extends BaseAction implements Action {
 
   constructor(
     private pool: Curve3Pool | CurveTriCrypto2Pool | CurveMetaPool | CurvePlainPool,
-    private registry: CurveRegistry | CurveMetaFactory | CurveCryptoFactory,
+    private registry: CurveMetaFactory | CurveCryptoFactory,
     private tokenIn: Token,
     private tokenOut: Token,
     private fromMode: FarmFromMode = FarmFromMode.INTERNAL_TOLERANT,
