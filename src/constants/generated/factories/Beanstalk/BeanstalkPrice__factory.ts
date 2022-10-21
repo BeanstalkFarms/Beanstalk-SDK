@@ -47,6 +47,21 @@ const _abi = [
             name: "deltaB",
             type: "int256",
           },
+          {
+            internalType: "uint256",
+            name: "lpSupply",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "lpUsd",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "lpBdv",
+            type: "uint256",
+          },
         ],
         internalType: "struct P.Pool",
         name: "pool",
@@ -108,6 +123,21 @@ const _abi = [
                 internalType: "int256",
                 name: "deltaB",
                 type: "int256",
+              },
+              {
+                internalType: "uint256",
+                name: "lpSupply",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "lpUsd",
+                type: "uint256",
+              },
+              {
+                internalType: "uint256",
+                name: "lpBdv",
+                type: "uint256",
               },
             ],
             internalType: "struct P.Pool[]",

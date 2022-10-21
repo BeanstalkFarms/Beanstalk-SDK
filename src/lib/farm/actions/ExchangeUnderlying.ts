@@ -20,7 +20,7 @@ export class ExchangeUnderlying extends BaseAction implements Action {
   async run(_amountInStep: ethers.BigNumber, forward: boolean = true): Promise<ActionResult> {
     const [tokenIn, tokenOut] = this.direction(this.tokenIn, this.tokenOut, forward);
     ExchangeUnderlying.sdk.debug(`[step@exchangeUnderlying] run [${forward ? 'forward' : 'backward'}]`, {
-      this.pool,
+      pool: this.pool,
       tokenIn,
       tokenOut,
       forward,
@@ -58,7 +58,7 @@ export class ExchangeUnderlying extends BaseAction implements Action {
         ]),
       decode: (data: string) => ExchangeUnderlying.sdk.contracts.beanstalk.interface.decodeFunctionData('exchangeUnderlying', data),
       data: {
-        pool: this.pool.address,
+        pool: this.pool,
         tokenIn: this.tokenIn.address,
         tokenOut: this.tokenOut.address,
         fromMode: this.fromMode,

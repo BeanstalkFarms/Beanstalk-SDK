@@ -201,7 +201,33 @@ const _abi = [
       },
     ],
     name: "convert",
-    outputs: [],
+    outputs: [
+      {
+        internalType: "uint32",
+        name: "toSeason",
+        type: "uint32",
+      },
+      {
+        internalType: "uint256",
+        name: "fromAmount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "toAmount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "fromBdv",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "toBdv",
+        type: "uint256",
+      },
+    ],
     stateMutability: "payable",
     type: "function",
   },
@@ -2862,6 +2888,37 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "spender",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "DepositApproval",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
         name: "account",
         type: "address",
       },
@@ -3011,6 +3068,29 @@ const _abi = [
     ],
     name: "StalkBalanceChanged",
     type: "event",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "spender",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "approveDeposit",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
   },
   {
     inputs: [
@@ -3230,13 +3310,7 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-    ],
+    inputs: [],
     name: "claimPlenty",
     outputs: [],
     stateMutability: "payable",
@@ -3292,6 +3366,35 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
+        name: "spender",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "subtractedValue",
+        type: "uint256",
+      },
+    ],
+    name: "decreaseDepositAllowance",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
         name: "token",
         type: "address",
       },
@@ -3309,6 +3412,35 @@ const _abi = [
     name: "deposit",
     outputs: [],
     stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "account",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "spender",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+    ],
+    name: "depositAllowance",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -3459,6 +3591,35 @@ const _abi = [
     type: "function",
   },
   {
+    inputs: [
+      {
+        internalType: "address",
+        name: "spender",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "addedValue",
+        type: "uint256",
+      },
+    ],
+    name: "increaseDepositAllowance",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "lastSeasonOfPlenty",
     outputs: [
@@ -3595,6 +3756,11 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
+        name: "sender",
+        type: "address",
+      },
+      {
+        internalType: "address",
         name: "recipient",
         type: "address",
       },
@@ -3615,12 +3781,23 @@ const _abi = [
       },
     ],
     name: "transferDeposit",
-    outputs: [],
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "bdv",
+        type: "uint256",
+      },
+    ],
     stateMutability: "payable",
     type: "function",
   },
   {
     inputs: [
+      {
+        internalType: "address",
+        name: "sender",
+        type: "address",
+      },
       {
         internalType: "address",
         name: "recipient",
@@ -3643,7 +3820,13 @@ const _abi = [
       },
     ],
     name: "transferDeposits",
-    outputs: [],
+    outputs: [
+      {
+        internalType: "uint256[]",
+        name: "bdvs",
+        type: "uint256[]",
+      },
+    ],
     stateMutability: "payable",
     type: "function",
   },
@@ -4147,6 +4330,35 @@ const _abi = [
         type: "address",
       },
       {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "supply",
+        type: "uint256",
+      },
+    ],
+    name: "_getPenalizedUnderlying",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "redeem",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "unripeToken",
+        type: "address",
+      },
+      {
         internalType: "address",
         name: "underlyingToken",
         type: "address",
@@ -4395,6 +4607,25 @@ const _abi = [
         internalType: "uint256",
         name: "underlyingPerToken",
         type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "unripeToken",
+        type: "address",
+      },
+    ],
+    name: "getUnderlyingToken",
+    outputs: [
+      {
+        internalType: "address",
+        name: "underlyingToken",
+        type: "address",
       },
     ],
     stateMutability: "view",

@@ -5,7 +5,6 @@ import BigNumber from 'bignumber.js';
 import { tokenBN } from './events/processor';
 import { TokenFacet } from '../constants/generated/Beanstalk/Beanstalk';
 import { ethers } from 'ethers';
-import { hexToUtf8, utf8ToASCII } from '../utils/Ledger';
 
 export type TokenBalance = {
   internal: BigNumber;

@@ -11,7 +11,6 @@ export type { curve };
 import type * as uniswap from "./Uniswap";
 export type { uniswap };
 export type { ERC20 } from "./ERC20";
-export type { ERC20Permit } from "./ERC20Permit";
 export * as factories from "./factories";
 export type { BeaNFTGenesis } from "./BeaNFT/BeaNFTGenesis";
 export { BeaNFTGenesis__factory } from "./factories/BeaNFT/BeaNFTGenesis__factory";
@@ -40,7 +39,6 @@ export { CurveMetaPool__factory } from "./factories/Curve/Template/CurveMetaPool
 export type { CurvePlainPool } from "./Curve/Template/CurvePlainPool";
 export { CurvePlainPool__factory } from "./factories/Curve/Template/CurvePlainPool__factory";
 export { ERC20__factory } from "./factories/ERC20__factory";
-export { ERC20Permit__factory } from "./factories/ERC20Permit__factory";
 export type { UniswapV2Pair } from "./Uniswap/UniswapV2Pair";
 export { UniswapV2Pair__factory } from "./factories/Uniswap/UniswapV2Pair__factory";
 export type { UniswapV2Router } from "./Uniswap/UniswapV2Router";

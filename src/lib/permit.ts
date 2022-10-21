@@ -1,4 +1,4 @@
-import { zeros } from "../utils";
+// import { zeros } from "../utils";
 import { BeanstalkSDK } from "./BeanstalkSDK";
 
 /// EIP-712: "Typed structured data hashing and signing"
@@ -151,7 +151,7 @@ export class Permit {
     const tokenAddress = (addressOrDomain as EIP712Domain).verifyingContract || addressOrDomain as string;
     const nonce = _nonce ?? await Permit.sdk.provider.call({
       to: tokenAddress,
-      data: `${Permit.NONCES_FN}${zeros(24)}${owner.substr(2)}`,
+      // data: `${Permit.NONCES_FN}${zeros(24)}${owner.substr(2)}`,
     });
 
     const message: EIP2612PermitMessage = {

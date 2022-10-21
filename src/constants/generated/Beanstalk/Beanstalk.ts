@@ -370,6 +370,7 @@ export interface BeanstalkInterface extends utils.Interface {
     "totalDeltaB()": FunctionFragment;
     "weather()": FunctionFragment;
     "yield()": FunctionFragment;
+    "approveDeposit(address,address,uint256)": FunctionFragment;
     "balanceOfEarnedBeans(address)": FunctionFragment;
     "balanceOfEarnedSeeds(address)": FunctionFragment;
     "balanceOfEarnedStalk(address)": FunctionFragment;
@@ -380,16 +381,19 @@ export interface BeanstalkInterface extends utils.Interface {
     "balanceOfSeeds(address)": FunctionFragment;
     "balanceOfSop(address)": FunctionFragment;
     "balanceOfStalk(address)": FunctionFragment;
-    "claimPlenty(address)": FunctionFragment;
+    "claimPlenty()": FunctionFragment;
     "claimWithdrawal(address,uint32,uint8)": FunctionFragment;
     "claimWithdrawals(address,uint32[],uint8)": FunctionFragment;
+    "decreaseDepositAllowance(address,address,uint256)": FunctionFragment;
     "deposit(address,uint256,uint8)": FunctionFragment;
+    "depositAllowance(address,address,address)": FunctionFragment;
     "enrootDeposit(address,uint32,uint256)": FunctionFragment;
     "enrootDeposits(address,uint32[],uint256[])": FunctionFragment;
     "getDeposit(address,address,uint32)": FunctionFragment;
     "getTotalDeposited(address)": FunctionFragment;
     "getTotalWithdrawn(address)": FunctionFragment;
     "getWithdrawal(address,address,uint32)": FunctionFragment;
+    "increaseDepositAllowance(address,address,uint256)": FunctionFragment;
     "lastSeasonOfPlenty()": FunctionFragment;
     "lastUpdate(address)": FunctionFragment;
     "plant()": FunctionFragment;
@@ -398,8 +402,8 @@ export interface BeanstalkInterface extends utils.Interface {
     "totalRoots()": FunctionFragment;
     "totalSeeds()": FunctionFragment;
     "totalStalk()": FunctionFragment;
-    "transferDeposit(address,address,uint32,uint256)": FunctionFragment;
-    "transferDeposits(address,address,uint32[],uint256[])": FunctionFragment;
+    "transferDeposit(address,address,address,uint32,uint256)": FunctionFragment;
+    "transferDeposits(address,address,address,uint32[],uint256[])": FunctionFragment;
     "update(address)": FunctionFragment;
     "withdrawDeposit(address,uint32,uint256)": FunctionFragment;
     "withdrawDeposits(address,uint32[],uint256[])": FunctionFragment;
@@ -415,6 +419,7 @@ export interface BeanstalkInterface extends utils.Interface {
     "transferToken(address,address,uint256,uint8,uint8)": FunctionFragment;
     "unwrapEth(uint256,uint8)": FunctionFragment;
     "wrapEth(uint256,uint8)": FunctionFragment;
+    "_getPenalizedUnderlying(address,uint256,uint256)": FunctionFragment;
     "addUnripeToken(address,address,bytes32)": FunctionFragment;
     "balanceOfPenalizedUnderlying(address,address)": FunctionFragment;
     "balanceOfUnderlying(address,address)": FunctionFragment;
@@ -427,6 +432,7 @@ export interface BeanstalkInterface extends utils.Interface {
     "getTotalUnderlying(address)": FunctionFragment;
     "getUnderlying(address,uint256)": FunctionFragment;
     "getUnderlyingPerUnripeToken(address)": FunctionFragment;
+    "getUnderlyingToken(address)": FunctionFragment;
     "isUnripe(address)": FunctionFragment;
     "pick(address,uint256,bytes32[],uint8)": FunctionFragment;
     "picked(address,address)": FunctionFragment;
@@ -527,6 +533,7 @@ export interface BeanstalkInterface extends utils.Interface {
       | "totalDeltaB"
       | "weather"
       | "yield"
+      | "approveDeposit"
       | "balanceOfEarnedBeans"
       | "balanceOfEarnedSeeds"
       | "balanceOfEarnedStalk"
@@ -540,13 +547,16 @@ export interface BeanstalkInterface extends utils.Interface {
       | "claimPlenty"
       | "claimWithdrawal"
       | "claimWithdrawals"
+      | "decreaseDepositAllowance"
       | "deposit"
+      | "depositAllowance"
       | "enrootDeposit"
       | "enrootDeposits"
       | "getDeposit"
       | "getTotalDeposited"
       | "getTotalWithdrawn"
       | "getWithdrawal"
+      | "increaseDepositAllowance"
       | "lastSeasonOfPlenty"
       | "lastUpdate"
       | "plant"
@@ -572,6 +582,7 @@ export interface BeanstalkInterface extends utils.Interface {
       | "transferToken"
       | "unwrapEth"
       | "wrapEth"
+      | "_getPenalizedUnderlying"
       | "addUnripeToken"
       | "balanceOfPenalizedUnderlying"
       | "balanceOfUnderlying"
@@ -584,6 +595,7 @@ export interface BeanstalkInterface extends utils.Interface {
       | "getTotalUnderlying"
       | "getUnderlying"
       | "getUnderlyingPerUnripeToken"
+      | "getUnderlyingToken"
       | "isUnripe"
       | "pick"
       | "picked"
@@ -1019,6 +1031,14 @@ export interface BeanstalkInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "weather", values?: undefined): string;
   encodeFunctionData(functionFragment: "yield", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "approveDeposit",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "balanceOfEarnedBeans",
     values: [PromiseOrValue<string>]
   ): string;
@@ -1060,7 +1080,7 @@ export interface BeanstalkInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "claimPlenty",
-    values: [PromiseOrValue<string>]
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "claimWithdrawal",
@@ -1079,11 +1099,27 @@ export interface BeanstalkInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "decreaseDepositAllowance",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "deposit",
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "depositAllowance",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>
     ]
   ): string;
   encodeFunctionData(
@@ -1127,6 +1163,14 @@ export interface BeanstalkInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "increaseDepositAllowance",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "lastSeasonOfPlenty",
     values?: undefined
   ): string;
@@ -1160,6 +1204,7 @@ export interface BeanstalkInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
+      PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
     ]
@@ -1167,6 +1212,7 @@ export interface BeanstalkInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "transferDeposits",
     values: [
+      PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>[],
@@ -1248,6 +1294,14 @@ export interface BeanstalkInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
+    functionFragment: "_getPenalizedUnderlying",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "addUnripeToken",
     values: [
       PromiseOrValue<string>,
@@ -1302,6 +1356,10 @@ export interface BeanstalkInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getUnderlyingPerUnripeToken",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getUnderlyingToken",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
@@ -1595,6 +1653,10 @@ export interface BeanstalkInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "weather", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "yield", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "approveDeposit",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "balanceOfEarnedBeans",
     data: BytesLike
   ): Result;
@@ -1646,7 +1708,15 @@ export interface BeanstalkInterface extends utils.Interface {
     functionFragment: "claimWithdrawals",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "decreaseDepositAllowance",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "depositAllowance",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "enrootDeposit",
     data: BytesLike
@@ -1666,6 +1736,10 @@ export interface BeanstalkInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getWithdrawal",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "increaseDepositAllowance",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -1742,6 +1816,10 @@ export interface BeanstalkInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "unwrapEth", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "wrapEth", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "_getPenalizedUnderlying",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "addUnripeToken",
     data: BytesLike
   ): Result;
@@ -1781,6 +1859,10 @@ export interface BeanstalkInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getUnderlyingPerUnripeToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getUnderlyingToken",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "isUnripe", data: BytesLike): Result;
@@ -1826,6 +1908,7 @@ export interface BeanstalkInterface extends utils.Interface {
     "AddDeposit(address,address,uint32,uint256,uint256)": EventFragment;
     "AddWithdrawal(address,address,uint32,uint256)": EventFragment;
     "ClaimPlenty(address,uint256)": EventFragment;
+    "DepositApproval(address,address,address,uint256)": EventFragment;
     "Plant(address,uint256)": EventFragment;
     "RemoveDeposit(address,address,uint32,uint256)": EventFragment;
     "RemoveWithdrawal(address,address,uint32,uint256)": EventFragment;
@@ -1871,6 +1954,7 @@ export interface BeanstalkInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "AddDeposit"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AddWithdrawal"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ClaimPlenty"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "DepositApproval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Plant"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RemoveDeposit"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RemoveWithdrawal"): EventFragment;
@@ -2251,6 +2335,19 @@ export type ClaimPlentyEvent = TypedEvent<
 >;
 
 export type ClaimPlentyEventFilter = TypedEventFilter<ClaimPlentyEvent>;
+
+export interface DepositApprovalEventObject {
+  owner: string;
+  spender: string;
+  token: string;
+  amount: BigNumber;
+}
+export type DepositApprovalEvent = TypedEvent<
+  [string, string, string, BigNumber],
+  DepositApprovalEventObject
+>;
+
+export type DepositApprovalEventFilter = TypedEventFilter<DepositApprovalEvent>;
 
 export interface PlantEventObject {
   account: string;
@@ -2909,6 +3006,13 @@ export interface Beanstalk extends BaseContract {
 
     yield(overrides?: CallOverrides): Promise<[number]>;
 
+    approveDeposit(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     balanceOfEarnedBeans(
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -2964,7 +3068,6 @@ export interface Beanstalk extends BaseContract {
     ): Promise<[BigNumber]>;
 
     claimPlenty(
-      account: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -2982,12 +3085,26 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    decreaseDepositAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      subtractedValue: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     deposit(
       token: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    depositAllowance(
+      account: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
 
     enrootDeposit(
       token: PromiseOrValue<string>,
@@ -3027,6 +3144,13 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    increaseDepositAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      addedValue: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     lastSeasonOfPlenty(overrides?: CallOverrides): Promise<[number]>;
 
     lastUpdate(
@@ -3052,6 +3176,7 @@ export interface Beanstalk extends BaseContract {
     totalStalk(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     transferDeposit(
+      sender: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       season: PromiseOrValue<BigNumberish>,
@@ -3060,6 +3185,7 @@ export interface Beanstalk extends BaseContract {
     ): Promise<ContractTransaction>;
 
     transferDeposits(
+      sender: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       seasons: PromiseOrValue<BigNumberish>[],
@@ -3163,6 +3289,13 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    _getPenalizedUnderlying(
+      unripeToken: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      supply: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { redeem: BigNumber }>;
+
     addUnripeToken(
       unripeToken: PromiseOrValue<string>,
       underlyingToken: PromiseOrValue<string>,
@@ -3230,6 +3363,11 @@ export interface Beanstalk extends BaseContract {
       unripeToken: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { underlyingPerToken: BigNumber }>;
+
+    getUnderlyingToken(
+      unripeToken: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string] & { underlyingToken: string }>;
 
     isUnripe(
       unripeToken: PromiseOrValue<string>,
@@ -3706,6 +3844,13 @@ export interface Beanstalk extends BaseContract {
 
   yield(overrides?: CallOverrides): Promise<number>;
 
+  approveDeposit(
+    spender: PromiseOrValue<string>,
+    token: PromiseOrValue<string>,
+    amount: PromiseOrValue<BigNumberish>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   balanceOfEarnedBeans(
     account: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -3757,7 +3902,6 @@ export interface Beanstalk extends BaseContract {
   ): Promise<BigNumber>;
 
   claimPlenty(
-    account: PromiseOrValue<string>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -3775,12 +3919,26 @@ export interface Beanstalk extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  decreaseDepositAllowance(
+    spender: PromiseOrValue<string>,
+    token: PromiseOrValue<string>,
+    subtractedValue: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   deposit(
     token: PromiseOrValue<string>,
     amount: PromiseOrValue<BigNumberish>,
     mode: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
+
+  depositAllowance(
+    account: PromiseOrValue<string>,
+    spender: PromiseOrValue<string>,
+    token: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   enrootDeposit(
     token: PromiseOrValue<string>,
@@ -3820,6 +3978,13 @@ export interface Beanstalk extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  increaseDepositAllowance(
+    spender: PromiseOrValue<string>,
+    token: PromiseOrValue<string>,
+    addedValue: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   lastSeasonOfPlenty(overrides?: CallOverrides): Promise<number>;
 
   lastUpdate(
@@ -3845,6 +4010,7 @@ export interface Beanstalk extends BaseContract {
   totalStalk(overrides?: CallOverrides): Promise<BigNumber>;
 
   transferDeposit(
+    sender: PromiseOrValue<string>,
     recipient: PromiseOrValue<string>,
     token: PromiseOrValue<string>,
     season: PromiseOrValue<BigNumberish>,
@@ -3853,6 +4019,7 @@ export interface Beanstalk extends BaseContract {
   ): Promise<ContractTransaction>;
 
   transferDeposits(
+    sender: PromiseOrValue<string>,
     recipient: PromiseOrValue<string>,
     token: PromiseOrValue<string>,
     seasons: PromiseOrValue<BigNumberish>[],
@@ -3950,6 +4117,13 @@ export interface Beanstalk extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  _getPenalizedUnderlying(
+    unripeToken: PromiseOrValue<string>,
+    amount: PromiseOrValue<BigNumberish>,
+    supply: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   addUnripeToken(
     unripeToken: PromiseOrValue<string>,
     underlyingToken: PromiseOrValue<string>,
@@ -4016,6 +4190,11 @@ export interface Beanstalk extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  getUnderlyingToken(
+    unripeToken: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<string>;
+
   isUnripe(
     unripeToken: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -4080,7 +4259,15 @@ export interface Beanstalk extends BaseContract {
       crates: PromiseOrValue<BigNumberish>[],
       amounts: PromiseOrValue<BigNumberish>[],
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<
+      [number, BigNumber, BigNumber, BigNumber, BigNumber] & {
+        toSeason: number;
+        fromAmount: BigNumber;
+        toAmount: BigNumber;
+        fromBdv: BigNumber;
+        toBdv: BigNumber;
+      }
+    >;
 
     getAmountOut(
       tokenIn: PromiseOrValue<string>,
@@ -4485,6 +4672,13 @@ export interface Beanstalk extends BaseContract {
 
     yield(overrides?: CallOverrides): Promise<number>;
 
+    approveDeposit(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     balanceOfEarnedBeans(
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -4535,10 +4729,7 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    claimPlenty(
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    claimPlenty(overrides?: CallOverrides): Promise<void>;
 
     claimWithdrawal(
       token: PromiseOrValue<string>,
@@ -4554,12 +4745,26 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    decreaseDepositAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      subtractedValue: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
     deposit(
       token: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    depositAllowance(
+      account: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     enrootDeposit(
       token: PromiseOrValue<string>,
@@ -4599,6 +4804,13 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    increaseDepositAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      addedValue: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
     lastSeasonOfPlenty(overrides?: CallOverrides): Promise<number>;
 
     lastUpdate(
@@ -4622,20 +4834,22 @@ export interface Beanstalk extends BaseContract {
     totalStalk(overrides?: CallOverrides): Promise<BigNumber>;
 
     transferDeposit(
+      sender: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       season: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<BigNumber>;
 
     transferDeposits(
+      sender: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       seasons: PromiseOrValue<BigNumberish>[],
       amounts: PromiseOrValue<BigNumberish>[],
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<BigNumber[]>;
 
     update(
       account: PromiseOrValue<string>,
@@ -4727,6 +4941,13 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    _getPenalizedUnderlying(
+      unripeToken: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      supply: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     addUnripeToken(
       unripeToken: PromiseOrValue<string>,
       underlyingToken: PromiseOrValue<string>,
@@ -4792,6 +5013,11 @@ export interface Beanstalk extends BaseContract {
       unripeToken: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    getUnderlyingToken(
+      unripeToken: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<string>;
 
     isUnripe(
       unripeToken: PromiseOrValue<string>,
@@ -5160,6 +5386,19 @@ export interface Beanstalk extends BaseContract {
       account?: PromiseOrValue<string> | null,
       plenty?: null
     ): ClaimPlentyEventFilter;
+
+    "DepositApproval(address,address,address,uint256)"(
+      owner?: PromiseOrValue<string> | null,
+      spender?: PromiseOrValue<string> | null,
+      token?: null,
+      amount?: null
+    ): DepositApprovalEventFilter;
+    DepositApproval(
+      owner?: PromiseOrValue<string> | null,
+      spender?: PromiseOrValue<string> | null,
+      token?: null,
+      amount?: null
+    ): DepositApprovalEventFilter;
 
     "Plant(address,uint256)"(
       account?: PromiseOrValue<string> | null,
@@ -5746,6 +5985,13 @@ export interface Beanstalk extends BaseContract {
 
     yield(overrides?: CallOverrides): Promise<BigNumber>;
 
+    approveDeposit(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     balanceOfEarnedBeans(
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -5797,7 +6043,6 @@ export interface Beanstalk extends BaseContract {
     ): Promise<BigNumber>;
 
     claimPlenty(
-      account: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -5815,11 +6060,25 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    decreaseDepositAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      subtractedValue: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     deposit(
       token: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    depositAllowance(
+      account: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     enrootDeposit(
@@ -5860,6 +6119,13 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    increaseDepositAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      addedValue: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     lastSeasonOfPlenty(overrides?: CallOverrides): Promise<BigNumber>;
 
     lastUpdate(
@@ -5885,6 +6151,7 @@ export interface Beanstalk extends BaseContract {
     totalStalk(overrides?: CallOverrides): Promise<BigNumber>;
 
     transferDeposit(
+      sender: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       season: PromiseOrValue<BigNumberish>,
@@ -5893,6 +6160,7 @@ export interface Beanstalk extends BaseContract {
     ): Promise<BigNumber>;
 
     transferDeposits(
+      sender: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       seasons: PromiseOrValue<BigNumberish>[],
@@ -5990,6 +6258,13 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    _getPenalizedUnderlying(
+      unripeToken: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      supply: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     addUnripeToken(
       unripeToken: PromiseOrValue<string>,
       underlyingToken: PromiseOrValue<string>,
@@ -6052,6 +6327,11 @@ export interface Beanstalk extends BaseContract {
     ): Promise<BigNumber>;
 
     getUnderlyingPerUnripeToken(
+      unripeToken: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getUnderlyingToken(
       unripeToken: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -6548,6 +6828,13 @@ export interface Beanstalk extends BaseContract {
 
     yield(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    approveDeposit(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     balanceOfEarnedBeans(
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -6599,7 +6886,6 @@ export interface Beanstalk extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     claimPlenty(
-      account: PromiseOrValue<string>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -6617,11 +6903,25 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    decreaseDepositAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      subtractedValue: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     deposit(
       token: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    depositAllowance(
+      account: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     enrootDeposit(
@@ -6662,6 +6962,13 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    increaseDepositAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      addedValue: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     lastSeasonOfPlenty(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -6689,6 +6996,7 @@ export interface Beanstalk extends BaseContract {
     totalStalk(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     transferDeposit(
+      sender: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       season: PromiseOrValue<BigNumberish>,
@@ -6697,6 +7005,7 @@ export interface Beanstalk extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     transferDeposits(
+      sender: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
       seasons: PromiseOrValue<BigNumberish>[],
@@ -6794,6 +7103,13 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    _getPenalizedUnderlying(
+      unripeToken: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      supply: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     addUnripeToken(
       unripeToken: PromiseOrValue<string>,
       underlyingToken: PromiseOrValue<string>,
@@ -6858,6 +7174,11 @@ export interface Beanstalk extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getUnderlyingPerUnripeToken(
+      unripeToken: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getUnderlyingToken(
       unripeToken: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
