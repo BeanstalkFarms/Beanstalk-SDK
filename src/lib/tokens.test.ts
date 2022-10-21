@@ -27,6 +27,16 @@ beforeAll(() => {
 });
 
 ///
+describe('Function: getBalance', function () {
+  it('returns a TokenBalance struct when the token is ETH', async () => {
+    const balance = await sdk.tokens.getBalance(sdk.tokens.ETH, sdk.tokens.WETH.address)
+    expect(balance.internal.toNumber()).toStrictEqual(0);
+    expect(balance.external.toNumber()).toBeGreaterThan(0);
+    expect(balance.external.toString()).toBe(balance.total.toString());
+  });
+})
+
+///
 describe('Function: getBalances', function () {
   it('throws without account or signer', async () => {
     await expect(sdk.tokens.getBalances()).rejects.toThrow();

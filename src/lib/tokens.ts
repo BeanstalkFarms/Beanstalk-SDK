@@ -4,6 +4,7 @@ import { BeanstalkSDK } from './BeanstalkSDK';
 import BigNumber from 'bignumber.js';
 import { tokenBN } from './events/processor';
 import { TokenFacet } from '../constants/generated/Beanstalk/Beanstalk';
+import { ethers } from 'ethers';
 
 export type TokenBalance = {
   internal: BigNumber;
@@ -227,7 +228,10 @@ export class Tokens {
     return typeof value === 'string' ? value : value.address;
   }
 
-  _balanceStructToTokenBalance(token: Token, result: TokenFacet.BalanceStructOutput) : TokenBalance {
+  _balanceStructToTokenBalance(
+    token: Token,
+    result: TokenFacet.BalanceStruct
+  ) : TokenBalance {
     return {
       internal: token.stringifyToDecimal(result.internalBalance.toString()),
       external: token.stringifyToDecimal(result.externalBalance.toString()),
@@ -245,10 +249,21 @@ export class Tokens {
     _account?: string,
   ) : Promise<TokenBalance> {
     const account = await this.sdk.getAccount(_account);
-    const tokenAddress = this._deriveAddress(_token);
-    const token = this.findByAddress(tokenAddress);
+
+    // ETH cannot be stored in the INTERNAL balance.
+    // Here we use the native getBalance() method and cast to a TokenBalance.
+    if (_token === this.ETH) {
+      const balance = await this.sdk.provider.getBalance(account);
+      return this._balanceStructToTokenBalance(_token, {
+        internalBalance: '0',
+        externalBalance: balance,
+        totalBalance: balance,
+      });
+    }
 
     // FIXME: use the ERC20 token contract directly to load decimals for parsing?
+    const tokenAddress = this._deriveAddress(_token);
+    const token = this.findByAddress(tokenAddress);
     if (!token) throw new Error(`Unknown token: ${tokenAddress}`);
 
     const balance = await this.sdk.contracts.beanstalk.getAllBalance(
@@ -263,6 +278,8 @@ export class Tokens {
    * Return a TokenBalance struct for each requested token.
    * Includes the Farmer's INTERNAL and EXTERNAL balance in one item.
    * This is the typical representation of balances within Beanstalk.
+   * 
+   * @todo discuss parameter inversion between getBalance() and getBalances().
    */
   public async getBalances(
     _account?: string,
@@ -272,6 +289,8 @@ export class Tokens {
     const tokens = _tokens || Array.from(this.erc20Tokens);
     const tokenAddresses = tokens.map(this._deriveAddress);
 
+    // FIXME: only allow ERC20 tokens with getBalance() method, or
+    // override if token is NativeToken
     const balances = new Map<Token, TokenBalance>();
     const results = await this.sdk.contracts.beanstalk.getAllBalances(
       account,
