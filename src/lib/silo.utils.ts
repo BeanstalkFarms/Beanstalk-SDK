@@ -60,3 +60,20 @@ export const _parseWithdrawalCrates = (
     },
   };
 }
+
+export interface DepositTokenPermitMessage {
+  owner: string;
+  spender: string;
+  token: string;
+  value: number | string;
+  nonce: number | string;
+  deadline: number | string;
+}
+export interface DepositTokensPermitMessage {
+  owner: string;
+  spender: string;
+  tokens: string[];
+  values: (number | string)[];
+  nonce: number | string;
+  deadline: number | string;
+}

@@ -4,12 +4,14 @@ import _ from 'lodash';
 import { Test } from 'mocha';
 import { Token } from '../classes/Token';
 import { ZERO_BN } from '../constants';
-import { DataSource, MapValueType, StringMap } from '../types';
+import { DataSource, StringMap } from '../types';
+import { wrapped } from '../utils';
 import { toTokenUnitsBN } from '../utils/Tokens';
 
 import { BeanstalkSDK } from './BeanstalkSDK';
 import EventProcessor, { EventProcessorData, WithdrawalCrateRaw } from './events/processor';
-import { _parseWithdrawalCrates } from './silo.utils';
+import { EIP712Domain, Permit } from './permit';
+import { DepositTokenPermitMessage, DepositTokensPermitMessage, _parseWithdrawalCrates } from './silo.utils';
 
 /**
  * A Crate is an `amount` of a token Deposited or
@@ -68,11 +70,11 @@ export type TokenSiloBalance = {
 export type UpdateFarmerSiloBalancesPayload = StringMap<Partial<TokenSiloBalance>>;
 
 export class Silo {
-  private readonly sdk: BeanstalkSDK;
+  static sdk: BeanstalkSDK;
   // public balances: Map<Token, TokenSiloBalance>;
 
   constructor(sdk: BeanstalkSDK) {
-    this.sdk = sdk;
+    Silo.sdk = sdk;
   }
 
   /**
@@ -86,20 +88,20 @@ export class Silo {
   //   _amountIn: BigNumber,
   //   _tokenOut: ERC20Token,
   // ): Promise<{ amountOut: any; steps: any }> {
-  //   if (this.sdk.tokens.siloWhitelist.has(_tokenOut)) {
+  //   if (Silo.sdk.tokens.siloWhitelist.has(_tokenOut)) {
   //     throw new Error(`${_tokenOut.symbol} is not a whitelisted token`)
   //   }
-  //   const tokenIn: ERC20Token = _tokenIn instanceof NativeToken ? this.sdk.tokens.WETH : _tokenIn;
+  //   const tokenIn: ERC20Token = _tokenIn instanceof NativeToken ? Silo.sdk.tokens.WETH : _tokenIn;
   //   const tokenOut = _tokenOut;
   //   const amountIn = ethers.BigNumber.from(toStringBaseUnitBN(_amountIn, tokenIn.decimals));
 
   //   let estimate;
 
   //   // Depositing BEAN
-  //   if (tokenOut.equals(this.sdk.tokens.BEAN)) {
-  //     if (tokenIn.equals(this.sdk.tokens.WETH)) {
-  //       estimate = await this.sdk.farm.estimate(
-  //         this.sdk.farm.buyBeans(), // this assumes we're coming from WETH
+  //   if (tokenOut.equals(Silo.sdk.tokens.BEAN)) {
+  //     if (tokenIn.equals(Silo.sdk.tokens.WETH)) {
+  //       estimate = await Silo.sdk.farm.estimate(
+  //         Silo.sdk.farm.buyBeans(), // this assumes we're coming from WETH
   //         [amountIn]
   //       );
   //     }
@@ -107,7 +109,7 @@ export class Silo {
 
   //   // Depositing LP Tokens
   //   else {
-  //     const pool = this.sdk.tokens
+  //     const pool = Silo.sdk.tokens
   //     if (!pool) throw new Error(`Depositing to ${tokenOut.symbol} but no corresponding pool data found.`);
 
   //     // This is a Curve MetaPool...
@@ -228,18 +230,6 @@ export class Silo {
   //   };
   // }
 
-  public async deposit() {
-    console.log('not implemented');
-  }
-
-  // private _sortTokenMapByAddress<T extends any>(map: Map<Token, T>) {
-    // return Array.from(map.keys()).sort((a, b) => a.address < b.address ? 1 : -1).reduce((prev, curr) => {
-    //   const v = map.get(curr);
-    //   if (v) prev.set(curr, v);
-    //   return prev;
-    // }, new Map<Token, T>())
-  // }
-
   //////////////////////// UTILITIES ////////////////////////
 
   /**
@@ -251,7 +241,7 @@ export class Silo {
    * Beanstalk UI will change at some point in the future.
    */
   private _sortTokenMapByWhitelist<T extends any>(map: Map<Token, T>) {
-    const whitelist = this.sdk.tokens.siloWhitelist;
+    const whitelist = Silo.sdk.tokens.siloWhitelist;
     const copy = new Map<Token, T>(map);
     const ordered = new Map<Token, T>();
     // by default, order by whitelist
@@ -282,9 +272,9 @@ export class Silo {
     { source: DataSource.LEDGER } | 
     { source: DataSource.SUBGRAPH }
   )) {
-    const source = this.sdk.deriveConfig("source", options);
+    const source = Silo.sdk.deriveConfig("source", options);
     if (source === DataSource.SUBGRAPH) {
-      const query = await this.sdk.queries.getSiloWhitelist(); 
+      const query = await Silo.sdk.queries.getSiloWhitelist(); 
       return query.whitelistTokens.map((e) => ({
         token: e.token,
         stalk: parseInt(e.stalk),
@@ -296,15 +286,6 @@ export class Silo {
 
   //////////////////////// BALANCES ////////////////////////
 
-  // private _parseWithdrawalCrates(
-  //   token: Token,
-  //   withdrawals: MapValueType<EventProcessorData['withdrawals']>,
-  //   currentSeason: BigNumber
-  // ): {
-  //   withdrawn: TokenSiloBalance['withdrawn'];
-  //   claimable: TokenSiloBalance['claimable'];
-  // } {
-  // }
   private _parseWithdrawalCrates = _parseWithdrawalCrates;
 
   private _makeTokenSiloBalance() : TokenSiloBalance {
@@ -341,7 +322,7 @@ export class Silo {
   ) {
     const season = new BigNumber(rawCrate.season);
     const amount = toTokenUnitsBN(rawCrate.amount, token.decimals);
-    const bdv    = toTokenUnitsBN(rawCrate.bdv, this.sdk.tokens.BEAN.decimals);
+    const bdv    = toTokenUnitsBN(rawCrate.bdv, Silo.sdk.tokens.BEAN.decimals);
 
     const crate = {
       season:   season,
@@ -404,20 +385,20 @@ export class Silo {
       { source: DataSource.SUBGRAPH }
     )
   ) : Promise<TokenSiloBalance> {
-    const source = this.sdk.deriveConfig("source", options);
+    const source = Silo.sdk.deriveConfig("source", options);
     const [account, season] = await Promise.all([
-      this.sdk.getAccount(_account),
-      this.sdk.sun.getSeason(),
+      Silo.sdk.getAccount(_account),
+      Silo.sdk.sun.getSeason(),
     ]);
 
     // FIXME: doesn't work if _token is an instance of a token created by the SDK consumer
-    if (!this.sdk.tokens.siloWhitelist.has(_token)) throw new Error(`${_token.address} is not whitelisted in the Silo`)
+    if (!Silo.sdk.tokens.siloWhitelist.has(_token)) throw new Error(`${_token.address} is not whitelisted in the Silo`)
 
     const balance : TokenSiloBalance = this._makeTokenSiloBalance();
 
     /// SUBGRAPH
     if (source === DataSource.SUBGRAPH) {
-      const query = await this.sdk.queries.getSiloBalance({
+      const query = await Silo.sdk.queries.getSiloBalance({
         token: _token.address.toLowerCase(),
         account,
         season,
@@ -458,13 +439,13 @@ export class Silo {
       { source: DataSource.SUBGRAPH }
     )
   ) : Promise<Map<Token, TokenSiloBalance>> {
-    const source = this.sdk.deriveConfig("source", options);
+    const source = Silo.sdk.deriveConfig("source", options);
     const [account, season] = await Promise.all([
-      this.sdk.getAccount(_account),
-      this.sdk.sun.getSeason(),
+      Silo.sdk.getAccount(_account),
+      Silo.sdk.sun.getSeason(),
     ]);
 
-    const whitelist = this.sdk.tokens.siloWhitelist;
+    const whitelist = Silo.sdk.tokens.siloWhitelist;
     const balances = new Map<Token, TokenSiloBalance>();
 
     /// SETUP
@@ -474,8 +455,8 @@ export class Silo {
     if (source === DataSource.LEDGER) {
       // Fetch and process events.
       const seasonBN = new BigNumber(season);
-      const events = await this.sdk.events.getSiloEvents(account);
-      const processor = new EventProcessor(this.sdk, account, { 
+      const events = await Silo.sdk.events.getSiloEvents(account);
+      const processor = new EventProcessor(Silo.sdk, account, { 
         season: ethers.BigNumber.from(season.toString()), // FIXME: verbose
         whitelist
       });
@@ -526,13 +507,13 @@ export class Silo {
 
     /// SUBGRAPH
     if (source === DataSource.SUBGRAPH) {
-      const query = await this.sdk.queries.getSiloBalances({ account, season }); // crates ordered in asc order
+      const query = await Silo.sdk.queries.getSiloBalances({ account, season }); // crates ordered in asc order
       if (!query.farmer) return balances;
       const { deposited, withdrawn, claimable } = query.farmer!;
 
       // Lookup token by address and create a TokenSiloBalance entity.
       const prep = (address: string) => {
-        const token = this.sdk.tokens.findByAddress(address);
+        const token = Silo.sdk.tokens.findByAddress(address);
         if (!token) return; // FIXME: unknown token handling
         if (!balances.has(token)) balances.set(token, this._makeTokenSiloBalance());
         return token;
@@ -567,29 +548,86 @@ export class Silo {
     throw new Error(`Unsupported source: ${source}`);
   }
 
-  /**
-   * Integration test:
-   * should be able to assert that 
-   *    sdk.silo.getBalances(0xADDR, { source: DataSource.SUBGRAPH })
-   *    == sdk.silo.getBalances(0xADDR, { source: DataSource.LEDGER })
-   */
+  //////////////////////// ACTION: Deposit ////////////////////////
+  
+  // public deposit = wrapped(Silo.sdk.contracts.beanstalk, 'deposit')
 
-  // public async getDeposits() {
-  //   console.log('not implemented');
-  // }
-  // public async convert() {
-  //   console.log('not implemented');
-  // }
-  // public async transfer() {
-  //   console.log('not implemented');
-  // }
-  // public async withdraw() {
-  //   console.log('not implemented');
-  // }
-  // public async getWithdrawals() {
-  //   console.log('not implemented');
-  // }
-  // public async claim() {
-  //   console.log('not implemented');
-  // }
+  //////////////////////// ACTION: Permits ////////////////////////
+
+  /**
+   * Permit `spender` to transfer up to `value` of `token`
+   * that is Deposited in the Silo by `owner`.
+   */
+  public signDepositPermit = async (
+    owner: string,
+    spender: string,
+    token: string,
+    value: string,
+    nonce: string,
+    deadline: string,
+  ) => {
+    const message = {
+      owner,
+      spender,
+      token,
+      value,
+      nonce,
+      deadline: deadline || Permit.MAX_UINT256, // FIXME
+    };
+
+    const domain = Silo._EIP21612_DOMAIN;
+    const typedData = this.createTypedDepositTokenPermitData(message, domain);
+    const sig = await Silo.sdk.permit.signData(owner, typedData);
+
+    return { ...sig, ...message };
+  } 
+
+  //////////////////////// Permit Data ////////////////////////
+
+  static _EIP21612_DOMAIN : EIP712Domain = {
+    name: "SiloDeposit",
+    version: "1",
+    chainId: 1,
+    verifyingContract: "0xc1e088fc1323b20bcbee9bd1b9fc9546db5624c5",
+  };
+
+  public createTypedDepositTokenPermitData = (
+    message: DepositTokenPermitMessage,
+    domain: EIP712Domain,
+  ) => ({
+    types: {
+      EIP712Domain: Permit.EIP712_DOMAIN,
+      Permit: [
+        { name: "owner", type: "address" },
+        { name: "spender", type: "address" },
+        { name: "token", type: "address" },
+        { name: "value", type: "uint256" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+      ],
+    },
+    primaryType: "Permit",
+    domain,
+    message,
+  });
+
+  public createTypedDepositTokensPermitData = (
+    message: DepositTokensPermitMessage,
+    domain: EIP712Domain,
+  ) => ({
+    types: {
+      EIP712Domain: Permit.EIP712_DOMAIN,
+      Permit: [
+        { name: "owner", type: "address" },
+        { name: "spender", type: "address" },
+        { name: "tokens", type: "address[]" },
+        { name: "values", type: "uint256[]" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+      ],
+    },
+    primaryType: "Permit",
+    domain,
+    message,
+  });
 }

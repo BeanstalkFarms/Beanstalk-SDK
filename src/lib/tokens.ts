@@ -5,6 +5,7 @@ import BigNumber from 'bignumber.js';
 import { tokenBN } from './events/processor';
 import { TokenFacet } from '../constants/generated/Beanstalk/Beanstalk';
 import { ethers } from 'ethers';
+import { hexToUtf8, utf8ToASCII } from '../utils/Ledger';
 
 export type TokenBalance = {
   internal: BigNumber;
@@ -308,5 +309,41 @@ export class Tokens {
 
     return balances;
   }
-  
+
+  //////////////////////// Permit Data ////////////////////////
+
+  static NAME_FN = '0x06fdde03';
+  static DECIMALS_FN = '0x313ce567';
+
+  /**
+   * Get the on-chain `.name()` for an ERC-20 token.
+   * @todo make this work with ERC-1155 (does it already?)
+   * @note stored onchain in hex format, need to decode.
+   * @ref https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L81
+   */
+  public async getName(tokenAddress: string) {
+    return this.sdk.provider.call({
+      to: tokenAddress,
+      data: Tokens.NAME_FN,
+    }).then((n) => {
+      const utf8 = ethers.utils.toUtf8String(n);
+      return utf8;
+      // const decoder = new TextDecoder('utf-8');
+      // return .replace(/^\s+|\s+$/g, '');
+      // return utf8ToASCII(ethers.utils.toUtf8String(n)).replace(/^\s+|\s+$/g, '').trim();
+      // return hexToUtf8(n).substring(130)
+    });
+  }
+
+  /**
+   * Get the on-chain `.decimals()` for an ERC-20 token.
+   * @todo make this work with ERC-1155 (does it already?)
+   * @note stored onchain in hex format, need to decode.
+   */
+  public async getDecimals(tokenAddress: string) {
+    return this.sdk.provider.call({
+      to: tokenAddress,
+      data: Tokens.DECIMALS_FN,
+    }).then((d) => parseInt(d, 10));
+  }
 }
