@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { expect } from 'chai';
 import { DataSource } from '../types';
-import { getProvider } from '../../test/provider';
+import { getProvider, setupConnection } from '../../test/provider';
 
 import { BeanstalkSDK } from './BeanstalkSDK';
 import { Token } from '../classes/Token';
@@ -26,11 +26,15 @@ const account3 = '0x21DE18B6A8f78eDe6D16C50A167f6B222DC08DF7'; // BF Multisig
 
 /// Setup
 let sdk : BeanstalkSDK;
-beforeAll(() => {
+let account: string;
+beforeAll(async () => {
+  const { signer, provider, account: _account } = await setupConnection();
   sdk = new BeanstalkSDK({
-    provider: getProvider(),
+    provider: provider,
+    signer: signer,
     subgraphUrl: 'https://graph.node.bean.money/subgraphs/name/beanstalk-testing'
   });
+  account = _account;
 });
 
 ///
@@ -110,3 +114,56 @@ describe('Function: getBalances', function() {
     }
   });
 });
+
+///
+describe('Permits', function () {
+  it('permits', async () => {
+    const owner   = account;
+    const spender = sdk.contracts.root.address;
+    const token   = sdk.tokens.BEAN.address;
+    const amount  = sdk.tokens.BEAN.stringify(100);
+
+    const startAllowance = await sdk.contracts.beanstalk.depositAllowance(owner, spender, token);
+    const depositPermitNonces = await sdk.contracts.beanstalk.depositPermitNonces(owner);
+    
+    console.log("Initial allowance: ", startAllowance.toString())
+    console.log("Nonce: ", depositPermitNonces.toString())
+
+    // Get permit
+    const permit = await sdk.silo.permitDepositTokens(
+      owner,
+      spender,
+      [token],
+      [amount],
+      undefined, // nonce
+      undefined, // deadline
+    );
+
+    const sig = await sdk.permit.sign(owner, permit.typedData);
+
+    console.log("Signed permit", permit, sig)
+
+    // Send permit
+    await sdk.contracts.beanstalk.permitDeposit(
+      owner,
+      spender,
+      token,
+      amount,
+      permit.message.deadline,
+      sig.split.v,
+      sig.split.r,
+      sig.split.s,
+    );
+
+    // Verify
+    const allowance = await sdk.contracts.beanstalk.depositAllowance(owner, spender, token);
+    expect(allowance.toString()).to.be(amount);
+  });
+})
+
+///
+// describe('Contract aliases', function () {
+//   it('calls aliased $ methods properly', async () => {
+//     expect(await sdk.silo.$lastUpdate(account1)).to.be.greaterThan(0);
+//   });
+// })

@@ -14,34 +14,43 @@ export type EIP712Domain = {
 /// EIP-2612: EIP-20 Permit Extension: Signed Approvals
 /// https://eips.ethereum.org/EIPS/eip-2612
 /// @note applies EIP-712 signatures to tokens that adhere to EIP-20.
-export type EIP2612PermitMessage = {
+export type EIP712PermitMessage<
+  D extends {} = { value: number | string; }
+> = ({
   owner: string;
   spender: string;
-  value: number | string;
+} & D & {
   nonce: number | string;
   deadline: number | string;
-  // owner: string;
-  // spender: string;
-  // token: string;
-  // value: string;
-  // nonce: string;
-  // deadline: string;
-}
+});
 
+export type EIP2612PermitMessage = EIP712PermitMessage; // use default value for D
 export interface RSV {
   r: string;
   s: string;
   v: number;
 }
 
-export type ERC2612TypedData = {
+//
+export type EIP712TypedData<
+  Domain extends any = any, 
+  Message extends EIP712PermitMessage = any
+> = {
   types: {
     EIP712Domain: typeof Permit.EIP712_DOMAIN;
     Permit: ({ name: string; type: string; })[]
   };
   primaryType: string;
-  domain: any;
-  message: any;
+  domain: Domain;
+  message: Message;
+}
+
+export type SignablePermitData<
+  Message extends EIP2612PermitMessage = EIP2612PermitMessage
+> = {
+  owner: string;
+  message: Message;
+  typedData: EIP712TypedData;
 }
 
 /**
@@ -78,33 +87,6 @@ export class Permit {
     return { r, s, v };
   }
 
-  /**
-   * https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L85
-   */
-  async getERC2612Domain(
-    _tokenOrDomain: string | EIP712Domain
-  ): Promise<EIP712Domain> {
-    if (typeof _tokenOrDomain !== 'string') {
-      return _tokenOrDomain as EIP712Domain;
-    }
-  
-    const tokenAddress = _tokenOrDomain as string;
-    const token = Permit.sdk.tokens.findByAddress(tokenAddress);
-  
-    const [name, chainId] = await Promise.all([
-      // FIXME: assumes that token.name === token.name() on-chain
-      token ? token.name : Permit.sdk.tokens.getName(tokenAddress),
-      Permit.sdk.provider.getNetwork().then((network) => network.chainId),
-    ]);
-  
-    return {
-      name,
-      version: '1',
-      chainId,
-      verifyingContract: tokenAddress
-    };
-  };
-  
   //////////////////////// Sign Typed Data ////////////////////////
 
   /**
@@ -140,57 +122,4 @@ export class Permit {
       split: Permit.signatureToRSV(rawSignature),
     };
   }
-
-  //////////////////////// PERMIT: ERC-2612 (for ERC-20 tokens) ////////////////////////
-
-  /**
-   * https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L126
-   * 
-   * @fixme should this be in `tokens.ts`?
-   * @fixme does the order of keys in `message` matter? if not we could make an abstraction here
-   */
-  // public async signERC2612(
-  //   addressOrDomain: string | EIP712Domain,
-  //   owner: string,
-  //   spender: string,
-  //   value: string | number, // FIXME: included default on eth-permit
-  //   deadline?: number,      // FIXME: is MAX_UINT256 an appropriate default?
-  //   _nonce?: number,
-  // ) {
-  //   const tokenAddress = (addressOrDomain as EIP712Domain).verifyingContract || addressOrDomain as string;
-  //   const nonce = _nonce ?? await Permit.sdk.provider.call({
-  //     to: tokenAddress,
-  //     // data: `${Permit.NONCES_FN}${zeros(24)}${owner.substr(2)}`,
-  //   });
-
-  //   const message: EIP2612PermitMessage = {
-  //     owner,
-  //     spender,
-  //     value,
-  //     nonce,
-  //     deadline: deadline || Permit.MAX_UINT256,
-  //   };
-
-  //   const domain = await this.getERC2612Domain(addressOrDomain);
-  //   const typedData = this._createTypedERC2612Data(message, domain);
-  //   const sig = await this.sign(owner, typedData);
-
-  //   return { ...sig, ...message };
-  // }
-
-  // private _createTypedERC2612Data = (message: EIP2612PermitMessage, domain: EIP712Domain) => ({
-  //   types: {
-  //     EIP712Domain: Permit.EIP712_DOMAIN,
-  //     Permit: [
-  //       { name: "owner", type: "address" },
-  //       { name: "spender", type: "address" },
-  //       { name: "value", type: "uint256" },
-  //       { name: "nonce", type: "uint256" },
-  //       { name: "deadline", type: "uint256" },
-  //     ],
-  //   },
-  //   primaryType: "Permit",
-  //   domain,
-  //   message,
-  // })
 }

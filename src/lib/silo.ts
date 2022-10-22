@@ -9,8 +9,8 @@ import { toTokenUnitsBN } from '../utils/Tokens';
 
 import { BeanstalkSDK } from './BeanstalkSDK';
 import EventProcessor, { EventProcessorData, WithdrawalCrateRaw } from './events/processor';
-import { EIP712Domain, Permit } from './permit';
-import { DepositTokenPermitMessage, DepositTokensPermitMessage, _parseWithdrawalCrates } from './silo.utils';
+import { EIP712Domain, Permit, SignablePermitData } from './permit';
+import { CrateSortFn, DepositTokenPermitMessage, DepositTokensPermitMessage, sortCratesBySeason, _parseWithdrawalCrates } from './silo.utils';
 
 /**
  * A Crate is an `amount` of a token Deposited or
@@ -546,66 +546,55 @@ export class Silo {
 
     throw new Error(`Unsupported source: ${source}`);
   }
+  
+  //////////////////////// Crates ////////////////////////
+
+  pickCrates(
+    token: Token,
+    crates: Crate<BigNumber>[],
+    amount: BigNumber.Value,
+    sort: CrateSortFn = (crates) => sortCratesBySeason(crates, 'desc'),
+  ) {
+    const sortedCrates = sort(crates);
+    const seasons : string[] = [];
+    const amounts : string[] = [];
+    let remaining = new BigNumber(amount);
+    sortedCrates.some((crate) => {
+      const thisAmount = crate.amount.gt(remaining) ? crate.amount.minus(remaining) : crate.amount;
+      seasons.push(crate.season.toString());
+      amounts.push(token.stringify(thisAmount));
+      remaining = remaining.minus(thisAmount);
+      return remaining.eq(0); // done
+    });
+    if (!remaining.eq(0)) throw new Error('Not enough amount in crates');
+    return { seasons, amounts };
+  }
 
   //////////////////////// ACTION: Deposit ////////////////////////
   
   // public deposit = wrapped(Silo.sdk.contracts.beanstalk, 'deposit')
-
-  //////////////////////// ACTION: Permits ////////////////////////
-
-  /**
-   * Permit `spender` to transfer up to `value` of `token`
-   * that is Deposited in the Silo by `owner`.
-   */
-  // public signDepositPermit = async (
-  //   owner: string,
-  //   spender: string,
-  //   token: string,
-  //   value: string,
-  //   nonce: string,
-  //   deadline: string,
-  // ) => {
-  //   const message = {
-  //     owner,
-  //     spender,
-  //     token,
-  //     value,
-  //     nonce,
-  //     deadline: deadline || Permit.MAX_UINT256, // FIXME
-  //   };
-
-  //   const domain = Silo._EIP21612_DOMAIN;
-  //   const typedData = this.createTypedDepositTokenPermitData(message, domain);
-  //   const sig = await Silo.sdk.permit.sign(owner, typedData);
-
-  //   return { ...sig, ...message };
-  // } 
+  // $deposit = Silo.sdk.contracts.beanstalk.deposit;
+  // $plant = Silo.sdk.contracts.beanstalk.plant;
+  // $update = Silo.sdk.contracts.beanstalk.update;
+  // $lastUpdate = Silo.sdk.contracts.beanstalk.lastUpdate;
 
   //////////////////////// Permits ////////////////////////
 
   /**
    * Get the EIP-712 domain for the Silo.
+   * 
    * @note applies to both `depositToken` and `depositTokens` permits.
    */
   async _getEIP712Domain() {
     return {
       name: "SiloDeposit",
       version: "1",
-      chainId: (await Silo.sdk.provider.getNetwork()).chainId,
+      chainId: 1, // FIXME: switch to below after protocol patch
+      // chainId: (await Silo.sdk.provider.getNetwork()).chainId,
       verifyingContract: "0xc1e088fc1323b20bcbee9bd1b9fc9546db5624c5"
     }
   }
 
-  /**
-   * 
-   * @param owner 
-   * @param spender 
-   * @param token 
-   * @param value 
-   * @param _nonce 
-   * @param _deadline 
-   * @returns 
-   */
   async permitDepositToken(
     owner: string,
     spender: string,
@@ -632,12 +621,45 @@ export class Silo {
     };
 
     const typedData = this._createTypedDepositTokenPermitData(message, domain);
-    const signature = await Silo.sdk.permit.sign(owner, typedData);
 
-    return { ...signature, ...message };
+    return { message, typedData };
   }
 
-  private _createTypedDepositTokenPermitData = (
+  async permitDepositTokens(
+    owner: string,
+    spender: string,
+    tokens: string[],
+    values: string[],
+    _nonce?: string,
+    _deadline?: string,
+  ) {
+    if (tokens.length !== values.length) throw new Error('Input mismatch: number of tokens does not equal number of values');
+
+    // domain is dependent on current chainId
+    // if not provided grab nonce from Beanstalk
+    const deadline = _deadline || MAX_UINT256;
+    const [domain, nonce] = await Promise.all([
+      this._getEIP712Domain(), 
+      _nonce || (Silo.sdk.contracts.beanstalk.depositPermitNonces(owner).then((nonce) => nonce.toString())),
+    ]);
+
+    // TO DISCUSS: 
+    if (tokens.length === 1) console.warn('Optimization: use permitDepositToken when permitting one Silo Token.')
+
+    const message = {
+      owner,
+      spender,
+      tokens,
+      values,
+      nonce,
+      deadline
+    };
+    const typedData = this._createTypedDepositTokensPermitData(message, domain);
+
+    return { message, typedData };
+  }
+
+  _createTypedDepositTokenPermitData = (
     message: DepositTokenPermitMessage,
     domain: EIP712Domain,
   ) => ({
@@ -657,7 +679,7 @@ export class Silo {
     message,
   });
 
-  private _createTypedDepositTokensPermitData = (
+  _createTypedDepositTokensPermitData = (
     message: DepositTokensPermitMessage,
     domain: EIP712Domain,
   ) => ({
