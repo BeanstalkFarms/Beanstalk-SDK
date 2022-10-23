@@ -137,26 +137,26 @@ describe('Permits', function () {
     console.log("Nonce: ", depositPermitNonces.toString())
 
     // Get permit
-    const permit = await sdk.silo.permitDepositTokens(
+    const permitData = await sdk.silo.permitDepositToken(
       owner,
       spender,
-      [token],
-      [amount],
+      token,
+      amount,
       undefined, // nonce
       undefined, // deadline
     );
 
-    const sig = await sdk.permit.sign(owner, permit.typedData);
+    const sig = await sdk.permit.sign(owner, permitData);
 
-    console.log("Signed permit", permit, sig)
+    console.log("Signed permit", permitData, sig)
 
     // Send permit
     await sdk.contracts.beanstalk.permitDeposit(
       owner,
       spender,
-      token,
-      amount,
-      permit.message.deadline,
+      permitData.message.token,
+      permitData.message.value,
+      permitData.message.deadline,
       sig.split.v,
       sig.split.r,
       sig.split.s,

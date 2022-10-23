@@ -8,8 +8,8 @@ import { DataSource, StringMap } from '../types';
 import { toTokenUnitsBN } from '../utils/Tokens';
 
 import { BeanstalkSDK } from './BeanstalkSDK';
-import EventProcessor, { EventProcessorData, WithdrawalCrateRaw } from './events/processor';
-import { EIP712Domain, Permit, SignablePermitData } from './permit';
+import EventProcessor from './events/processor';
+import { EIP712Domain, EIP712TypedData, Permit } from './permit';
 import { CrateSortFn, DepositTokenPermitMessage, DepositTokensPermitMessage, sortCratesBySeason, _parseWithdrawalCrates } from './silo.utils';
 
 /**
@@ -652,7 +652,7 @@ export class Silo {
     value: string,
     _nonce?: string,
     _deadline?: string,
-  ) {
+  ) : Promise<EIP712TypedData<DepositTokenPermitMessage>> {
     // domain is dependent on current chainId
     // if not provided grab nonce from Beanstalk
     const [domain, nonce] = await Promise.all([
@@ -672,7 +672,7 @@ export class Silo {
 
     const typedData = this._createTypedDepositTokenPermitData(message, domain);
 
-    return { message, typedData };
+    return typedData;
   }
 
   async permitDepositTokens(
@@ -682,7 +682,7 @@ export class Silo {
     values: string[],
     _nonce?: string,
     _deadline?: string,
-  ) {
+  ): Promise<EIP712TypedData<DepositTokensPermitMessage>> {
     if (tokens.length !== values.length) throw new Error('Input mismatch: number of tokens does not equal number of values');
 
     // domain is dependent on current chainId
@@ -706,7 +706,7 @@ export class Silo {
     };
     const typedData = this._createTypedDepositTokensPermitData(message, domain);
 
-    return { message, typedData };
+    return typedData;
   }
 
   _createTypedDepositTokenPermitData = (

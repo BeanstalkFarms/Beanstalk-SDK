@@ -1,4 +1,4 @@
-import { Signer, VoidSigner } from "ethers";
+import { Signer, TypedDataField, VoidSigner } from "ethers";
 // import { zeros } from "../utils";
 import { BeanstalkSDK } from "./BeanstalkSDK";
 
@@ -15,7 +15,8 @@ export type EIP712Domain = {
 /// https://eips.ethereum.org/EIPS/eip-2612
 /// @note applies EIP-712 signatures to tokens that adhere to EIP-20.
 export type EIP712PermitMessage<
-  D extends {} = { value: number | string; }
+  D extends {} = {}
+  // D extends {} = { value: number | string; }
 > = ({
   owner: string;
   spender: string;
@@ -24,7 +25,7 @@ export type EIP712PermitMessage<
   deadline: number | string;
 });
 
-export type EIP2612PermitMessage = EIP712PermitMessage; // use default value for D
+export type EIP2612PermitMessage = EIP712PermitMessage<{ value: number | string }>; // use default value for D
 export interface RSV {
   r: string;
   s: string;
@@ -33,8 +34,8 @@ export interface RSV {
 
 //
 export type EIP712TypedData<
-  Domain extends any = any, 
-  Message extends EIP712PermitMessage = any
+  Message extends EIP712PermitMessage = any,
+  Domain extends EIP712Domain = EIP712Domain, 
 > = {
   types: {
     EIP712Domain: typeof Permit.EIP712_DOMAIN;
@@ -45,16 +46,22 @@ export type EIP712TypedData<
   message: Message;
 }
 
-export type SignablePermitData<
-  Message extends EIP2612PermitMessage = EIP2612PermitMessage
+export type SignedPermit<
+  Message extends EIP712PermitMessage = any,
+  Domain extends EIP712Domain = EIP712Domain,
 > = {
+  /** The account that signed the permit. */
   owner: string;
-  message: Message;
-  typedData: EIP712TypedData;
+  /** The typed data included within the permit. */
+  typedData: EIP712TypedData<Message, Domain>;
+  /** The raw signature output for this permit, signed by `owner`. */
+  rawSignature: string;
+  /** The "RSV" split of the raw signature. */
+  split: RSV;
 }
 
 /**
- * https://github.com/dmihal/eth-permit/blob/master/src/eth-permit.ts
+ * @ref https://github.com/dmihal/eth-permit/blob/master/src/eth-permit.ts
  */
 export class Permit {
   static sdk : BeanstalkSDK;
@@ -93,10 +100,14 @@ export class Permit {
    * Request a signature for arbitrary typed data.
    * @ref https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/rpc.ts#L73
    */
-  public async sign(
+  public async sign<
+    Message extends EIP712PermitMessage
+  >(
     owner: string,
-    typedData: any
-  ) : Promise<{ rawSignature: string; split: RSV; }> {
+    typedData: EIP712TypedData<Message>
+  ) : Promise<
+    SignedPermit<Message>
+  > {
     const signerAddress = await Permit.sdk.getAccount();
 
     if (signerAddress.toLowerCase() !== owner.toLowerCase()) {
@@ -109,15 +120,19 @@ export class Permit {
 
     const { 
       EIP712Domain: _unused, 
-      ...types 
+      ...types
     } = typedData.types;
 
+
     // Shim in case of method renaming.
+    // src/lib/permit.ts(129,48): semantic error TS2352: Conversion of type '{ Permit: { name: string; type: string; }[]; }' to type 'Record<string, TypedDataField[]>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first. Index signature is missing in type '{ Permit: { name: string; type: string; }[]; }'.
     const rawSignature = await (signer.signTypedData
-      ? signer.signTypedData(typedData.domain, types, typedData.message)
-      : signer._signTypedData(typedData.domain, types, typedData.message));
+      ? signer.signTypedData(typedData.domain, types as any as Record<string, TypedDataField[]>, typedData.message)
+      : signer._signTypedData(typedData.domain, types as any as Record<string, TypedDataField[]>, typedData.message));
   
     return {
+      owner,
+      typedData,
       rawSignature,
       split: Permit.signatureToRSV(rawSignature),
     };

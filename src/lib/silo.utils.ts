@@ -4,23 +4,19 @@ import { ZERO_BN } from "../constants";
 import { MapValueType } from "../types";
 import { toTokenUnitsBN } from "../utils/Tokens";
 import { EventProcessorData } from "./events/processor";
+import { EIP712PermitMessage } from "./permit";
 import { Crate, DepositCrate, TokenSiloBalance, WithdrawalCrate } from "./silo";
-export interface DepositTokenPermitMessage {
-  owner: string;
-  spender: string;
+
+// FIXME: resolve with EIP712PermitMessage
+export type DepositTokenPermitMessage = EIP712PermitMessage<{
   token: string;
   value: number | string;
-  nonce: number | string;
-  deadline: number | string;
-}
-export interface DepositTokensPermitMessage {
-  owner: string;
-  spender: string;
+}>
+
+export type DepositTokensPermitMessage = EIP712PermitMessage<{
   tokens: string[];
   values: (number | string)[];
-  nonce: number | string;
-  deadline: number | string;
-}
+}>
 
 export type CrateSortFn = <T extends Crate<BigNumber>>(crates: T[]) => T[];
 
