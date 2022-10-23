@@ -29,6 +29,38 @@ import type {
   PromiseOrValue,
 } from "../common";
 
+export type AdvancedPipeStruct = {
+  target: PromiseOrValue<string>;
+  callData: PromiseOrValue<BytesLike>;
+  advancedData: PromiseOrValue<BytesLike>;
+};
+
+export type AdvancedPipeStructOutput = [string, string, string] & {
+  target: string;
+  callData: string;
+  advancedData: string;
+};
+
+export type PipeStruct = {
+  target: PromiseOrValue<string>;
+  data: PromiseOrValue<BytesLike>;
+};
+
+export type PipeStructOutput = [string, string] & {
+  target: string;
+  data: string;
+};
+
+export type AdvancedDataStruct = {
+  callData: PromiseOrValue<BytesLike>;
+  advancedData: PromiseOrValue<BytesLike>;
+};
+
+export type AdvancedDataStructOutput = [string, string] & {
+  callData: string;
+  advancedData: string;
+};
+
 export declare namespace IDiamondCut {
   export type FacetCutStruct = {
     facetAddress: PromiseOrValue<string>;
@@ -293,12 +325,18 @@ export interface BeanstalkInterface extends utils.Interface {
     "removeLiquidity(address,address,uint256,uint256[],uint8,uint8)": FunctionFragment;
     "removeLiquidityImbalance(address,address,uint256[],uint256,uint8,uint8)": FunctionFragment;
     "removeLiquidityOneToken(address,address,address,uint256,uint256,uint8,uint8)": FunctionFragment;
+    "advancedPipe((address,bytes,bytes)[],uint256)": FunctionFragment;
+    "etherPipe((address,bytes),uint256)": FunctionFragment;
+    "multiPipe((address,bytes)[])": FunctionFragment;
+    "pipe((address,bytes))": FunctionFragment;
+    "readPipe((address,bytes))": FunctionFragment;
     "diamondCut((address,uint8,bytes4[])[],address,bytes)": FunctionFragment;
     "facetAddress(bytes4)": FunctionFragment;
     "facetAddresses()": FunctionFragment;
     "facetFunctionSelectors(address)": FunctionFragment;
     "facets()": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
+    "advancedFarm((bytes,bytes)[])": FunctionFragment;
     "farm(bytes[])": FunctionFragment;
     "addFertilizerOwner(uint128,uint128,uint256)": FunctionFragment;
     "balanceOfBatchFertilizer(address[],uint256[])": FunctionFragment;
@@ -345,13 +383,21 @@ export interface BeanstalkInterface extends utils.Interface {
     "approvePods(address,uint256)": FunctionFragment;
     "cancelPodListing(uint256)": FunctionFragment;
     "cancelPodOrder(uint24,uint256,uint8)": FunctionFragment;
+    "cancelPodOrderV2(uint256,bytes,uint8)": FunctionFragment;
     "createPodListing(uint256,uint256,uint256,uint24,uint256,uint8)": FunctionFragment;
+    "createPodListingV2(uint256,uint256,uint256,uint256,bytes,uint8)": FunctionFragment;
     "createPodOrder(uint256,uint24,uint256,uint8)": FunctionFragment;
+    "createPodOrderV2(uint256,uint256,bytes,uint8)": FunctionFragment;
     "fillPodListing((address,uint256,uint256,uint256,uint24,uint256,uint8),uint256,uint8)": FunctionFragment;
+    "fillPodListingV2((address,uint256,uint256,uint256,uint24,uint256,uint8),uint256,bytes,uint8)": FunctionFragment;
     "fillPodOrder((address,uint24,uint256),uint256,uint256,uint256,uint8)": FunctionFragment;
+    "fillPodOrderV2((address,uint24,uint256),uint256,uint256,uint256,bytes,uint8)": FunctionFragment;
+    "getAmountBeansToFillOrderV2(uint256,uint256,bytes)": FunctionFragment;
+    "getAmountPodsFromFillListingV2(uint256,uint256,uint256,bytes)": FunctionFragment;
     "podListing(uint256)": FunctionFragment;
     "podOrder(address,uint24,uint256)": FunctionFragment;
     "podOrderById(bytes32)": FunctionFragment;
+    "podOrderV2(address,uint256,bytes)": FunctionFragment;
     "transferPlot(address,address,uint256,uint256,uint256)": FunctionFragment;
     "claimOwnership()": FunctionFragment;
     "owner()": FunctionFragment;
@@ -387,6 +433,8 @@ export interface BeanstalkInterface extends utils.Interface {
     "decreaseDepositAllowance(address,address,uint256)": FunctionFragment;
     "deposit(address,uint256,uint8)": FunctionFragment;
     "depositAllowance(address,address,address)": FunctionFragment;
+    "depositPermitDomainSeparator()": FunctionFragment;
+    "depositPermitNonces(address)": FunctionFragment;
     "enrootDeposit(address,uint32,uint256)": FunctionFragment;
     "enrootDeposits(address,uint32[],uint256[])": FunctionFragment;
     "getDeposit(address,address,uint32)": FunctionFragment;
@@ -396,6 +444,8 @@ export interface BeanstalkInterface extends utils.Interface {
     "increaseDepositAllowance(address,address,uint256)": FunctionFragment;
     "lastSeasonOfPlenty()": FunctionFragment;
     "lastUpdate(address)": FunctionFragment;
+    "permitDeposit(address,address,address,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
+    "permitDeposits(address,address,address[],uint256[],uint256,uint8,bytes32,bytes32)": FunctionFragment;
     "plant()": FunctionFragment;
     "tokenSettings(address)": FunctionFragment;
     "totalEarnedBeans()": FunctionFragment;
@@ -408,6 +458,8 @@ export interface BeanstalkInterface extends utils.Interface {
     "withdrawDeposit(address,uint32,uint256)": FunctionFragment;
     "withdrawDeposits(address,uint32[],uint256[])": FunctionFragment;
     "withdrawFreeze()": FunctionFragment;
+    "approveToken(address,address,uint256)": FunctionFragment;
+    "decreaseTokenAllowance(address,address,uint256)": FunctionFragment;
     "getAllBalance(address,address)": FunctionFragment;
     "getAllBalances(address,address[])": FunctionFragment;
     "getBalance(address,address)": FunctionFragment;
@@ -416,7 +468,14 @@ export interface BeanstalkInterface extends utils.Interface {
     "getExternalBalances(address,address[])": FunctionFragment;
     "getInternalBalance(address,address)": FunctionFragment;
     "getInternalBalances(address,address[])": FunctionFragment;
+    "increaseTokenAllowance(address,address,uint256)": FunctionFragment;
+    "permitERC20(address,address,address,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
+    "permitToken(address,address,address,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
+    "tokenAllowance(address,address,address)": FunctionFragment;
+    "tokenPermitDomainSeparator()": FunctionFragment;
+    "tokenPermitNonces(address)": FunctionFragment;
     "transferToken(address,address,uint256,uint8,uint8)": FunctionFragment;
+    "transferTokenFrom(address,address,address,uint256,uint8,uint8)": FunctionFragment;
     "unwrapEth(uint256,uint8)": FunctionFragment;
     "wrapEth(uint256,uint8)": FunctionFragment;
     "_getPenalizedUnderlying(address,uint256,uint256)": FunctionFragment;
@@ -456,12 +515,18 @@ export interface BeanstalkInterface extends utils.Interface {
       | "removeLiquidity"
       | "removeLiquidityImbalance"
       | "removeLiquidityOneToken"
+      | "advancedPipe"
+      | "etherPipe"
+      | "multiPipe"
+      | "pipe"
+      | "readPipe"
       | "diamondCut"
       | "facetAddress"
       | "facetAddresses"
       | "facetFunctionSelectors"
       | "facets"
       | "supportsInterface"
+      | "advancedFarm"
       | "farm"
       | "addFertilizerOwner"
       | "balanceOfBatchFertilizer"
@@ -508,13 +573,21 @@ export interface BeanstalkInterface extends utils.Interface {
       | "approvePods"
       | "cancelPodListing"
       | "cancelPodOrder"
+      | "cancelPodOrderV2"
       | "createPodListing"
+      | "createPodListingV2"
       | "createPodOrder"
+      | "createPodOrderV2"
       | "fillPodListing"
+      | "fillPodListingV2"
       | "fillPodOrder"
+      | "fillPodOrderV2"
+      | "getAmountBeansToFillOrderV2"
+      | "getAmountPodsFromFillListingV2"
       | "podListing"
       | "podOrder"
       | "podOrderById"
+      | "podOrderV2"
       | "transferPlot"
       | "claimOwnership"
       | "owner"
@@ -550,6 +623,8 @@ export interface BeanstalkInterface extends utils.Interface {
       | "decreaseDepositAllowance"
       | "deposit"
       | "depositAllowance"
+      | "depositPermitDomainSeparator"
+      | "depositPermitNonces"
       | "enrootDeposit"
       | "enrootDeposits"
       | "getDeposit"
@@ -559,6 +634,8 @@ export interface BeanstalkInterface extends utils.Interface {
       | "increaseDepositAllowance"
       | "lastSeasonOfPlenty"
       | "lastUpdate"
+      | "permitDeposit"
+      | "permitDeposits"
       | "plant"
       | "tokenSettings"
       | "totalEarnedBeans"
@@ -571,6 +648,8 @@ export interface BeanstalkInterface extends utils.Interface {
       | "withdrawDeposit"
       | "withdrawDeposits"
       | "withdrawFreeze"
+      | "approveToken"
+      | "decreaseTokenAllowance"
       | "getAllBalance"
       | "getAllBalances"
       | "getBalance"
@@ -579,7 +658,14 @@ export interface BeanstalkInterface extends utils.Interface {
       | "getExternalBalances"
       | "getInternalBalance"
       | "getInternalBalances"
+      | "increaseTokenAllowance"
+      | "permitERC20"
+      | "permitToken"
+      | "tokenAllowance"
+      | "tokenPermitDomainSeparator"
+      | "tokenPermitNonces"
       | "transferToken"
+      | "transferTokenFrom"
       | "unwrapEth"
       | "wrapEth"
       | "_getPenalizedUnderlying"
@@ -714,6 +800,23 @@ export interface BeanstalkInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "advancedPipe",
+    values: [AdvancedPipeStruct[], PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "etherPipe",
+    values: [PipeStruct, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "multiPipe",
+    values: [PipeStruct[]]
+  ): string;
+  encodeFunctionData(functionFragment: "pipe", values: [PipeStruct]): string;
+  encodeFunctionData(
+    functionFragment: "readPipe",
+    values: [PipeStruct]
+  ): string;
+  encodeFunctionData(
     functionFragment: "diamondCut",
     values: [
       IDiamondCut.FacetCutStruct[],
@@ -737,6 +840,10 @@ export interface BeanstalkInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "supportsInterface",
     values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "advancedFarm",
+    values: [AdvancedDataStruct[]]
   ): string;
   encodeFunctionData(
     functionFragment: "farm",
@@ -929,6 +1036,14 @@ export interface BeanstalkInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "cancelPodOrderV2",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "createPodListing",
     values: [
       PromiseOrValue<BigNumberish>,
@@ -936,6 +1051,17 @@ export interface BeanstalkInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "createPodListingV2",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
       PromiseOrValue<BigNumberish>
     ]
   ): string;
@@ -949,10 +1075,28 @@ export interface BeanstalkInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "createPodOrderV2",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "fillPodListing",
     values: [
       Listing.PodListingStruct,
       PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "fillPodListingV2",
+    values: [
+      Listing.PodListingStruct,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
       PromiseOrValue<BigNumberish>
     ]
   ): string;
@@ -964,6 +1108,34 @@ export interface BeanstalkInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "fillPodOrderV2",
+    values: [
+      Order.PodOrderStruct,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getAmountBeansToFillOrderV2",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getAmountPodsFromFillListingV2",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>
     ]
   ): string;
   encodeFunctionData(
@@ -981,6 +1153,14 @@ export interface BeanstalkInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "podOrderById",
     values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "podOrderV2",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "transferPlot",
@@ -1123,6 +1303,14 @@ export interface BeanstalkInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "depositPermitDomainSeparator",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "depositPermitNonces",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "enrootDeposit",
     values: [
       PromiseOrValue<string>,
@@ -1177,6 +1365,32 @@ export interface BeanstalkInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "lastUpdate",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "permitDeposit",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BytesLike>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "permitDeposits",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>[],
+      PromiseOrValue<BigNumberish>[],
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BytesLike>
+    ]
   ): string;
   encodeFunctionData(functionFragment: "plant", values?: undefined): string;
   encodeFunctionData(
@@ -1244,6 +1458,22 @@ export interface BeanstalkInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "approveToken",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "decreaseTokenAllowance",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getAllBalance",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
@@ -1276,8 +1506,69 @@ export interface BeanstalkInterface extends utils.Interface {
     values: [PromiseOrValue<string>, PromiseOrValue<string>[]]
   ): string;
   encodeFunctionData(
+    functionFragment: "increaseTokenAllowance",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "permitERC20",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BytesLike>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "permitToken",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BytesLike>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "tokenAllowance",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "tokenPermitDomainSeparator",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "tokenPermitNonces",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "transferToken",
     values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "transferTokenFrom",
+    values: [
+      PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
@@ -1434,6 +1725,14 @@ export interface BeanstalkInterface extends utils.Interface {
     functionFragment: "removeLiquidityOneToken",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "advancedPipe",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "etherPipe", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "multiPipe", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "pipe", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "readPipe", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "diamondCut", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "facetAddress",
@@ -1450,6 +1749,10 @@ export interface BeanstalkInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "facets", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "supportsInterface",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "advancedFarm",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "farm", data: BytesLike): Result;
@@ -1595,7 +1898,15 @@ export interface BeanstalkInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "cancelPodOrderV2",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "createPodListing",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "createPodListingV2",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -1603,11 +1914,31 @@ export interface BeanstalkInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "createPodOrderV2",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "fillPodListing",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "fillPodListingV2",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "fillPodOrder",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "fillPodOrderV2",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getAmountBeansToFillOrderV2",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getAmountPodsFromFillListingV2",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "podListing", data: BytesLike): Result;
@@ -1616,6 +1947,7 @@ export interface BeanstalkInterface extends utils.Interface {
     functionFragment: "podOrderById",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "podOrderV2", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferPlot",
     data: BytesLike
@@ -1718,6 +2050,14 @@ export interface BeanstalkInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "depositPermitDomainSeparator",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "depositPermitNonces",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "enrootDeposit",
     data: BytesLike
   ): Result;
@@ -1747,6 +2087,14 @@ export interface BeanstalkInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "lastUpdate", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "permitDeposit",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "permitDeposits",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "plant", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "tokenSettings",
@@ -1781,6 +2129,14 @@ export interface BeanstalkInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "approveToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "decreaseTokenAllowance",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getAllBalance",
     data: BytesLike
   ): Result;
@@ -1810,7 +2166,35 @@ export interface BeanstalkInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "increaseTokenAllowance",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "permitERC20",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "permitToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "tokenAllowance",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "tokenPermitDomainSeparator",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "tokenPermitNonces",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "transferToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "transferTokenFrom",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "unwrapEth", data: BytesLike): Result;
@@ -1890,11 +2274,11 @@ export interface BeanstalkInterface extends utils.Interface {
     "FundFundraiser(address,uint32,uint256)": EventFragment;
     "PlotTransfer(address,address,uint256,uint256)": EventFragment;
     "PodApproval(address,address,uint256)": EventFragment;
-    "PodListingCreated(address,uint256,uint256,uint256,uint24,uint256,uint8)": EventFragment;
-    "PodListingFilled(address,address,uint256,uint256,uint256)": EventFragment;
+    "PodListingCreated(address,uint256,uint256,uint256,uint24,uint256,bytes,uint8,uint8)": EventFragment;
+    "PodListingFilled(address,address,uint256,uint256,uint256,uint256)": EventFragment;
     "PodOrderCancelled(address,bytes32)": EventFragment;
-    "PodOrderCreated(address,bytes32,uint256,uint24,uint256)": EventFragment;
-    "PodOrderFilled(address,address,bytes32,uint256,uint256,uint256)": EventFragment;
+    "PodOrderCreated(address,bytes32,uint256,uint24,uint256,bytes,uint8)": EventFragment;
+    "PodOrderFilled(address,address,bytes32,uint256,uint256,uint256,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Pause(uint256)": EventFragment;
     "Unpause(uint256,uint256)": EventFragment;
@@ -1916,6 +2300,7 @@ export interface BeanstalkInterface extends utils.Interface {
     "SeedsBalanceChanged(address,int256)": EventFragment;
     "StalkBalanceChanged(address,int256,int256)": EventFragment;
     "InternalBalanceChanged(address,address,int256)": EventFragment;
+    "TokenApproval(address,address,address,uint256)": EventFragment;
     "AddUnripeToken(address,address,bytes32)": EventFragment;
     "ChangeUnderlying(address,int256)": EventFragment;
     "Chop(address,address,uint256,uint256)": EventFragment;
@@ -1962,6 +2347,7 @@ export interface BeanstalkInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "SeedsBalanceChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "StalkBalanceChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "InternalBalanceChanged"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "TokenApproval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AddUnripeToken"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ChangeUnderlying"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Chop"): EventFragment;
@@ -2127,10 +2513,22 @@ export interface PodListingCreatedEventObject {
   amount: BigNumber;
   pricePerPod: number;
   maxHarvestableIndex: BigNumber;
+  pricingFunction: string;
   mode: number;
+  pricingType: number;
 }
 export type PodListingCreatedEvent = TypedEvent<
-  [string, BigNumber, BigNumber, BigNumber, number, BigNumber, number],
+  [
+    string,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    number,
+    BigNumber,
+    string,
+    number,
+    number
+  ],
   PodListingCreatedEventObject
 >;
 
@@ -2143,9 +2541,10 @@ export interface PodListingFilledEventObject {
   index: BigNumber;
   start: BigNumber;
   amount: BigNumber;
+  costInBeans: BigNumber;
 }
 export type PodListingFilledEvent = TypedEvent<
-  [string, string, BigNumber, BigNumber, BigNumber],
+  [string, string, BigNumber, BigNumber, BigNumber, BigNumber],
   PodListingFilledEventObject
 >;
 
@@ -2170,9 +2569,11 @@ export interface PodOrderCreatedEventObject {
   amount: BigNumber;
   pricePerPod: number;
   maxPlaceInLine: BigNumber;
+  pricingFunction: string;
+  priceType: number;
 }
 export type PodOrderCreatedEvent = TypedEvent<
-  [string, string, BigNumber, number, BigNumber],
+  [string, string, BigNumber, number, BigNumber, string, number],
   PodOrderCreatedEventObject
 >;
 
@@ -2185,9 +2586,10 @@ export interface PodOrderFilledEventObject {
   index: BigNumber;
   start: BigNumber;
   amount: BigNumber;
+  costInBeans: BigNumber;
 }
 export type PodOrderFilledEvent = TypedEvent<
-  [string, string, string, BigNumber, BigNumber, BigNumber],
+  [string, string, string, BigNumber, BigNumber, BigNumber, BigNumber],
   PodOrderFilledEventObject
 >;
 
@@ -2436,6 +2838,19 @@ export type InternalBalanceChangedEvent = TypedEvent<
 export type InternalBalanceChangedEventFilter =
   TypedEventFilter<InternalBalanceChangedEvent>;
 
+export interface TokenApprovalEventObject {
+  owner: string;
+  spender: string;
+  token: string;
+  amount: BigNumber;
+}
+export type TokenApprovalEvent = TypedEvent<
+  [string, string, string, BigNumber],
+  TokenApprovalEventObject
+>;
+
+export type TokenApprovalEventFilter = TypedEventFilter<TokenApprovalEvent>;
+
 export interface AddUnripeTokenEventObject {
   unripeToken: string;
   underlyingToken: string;
@@ -2646,6 +3061,33 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    advancedPipe(
+      pipes: AdvancedPipeStruct[],
+      value: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    etherPipe(
+      p: PipeStruct,
+      value: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    multiPipe(
+      pipes: PipeStruct[],
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    pipe(
+      p: PipeStruct,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    readPipe(
+      p: PipeStruct,
+      overrides?: CallOverrides
+    ): Promise<[string] & { result: string }>;
+
     diamondCut(
       _diamondCut: IDiamondCut.FacetCutStruct[],
       _init: PromiseOrValue<string>,
@@ -2679,6 +3121,11 @@ export interface Beanstalk extends BaseContract {
       _interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
+
+    advancedFarm(
+      data: AdvancedDataStruct[],
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     farm(
       data: PromiseOrValue<BytesLike>[],
@@ -2891,12 +3338,29 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    cancelPodOrderV2(
+      maxPlaceInLine: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     createPodListing(
       index: PromiseOrValue<BigNumberish>,
       start: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       pricePerPod: PromiseOrValue<BigNumberish>,
       maxHarvestableIndex: PromiseOrValue<BigNumberish>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    createPodListingV2(
+      index: PromiseOrValue<BigNumberish>,
+      start: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      maxHarvestableIndex: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -2909,9 +3373,25 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    createPodOrderV2(
+      beanAmount: PromiseOrValue<BigNumberish>,
+      maxPlaceInLine: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     fillPodListing(
       l: Listing.PodListingStruct,
       beanAmount: PromiseOrValue<BigNumberish>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    fillPodListingV2(
+      l: Listing.PodListingStruct,
+      beanAmount: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -2924,6 +3404,31 @@ export interface Beanstalk extends BaseContract {
       mode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    fillPodOrderV2(
+      o: Order.PodOrderStruct,
+      index: PromiseOrValue<BigNumberish>,
+      start: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    getAmountBeansToFillOrderV2(
+      placeInLine: PromiseOrValue<BigNumberish>,
+      amountPodsFromOrder: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { beanAmount: BigNumber }>;
+
+    getAmountPodsFromFillListingV2(
+      placeInLine: PromiseOrValue<BigNumberish>,
+      podListingAmount: PromiseOrValue<BigNumberish>,
+      fillBeanAmount: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { amount: BigNumber }>;
 
     podListing(
       index: PromiseOrValue<BigNumberish>,
@@ -2939,6 +3444,13 @@ export interface Beanstalk extends BaseContract {
 
     podOrderById(
       id: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    podOrderV2(
+      account: PromiseOrValue<string>,
+      maxPlaceInLine: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
@@ -3106,6 +3618,13 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    depositPermitDomainSeparator(overrides?: CallOverrides): Promise<[string]>;
+
+    depositPermitNonces(
+      owner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     enrootDeposit(
       token: PromiseOrValue<string>,
       _season: PromiseOrValue<BigNumberish>,
@@ -3157,6 +3676,30 @@ export interface Beanstalk extends BaseContract {
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[number]>;
+
+    permitDeposit(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    permitDeposits(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      tokens: PromiseOrValue<string>[],
+      values: PromiseOrValue<BigNumberish>[],
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     plant(
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
@@ -3214,6 +3757,20 @@ export interface Beanstalk extends BaseContract {
 
     withdrawFreeze(overrides?: CallOverrides): Promise<[number]>;
 
+    approveToken(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    decreaseTokenAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      subtractedValue: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     getAllBalance(
       account: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
@@ -3268,8 +3825,63 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber[]] & { balances: BigNumber[] }>;
 
+    increaseTokenAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      addedValue: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    permitERC20(
+      token: PromiseOrValue<string>,
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    permitToken(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    tokenAllowance(
+      account: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    tokenPermitDomainSeparator(overrides?: CallOverrides): Promise<[string]>;
+
+    tokenPermitNonces(
+      owner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     transferToken(
       token: PromiseOrValue<string>,
+      recipient: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      fromMode: PromiseOrValue<BigNumberish>,
+      toMode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    transferTokenFrom(
+      token: PromiseOrValue<string>,
+      sender: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       fromMode: PromiseOrValue<BigNumberish>,
@@ -3512,6 +4124,30 @@ export interface Beanstalk extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  advancedPipe(
+    pipes: AdvancedPipeStruct[],
+    value: PromiseOrValue<BigNumberish>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  etherPipe(
+    p: PipeStruct,
+    value: PromiseOrValue<BigNumberish>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  multiPipe(
+    pipes: PipeStruct[],
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  pipe(
+    p: PipeStruct,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  readPipe(p: PipeStruct, overrides?: CallOverrides): Promise<string>;
+
   diamondCut(
     _diamondCut: IDiamondCut.FacetCutStruct[],
     _init: PromiseOrValue<string>,
@@ -3537,6 +4173,11 @@ export interface Beanstalk extends BaseContract {
     _interfaceId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<boolean>;
+
+  advancedFarm(
+    data: AdvancedDataStruct[],
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   farm(
     data: PromiseOrValue<BytesLike>[],
@@ -3733,12 +4374,29 @@ export interface Beanstalk extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  cancelPodOrderV2(
+    maxPlaceInLine: PromiseOrValue<BigNumberish>,
+    pricingFunction: PromiseOrValue<BytesLike>,
+    mode: PromiseOrValue<BigNumberish>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   createPodListing(
     index: PromiseOrValue<BigNumberish>,
     start: PromiseOrValue<BigNumberish>,
     amount: PromiseOrValue<BigNumberish>,
     pricePerPod: PromiseOrValue<BigNumberish>,
     maxHarvestableIndex: PromiseOrValue<BigNumberish>,
+    mode: PromiseOrValue<BigNumberish>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  createPodListingV2(
+    index: PromiseOrValue<BigNumberish>,
+    start: PromiseOrValue<BigNumberish>,
+    amount: PromiseOrValue<BigNumberish>,
+    maxHarvestableIndex: PromiseOrValue<BigNumberish>,
+    pricingFunction: PromiseOrValue<BytesLike>,
     mode: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -3751,9 +4409,25 @@ export interface Beanstalk extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  createPodOrderV2(
+    beanAmount: PromiseOrValue<BigNumberish>,
+    maxPlaceInLine: PromiseOrValue<BigNumberish>,
+    pricingFunction: PromiseOrValue<BytesLike>,
+    mode: PromiseOrValue<BigNumberish>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   fillPodListing(
     l: Listing.PodListingStruct,
     beanAmount: PromiseOrValue<BigNumberish>,
+    mode: PromiseOrValue<BigNumberish>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  fillPodListingV2(
+    l: Listing.PodListingStruct,
+    beanAmount: PromiseOrValue<BigNumberish>,
+    pricingFunction: PromiseOrValue<BytesLike>,
     mode: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -3766,6 +4440,31 @@ export interface Beanstalk extends BaseContract {
     mode: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
+
+  fillPodOrderV2(
+    o: Order.PodOrderStruct,
+    index: PromiseOrValue<BigNumberish>,
+    start: PromiseOrValue<BigNumberish>,
+    amount: PromiseOrValue<BigNumberish>,
+    pricingFunction: PromiseOrValue<BytesLike>,
+    mode: PromiseOrValue<BigNumberish>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  getAmountBeansToFillOrderV2(
+    placeInLine: PromiseOrValue<BigNumberish>,
+    amountPodsFromOrder: PromiseOrValue<BigNumberish>,
+    pricingFunction: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  getAmountPodsFromFillListingV2(
+    placeInLine: PromiseOrValue<BigNumberish>,
+    podListingAmount: PromiseOrValue<BigNumberish>,
+    fillBeanAmount: PromiseOrValue<BigNumberish>,
+    pricingFunction: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   podListing(
     index: PromiseOrValue<BigNumberish>,
@@ -3781,6 +4480,13 @@ export interface Beanstalk extends BaseContract {
 
   podOrderById(
     id: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  podOrderV2(
+    account: PromiseOrValue<string>,
+    maxPlaceInLine: PromiseOrValue<BigNumberish>,
+    pricingFunction: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
@@ -3940,6 +4646,13 @@ export interface Beanstalk extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  depositPermitDomainSeparator(overrides?: CallOverrides): Promise<string>;
+
+  depositPermitNonces(
+    owner: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   enrootDeposit(
     token: PromiseOrValue<string>,
     _season: PromiseOrValue<BigNumberish>,
@@ -3991,6 +4704,30 @@ export interface Beanstalk extends BaseContract {
     account: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<number>;
+
+  permitDeposit(
+    owner: PromiseOrValue<string>,
+    spender: PromiseOrValue<string>,
+    token: PromiseOrValue<string>,
+    value: PromiseOrValue<BigNumberish>,
+    deadline: PromiseOrValue<BigNumberish>,
+    v: PromiseOrValue<BigNumberish>,
+    r: PromiseOrValue<BytesLike>,
+    s: PromiseOrValue<BytesLike>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  permitDeposits(
+    owner: PromiseOrValue<string>,
+    spender: PromiseOrValue<string>,
+    tokens: PromiseOrValue<string>[],
+    values: PromiseOrValue<BigNumberish>[],
+    deadline: PromiseOrValue<BigNumberish>,
+    v: PromiseOrValue<BigNumberish>,
+    r: PromiseOrValue<BytesLike>,
+    s: PromiseOrValue<BytesLike>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   plant(
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
@@ -4048,6 +4785,20 @@ export interface Beanstalk extends BaseContract {
 
   withdrawFreeze(overrides?: CallOverrides): Promise<number>;
 
+  approveToken(
+    spender: PromiseOrValue<string>,
+    token: PromiseOrValue<string>,
+    amount: PromiseOrValue<BigNumberish>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  decreaseTokenAllowance(
+    spender: PromiseOrValue<string>,
+    token: PromiseOrValue<string>,
+    subtractedValue: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   getAllBalance(
     account: PromiseOrValue<string>,
     token: PromiseOrValue<string>,
@@ -4096,8 +4847,63 @@ export interface Beanstalk extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber[]>;
 
+  increaseTokenAllowance(
+    spender: PromiseOrValue<string>,
+    token: PromiseOrValue<string>,
+    addedValue: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  permitERC20(
+    token: PromiseOrValue<string>,
+    owner: PromiseOrValue<string>,
+    spender: PromiseOrValue<string>,
+    value: PromiseOrValue<BigNumberish>,
+    deadline: PromiseOrValue<BigNumberish>,
+    v: PromiseOrValue<BigNumberish>,
+    r: PromiseOrValue<BytesLike>,
+    s: PromiseOrValue<BytesLike>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  permitToken(
+    owner: PromiseOrValue<string>,
+    spender: PromiseOrValue<string>,
+    token: PromiseOrValue<string>,
+    value: PromiseOrValue<BigNumberish>,
+    deadline: PromiseOrValue<BigNumberish>,
+    v: PromiseOrValue<BigNumberish>,
+    r: PromiseOrValue<BytesLike>,
+    s: PromiseOrValue<BytesLike>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  tokenAllowance(
+    account: PromiseOrValue<string>,
+    spender: PromiseOrValue<string>,
+    token: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  tokenPermitDomainSeparator(overrides?: CallOverrides): Promise<string>;
+
+  tokenPermitNonces(
+    owner: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   transferToken(
     token: PromiseOrValue<string>,
+    recipient: PromiseOrValue<string>,
+    amount: PromiseOrValue<BigNumberish>,
+    fromMode: PromiseOrValue<BigNumberish>,
+    toMode: PromiseOrValue<BigNumberish>,
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  transferTokenFrom(
+    token: PromiseOrValue<string>,
+    sender: PromiseOrValue<string>,
     recipient: PromiseOrValue<string>,
     amount: PromiseOrValue<BigNumberish>,
     fromMode: PromiseOrValue<BigNumberish>,
@@ -4346,6 +5152,27 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    advancedPipe(
+      pipes: AdvancedPipeStruct[],
+      value: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<string[]>;
+
+    etherPipe(
+      p: PipeStruct,
+      value: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
+    multiPipe(
+      pipes: PipeStruct[],
+      overrides?: CallOverrides
+    ): Promise<string[]>;
+
+    pipe(p: PipeStruct, overrides?: CallOverrides): Promise<string>;
+
+    readPipe(p: PipeStruct, overrides?: CallOverrides): Promise<string>;
+
     diamondCut(
       _diamondCut: IDiamondCut.FacetCutStruct[],
       _init: PromiseOrValue<string>,
@@ -4374,10 +5201,15 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
+    advancedFarm(
+      data: AdvancedDataStruct[],
+      overrides?: CallOverrides
+    ): Promise<string[]>;
+
     farm(
       data: PromiseOrValue<BytesLike>[],
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<string[]>;
 
     addFertilizerOwner(
       id: PromiseOrValue<BigNumberish>,
@@ -4569,12 +5401,29 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    cancelPodOrderV2(
+      maxPlaceInLine: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     createPodListing(
       index: PromiseOrValue<BigNumberish>,
       start: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       pricePerPod: PromiseOrValue<BigNumberish>,
       maxHarvestableIndex: PromiseOrValue<BigNumberish>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    createPodListingV2(
+      index: PromiseOrValue<BigNumberish>,
+      start: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      maxHarvestableIndex: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -4587,9 +5436,25 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    createPodOrderV2(
+      beanAmount: PromiseOrValue<BigNumberish>,
+      maxPlaceInLine: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
     fillPodListing(
       l: Listing.PodListingStruct,
       beanAmount: PromiseOrValue<BigNumberish>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    fillPodListingV2(
+      l: Listing.PodListingStruct,
+      beanAmount: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -4602,6 +5467,31 @@ export interface Beanstalk extends BaseContract {
       mode: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    fillPodOrderV2(
+      o: Order.PodOrderStruct,
+      index: PromiseOrValue<BigNumberish>,
+      start: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    getAmountBeansToFillOrderV2(
+      placeInLine: PromiseOrValue<BigNumberish>,
+      amountPodsFromOrder: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getAmountPodsFromFillListingV2(
+      placeInLine: PromiseOrValue<BigNumberish>,
+      podListingAmount: PromiseOrValue<BigNumberish>,
+      fillBeanAmount: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     podListing(
       index: PromiseOrValue<BigNumberish>,
@@ -4617,6 +5507,13 @@ export interface Beanstalk extends BaseContract {
 
     podOrderById(
       id: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    podOrderV2(
+      account: PromiseOrValue<string>,
+      maxPlaceInLine: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -4766,6 +5663,13 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    depositPermitDomainSeparator(overrides?: CallOverrides): Promise<string>;
+
+    depositPermitNonces(
+      owner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     enrootDeposit(
       token: PromiseOrValue<string>,
       _season: PromiseOrValue<BigNumberish>,
@@ -4817,6 +5721,30 @@ export interface Beanstalk extends BaseContract {
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<number>;
+
+    permitDeposit(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    permitDeposits(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      tokens: PromiseOrValue<string>[],
+      values: PromiseOrValue<BigNumberish>[],
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     plant(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -4872,6 +5800,20 @@ export interface Beanstalk extends BaseContract {
 
     withdrawFreeze(overrides?: CallOverrides): Promise<number>;
 
+    approveToken(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    decreaseTokenAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      subtractedValue: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
     getAllBalance(
       account: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
@@ -4920,8 +5862,63 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber[]>;
 
+    increaseTokenAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      addedValue: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    permitERC20(
+      token: PromiseOrValue<string>,
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    permitToken(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    tokenAllowance(
+      account: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    tokenPermitDomainSeparator(overrides?: CallOverrides): Promise<string>;
+
+    tokenPermitNonces(
+      owner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     transferToken(
       token: PromiseOrValue<string>,
+      recipient: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      fromMode: PromiseOrValue<BigNumberish>,
+      toMode: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    transferTokenFrom(
+      token: PromiseOrValue<string>,
+      sender: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       fromMode: PromiseOrValue<BigNumberish>,
@@ -5188,14 +6185,16 @@ export interface Beanstalk extends BaseContract {
       pods?: null
     ): PodApprovalEventFilter;
 
-    "PodListingCreated(address,uint256,uint256,uint256,uint24,uint256,uint8)"(
+    "PodListingCreated(address,uint256,uint256,uint256,uint24,uint256,bytes,uint8,uint8)"(
       account?: PromiseOrValue<string> | null,
       index?: null,
       start?: null,
       amount?: null,
       pricePerPod?: null,
       maxHarvestableIndex?: null,
-      mode?: null
+      pricingFunction?: null,
+      mode?: null,
+      pricingType?: null
     ): PodListingCreatedEventFilter;
     PodListingCreated(
       account?: PromiseOrValue<string> | null,
@@ -5204,22 +6203,26 @@ export interface Beanstalk extends BaseContract {
       amount?: null,
       pricePerPod?: null,
       maxHarvestableIndex?: null,
-      mode?: null
+      pricingFunction?: null,
+      mode?: null,
+      pricingType?: null
     ): PodListingCreatedEventFilter;
 
-    "PodListingFilled(address,address,uint256,uint256,uint256)"(
+    "PodListingFilled(address,address,uint256,uint256,uint256,uint256)"(
       from?: PromiseOrValue<string> | null,
       to?: PromiseOrValue<string> | null,
       index?: null,
       start?: null,
-      amount?: null
+      amount?: null,
+      costInBeans?: null
     ): PodListingFilledEventFilter;
     PodListingFilled(
       from?: PromiseOrValue<string> | null,
       to?: PromiseOrValue<string> | null,
       index?: null,
       start?: null,
-      amount?: null
+      amount?: null,
+      costInBeans?: null
     ): PodListingFilledEventFilter;
 
     "PodOrderCancelled(address,bytes32)"(
@@ -5231,28 +6234,33 @@ export interface Beanstalk extends BaseContract {
       id?: null
     ): PodOrderCancelledEventFilter;
 
-    "PodOrderCreated(address,bytes32,uint256,uint24,uint256)"(
+    "PodOrderCreated(address,bytes32,uint256,uint24,uint256,bytes,uint8)"(
       account?: PromiseOrValue<string> | null,
       id?: null,
       amount?: null,
       pricePerPod?: null,
-      maxPlaceInLine?: null
+      maxPlaceInLine?: null,
+      pricingFunction?: null,
+      priceType?: null
     ): PodOrderCreatedEventFilter;
     PodOrderCreated(
       account?: PromiseOrValue<string> | null,
       id?: null,
       amount?: null,
       pricePerPod?: null,
-      maxPlaceInLine?: null
+      maxPlaceInLine?: null,
+      pricingFunction?: null,
+      priceType?: null
     ): PodOrderCreatedEventFilter;
 
-    "PodOrderFilled(address,address,bytes32,uint256,uint256,uint256)"(
+    "PodOrderFilled(address,address,bytes32,uint256,uint256,uint256,uint256)"(
       from?: PromiseOrValue<string> | null,
       to?: PromiseOrValue<string> | null,
       id?: null,
       index?: null,
       start?: null,
-      amount?: null
+      amount?: null,
+      costInBeans?: null
     ): PodOrderFilledEventFilter;
     PodOrderFilled(
       from?: PromiseOrValue<string> | null,
@@ -5260,7 +6268,8 @@ export interface Beanstalk extends BaseContract {
       id?: null,
       index?: null,
       start?: null,
-      amount?: null
+      amount?: null,
+      costInBeans?: null
     ): PodOrderFilledEventFilter;
 
     "OwnershipTransferred(address,address)"(
@@ -5479,6 +6488,19 @@ export interface Beanstalk extends BaseContract {
       delta?: null
     ): InternalBalanceChangedEventFilter;
 
+    "TokenApproval(address,address,address,uint256)"(
+      owner?: PromiseOrValue<string> | null,
+      spender?: PromiseOrValue<string> | null,
+      token?: null,
+      amount?: null
+    ): TokenApprovalEventFilter;
+    TokenApproval(
+      owner?: PromiseOrValue<string> | null,
+      spender?: PromiseOrValue<string> | null,
+      token?: null,
+      amount?: null
+    ): TokenApprovalEventFilter;
+
     "AddUnripeToken(address,address,bytes32)"(
       unripeToken?: PromiseOrValue<string> | null,
       underlyingToken?: PromiseOrValue<string> | null,
@@ -5655,6 +6677,30 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    advancedPipe(
+      pipes: AdvancedPipeStruct[],
+      value: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    etherPipe(
+      p: PipeStruct,
+      value: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    multiPipe(
+      pipes: PipeStruct[],
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    pipe(
+      p: PipeStruct,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    readPipe(p: PipeStruct, overrides?: CallOverrides): Promise<BigNumber>;
+
     diamondCut(
       _diamondCut: IDiamondCut.FacetCutStruct[],
       _init: PromiseOrValue<string>,
@@ -5679,6 +6725,11 @@ export interface Beanstalk extends BaseContract {
     supportsInterface(
       _interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    advancedFarm(
+      data: AdvancedDataStruct[],
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     farm(
@@ -5874,12 +6925,29 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    cancelPodOrderV2(
+      maxPlaceInLine: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     createPodListing(
       index: PromiseOrValue<BigNumberish>,
       start: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       pricePerPod: PromiseOrValue<BigNumberish>,
       maxHarvestableIndex: PromiseOrValue<BigNumberish>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    createPodListingV2(
+      index: PromiseOrValue<BigNumberish>,
+      start: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      maxHarvestableIndex: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -5892,9 +6960,25 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    createPodOrderV2(
+      beanAmount: PromiseOrValue<BigNumberish>,
+      maxPlaceInLine: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     fillPodListing(
       l: Listing.PodListingStruct,
       beanAmount: PromiseOrValue<BigNumberish>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    fillPodListingV2(
+      l: Listing.PodListingStruct,
+      beanAmount: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -5906,6 +6990,31 @@ export interface Beanstalk extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    fillPodOrderV2(
+      o: Order.PodOrderStruct,
+      index: PromiseOrValue<BigNumberish>,
+      start: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    getAmountBeansToFillOrderV2(
+      placeInLine: PromiseOrValue<BigNumberish>,
+      amountPodsFromOrder: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getAmountPodsFromFillListingV2(
+      placeInLine: PromiseOrValue<BigNumberish>,
+      podListingAmount: PromiseOrValue<BigNumberish>,
+      fillBeanAmount: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     podListing(
@@ -5922,6 +7031,13 @@ export interface Beanstalk extends BaseContract {
 
     podOrderById(
       id: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    podOrderV2(
+      account: PromiseOrValue<string>,
+      maxPlaceInLine: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -6081,6 +7197,13 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    depositPermitDomainSeparator(overrides?: CallOverrides): Promise<BigNumber>;
+
+    depositPermitNonces(
+      owner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     enrootDeposit(
       token: PromiseOrValue<string>,
       _season: PromiseOrValue<BigNumberish>,
@@ -6131,6 +7254,30 @@ export interface Beanstalk extends BaseContract {
     lastUpdate(
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    permitDeposit(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    permitDeposits(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      tokens: PromiseOrValue<string>[],
+      values: PromiseOrValue<BigNumberish>[],
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     plant(
@@ -6189,6 +7336,20 @@ export interface Beanstalk extends BaseContract {
 
     withdrawFreeze(overrides?: CallOverrides): Promise<BigNumber>;
 
+    approveToken(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    decreaseTokenAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      subtractedValue: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     getAllBalance(
       account: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
@@ -6237,8 +7398,63 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    increaseTokenAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      addedValue: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    permitERC20(
+      token: PromiseOrValue<string>,
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    permitToken(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    tokenAllowance(
+      account: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    tokenPermitDomainSeparator(overrides?: CallOverrides): Promise<BigNumber>;
+
+    tokenPermitNonces(
+      owner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     transferToken(
       token: PromiseOrValue<string>,
+      recipient: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      fromMode: PromiseOrValue<BigNumberish>,
+      toMode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    transferTokenFrom(
+      token: PromiseOrValue<string>,
+      sender: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       fromMode: PromiseOrValue<BigNumberish>,
@@ -6480,6 +7696,33 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    advancedPipe(
+      pipes: AdvancedPipeStruct[],
+      value: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    etherPipe(
+      p: PipeStruct,
+      value: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    multiPipe(
+      pipes: PipeStruct[],
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    pipe(
+      p: PipeStruct,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    readPipe(
+      p: PipeStruct,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     diamondCut(
       _diamondCut: IDiamondCut.FacetCutStruct[],
       _init: PromiseOrValue<string>,
@@ -6504,6 +7747,11 @@ export interface Beanstalk extends BaseContract {
     supportsInterface(
       _interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    advancedFarm(
+      data: AdvancedDataStruct[],
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     farm(
@@ -6717,12 +7965,29 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    cancelPodOrderV2(
+      maxPlaceInLine: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     createPodListing(
       index: PromiseOrValue<BigNumberish>,
       start: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       pricePerPod: PromiseOrValue<BigNumberish>,
       maxHarvestableIndex: PromiseOrValue<BigNumberish>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    createPodListingV2(
+      index: PromiseOrValue<BigNumberish>,
+      start: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      maxHarvestableIndex: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -6735,9 +8000,25 @@ export interface Beanstalk extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    createPodOrderV2(
+      beanAmount: PromiseOrValue<BigNumberish>,
+      maxPlaceInLine: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     fillPodListing(
       l: Listing.PodListingStruct,
       beanAmount: PromiseOrValue<BigNumberish>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    fillPodListingV2(
+      l: Listing.PodListingStruct,
+      beanAmount: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -6749,6 +8030,31 @@ export interface Beanstalk extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       mode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    fillPodOrderV2(
+      o: Order.PodOrderStruct,
+      index: PromiseOrValue<BigNumberish>,
+      start: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      mode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    getAmountBeansToFillOrderV2(
+      placeInLine: PromiseOrValue<BigNumberish>,
+      amountPodsFromOrder: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getAmountPodsFromFillListingV2(
+      placeInLine: PromiseOrValue<BigNumberish>,
+      podListingAmount: PromiseOrValue<BigNumberish>,
+      fillBeanAmount: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     podListing(
@@ -6765,6 +8071,13 @@ export interface Beanstalk extends BaseContract {
 
     podOrderById(
       id: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    podOrderV2(
+      account: PromiseOrValue<string>,
+      maxPlaceInLine: PromiseOrValue<BigNumberish>,
+      pricingFunction: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -6924,6 +8237,15 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    depositPermitDomainSeparator(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    depositPermitNonces(
+      owner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     enrootDeposit(
       token: PromiseOrValue<string>,
       _season: PromiseOrValue<BigNumberish>,
@@ -6976,6 +8298,30 @@ export interface Beanstalk extends BaseContract {
     lastUpdate(
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    permitDeposit(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    permitDeposits(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      tokens: PromiseOrValue<string>[],
+      values: PromiseOrValue<BigNumberish>[],
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     plant(
@@ -7034,6 +8380,20 @@ export interface Beanstalk extends BaseContract {
 
     withdrawFreeze(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    approveToken(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    decreaseTokenAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      subtractedValue: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     getAllBalance(
       account: PromiseOrValue<string>,
       token: PromiseOrValue<string>,
@@ -7082,8 +8442,65 @@ export interface Beanstalk extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    increaseTokenAllowance(
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      addedValue: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    permitERC20(
+      token: PromiseOrValue<string>,
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    permitToken(
+      owner: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      deadline: PromiseOrValue<BigNumberish>,
+      v: PromiseOrValue<BigNumberish>,
+      r: PromiseOrValue<BytesLike>,
+      s: PromiseOrValue<BytesLike>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    tokenAllowance(
+      account: PromiseOrValue<string>,
+      spender: PromiseOrValue<string>,
+      token: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    tokenPermitDomainSeparator(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    tokenPermitNonces(
+      owner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     transferToken(
       token: PromiseOrValue<string>,
+      recipient: PromiseOrValue<string>,
+      amount: PromiseOrValue<BigNumberish>,
+      fromMode: PromiseOrValue<BigNumberish>,
+      toMode: PromiseOrValue<BigNumberish>,
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    transferTokenFrom(
+      token: PromiseOrValue<string>,
+      sender: PromiseOrValue<string>,
       recipient: PromiseOrValue<string>,
       amount: PromiseOrValue<BigNumberish>,
       fromMode: PromiseOrValue<BigNumberish>,

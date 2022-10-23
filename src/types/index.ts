@@ -26,7 +26,8 @@ export type Reconfigurable = Pick<
 export type MapValueType<A> = A extends Map<any, infer V> ? V : never;
 export type StringMap<T> = { [address: string]: T };
 
+// FIXME: add tests to ensure the proper DataSource is used. Setting a value to 0 causes issues rn
 export enum DataSource {
-  LEDGER   = 0,
-  SUBGRAPH = 1,
+  LEDGER   = 1,
+  SUBGRAPH = 2, 
 }

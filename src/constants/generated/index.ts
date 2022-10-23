@@ -22,6 +22,8 @@ export type { BeanstalkFertilizer } from "./Beanstalk/BeanstalkFertilizer";
 export { BeanstalkFertilizer__factory } from "./factories/Beanstalk/BeanstalkFertilizer__factory";
 export type { BeanstalkPrice } from "./Beanstalk/BeanstalkPrice";
 export { BeanstalkPrice__factory } from "./factories/Beanstalk/BeanstalkPrice__factory";
+export type { Root } from "./Beanstalk/Root";
+export { Root__factory } from "./factories/Beanstalk/Root__factory";
 export type { CurveZap } from "./Curve/CurveZap";
 export { CurveZap__factory } from "./factories/Curve/CurveZap__factory";
 export type { Curve3Pool } from "./Curve/Pool/Curve3Pool";

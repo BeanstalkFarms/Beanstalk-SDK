@@ -15,6 +15,7 @@ import { Sdk as Queries, getSdk as getQueries } from '../generated/graphql';
 import { Workflow } from './farm/Workflow';
 import { Workflows } from './workflows';
 import { Permit } from './permit';
+import { Root } from './root';
 
 export class BeanstalkSDK {
   public DEBUG: boolean;
@@ -41,6 +42,7 @@ export class BeanstalkSDK {
   public readonly sun: Sun;
   public readonly workflows: Workflows;
   public readonly permit: Permit;
+  public readonly root: Root;
 
   constructor(config?: BeanstalkConfig) {
     this.handleConfig(config);
@@ -65,6 +67,7 @@ export class BeanstalkSDK {
     this.sun = new Sun(this);
     this.workflows = new Workflows(this);
     this.permit = new Permit(this);
+    this.root = new Root(this);
   }
 
   handleConfig(config: BeanstalkConfig = {}) {

@@ -5,6 +5,8 @@ import BigNumber from 'bignumber.js';
 import { tokenBN } from './events/processor';
 import { TokenFacet } from '../constants/generated/Beanstalk/Beanstalk';
 import { ethers } from 'ethers';
+import { EIP2612PermitMessage, EIP712Domain, Permit } from './permit';
+import { zeros } from '../utils';
 
 export type TokenBalance = {
   internal: BigNumber;
@@ -17,6 +19,7 @@ export class Tokens {
   public readonly ETH: NativeToken;
   public readonly WETH: ERC20Token;
   public readonly BEAN: ERC20Token;
+  public readonly ROOT: ERC20Token;
   public readonly CRV3: ERC20Token;
   public readonly DAI: ERC20Token;
   public readonly USDC: ERC20Token;
@@ -44,6 +47,8 @@ export class Tokens {
   constructor(sdk: BeanstalkSDK) {
     this.sdk = sdk;
     this.map = new Map();
+    
+    /// Ethereum
 
     this.ETH = new NativeToken(this.sdk, null, 18, {
       name: 'Ether',
@@ -55,6 +60,8 @@ export class Tokens {
       name: 'Wrapped Ether',
       symbol: 'WETH',
     });
+
+    /// Beanstalk
 
     this.BEAN = new ERC20Token(
       this.sdk,
@@ -69,32 +76,6 @@ export class Tokens {
         seeds: 2,
       }
     );
-
-    this.CRV3 = new ERC20Token(this.sdk, addresses.CRV3.get(this.sdk.chainId), 18, {
-      name: '3CRV',
-      symbol: '3CRV',
-      isLP: true,
-    });
-
-    this.DAI = new ERC20Token(this.sdk, addresses.DAI.get(this.sdk.chainId), 18, {
-      name: 'Dai',
-      symbol: 'DAI',
-    });
-
-    this.USDC = new ERC20Token(this.sdk, addresses.USDC.get(this.sdk.chainId), 6, {
-      name: 'USD Coin',
-      symbol: 'USDC',
-    });
-
-    this.USDT = new ERC20Token(this.sdk, addresses.USDT.get(this.sdk.chainId), 6, {
-      name: 'Tether',
-      symbol: 'USDT',
-    });
-
-    this.LUSD = new ERC20Token(this.sdk, addresses.LUSD.get(this.sdk.chainId), 6, {
-      name: 'LUSD',
-      symbol: 'LUSD',
-    });
 
     this.BEAN_CRV3_LP = new ERC20Token(
       this.sdk,
@@ -144,6 +125,18 @@ export class Tokens {
       }
     );
 
+    this.ROOT = new ERC20Token(
+      this.sdk,
+      addresses.ROOT.get(this.sdk.chainId),
+      6,
+      {
+        name: 'Root',
+        symbol: 'ROOT',
+      }
+    );
+
+    /// Beanstalk "Tokens" (non ERC-20)
+
     this.STALK = new BeanstalkToken(this.sdk, null, 10, {
       name: 'Stalk',
       symbol: 'STALK',
@@ -169,7 +162,35 @@ export class Tokens {
       symbol: 'rSPROUT',
     });
 
-    // TEMP
+    /// Common ERC-20 Tokens
+
+    this.CRV3 = new ERC20Token(this.sdk, addresses.CRV3.get(this.sdk.chainId), 18, {
+      name: '3CRV',
+      symbol: '3CRV',
+      isLP: true,
+    });
+
+    this.DAI = new ERC20Token(this.sdk, addresses.DAI.get(this.sdk.chainId), 18, {
+      name: 'Dai',
+      symbol: 'DAI',
+    });
+
+    this.USDC = new ERC20Token(this.sdk, addresses.USDC.get(this.sdk.chainId), 6, {
+      name: 'USD Coin',
+      symbol: 'USDC',
+    });
+
+    this.USDT = new ERC20Token(this.sdk, addresses.USDT.get(this.sdk.chainId), 6, {
+      name: 'Tether',
+      symbol: 'USDT',
+    });
+
+    this.LUSD = new ERC20Token(this.sdk, addresses.LUSD.get(this.sdk.chainId), 6, {
+      name: 'LUSD',
+      symbol: 'LUSD',
+    });
+
+    /// Legacy
     // Keep the old BEAN_ETH and BEAN_LUSD tokens to let
     // the Pick dialog properly display pickable assets.
     this.BEAN_ETH_UNIV2_LP = new ERC20Token(
@@ -193,6 +214,7 @@ export class Tokens {
     // this will help in the UI migration to SDK use
     this.map.set('eth', this.ETH);
     this.map.set(addresses.WETH.get(this.sdk.chainId), this.WETH);
+    this.map.set(addresses.ROOT.get(this.sdk.chainId), this.ROOT);
     this.map.set(addresses.BEAN.get(this.sdk.chainId), this.BEAN);
     this.map.set(addresses.CRV3.get(this.sdk.chainId), this.CRV3);
     this.map.set(addresses.DAI.get(this.sdk.chainId), this.DAI);
@@ -226,6 +248,15 @@ export class Tokens {
 
   _deriveAddress(value: string | Token) {
     return typeof value === 'string' ? value : value.address;
+  }
+
+  _deriveToken(value: string | Token) : [Token, string] {
+    if (typeof value === 'string') {
+      const _token = this.findByAddress(value);
+      if (!_token) throw new Error(`Unknown token: ${value}`);
+      return [_token, value];
+    }
+    return [value, value.address];
   }
 
   _balanceStructToTokenBalance(
@@ -262,9 +293,7 @@ export class Tokens {
     }
 
     // FIXME: use the ERC20 token contract directly to load decimals for parsing?
-    const tokenAddress = this._deriveAddress(_token);
-    const token = this.findByAddress(tokenAddress);
-    if (!token) throw new Error(`Unknown token: ${tokenAddress}`);
+    const [token, tokenAddress] = this._deriveToken(_token);
 
     const balance = await this.sdk.contracts.beanstalk.getAllBalance(
       account,
@@ -310,6 +339,86 @@ export class Tokens {
   }
 
   //////////////////////// Permit Data ////////////////////////
+
+  /**
+   * https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L85
+   */
+  async _getDomainForToken(
+    _tokenOrDomain: string | EIP712Domain
+  ): Promise<EIP712Domain> {
+    if (typeof _tokenOrDomain !== 'string') {
+      return _tokenOrDomain as EIP712Domain;
+    }
+  
+    const tokenAddress = _tokenOrDomain as string;
+    const token = this.findByAddress(tokenAddress);
+  
+    const [name, chainId] = await Promise.all([
+      // FIXME: assumes that token.name === token.name() on-chain
+      token ? token.name : this.getName(tokenAddress),
+      this.sdk.provider.getNetwork().then((network) => network.chainId),
+    ]);
+  
+    return {
+      name,
+      version: '1',
+      chainId,
+      verifyingContract: tokenAddress
+    };
+  };
+
+  //////////////////////// PERMIT: ERC-2612 (for ERC-20 tokens) ////////////////////////
+
+  /**
+   * https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L126
+   * 
+   * @fixme should this be in `tokens.ts`?
+   * @fixme does the order of keys in `message` matter? if not we could make an abstraction here
+   */
+  public async permitERC2612(
+    addressOrDomain: string | EIP712Domain,
+    owner: string,
+    spender: string,
+    value: string | number, // FIXME: included default on eth-permit
+    deadline?: number,      // FIXME: is MAX_UINT256 an appropriate default?
+    _nonce?: number,
+  ) {
+    const tokenAddress = (addressOrDomain as EIP712Domain).verifyingContract || addressOrDomain as string;
+    const nonce = _nonce ?? await this.sdk.provider.call({
+      to: tokenAddress,
+      data: `${Permit.NONCES_FN}${zeros(24)}${owner.substr(2)}`,
+    });
+
+    const message: EIP2612PermitMessage = {
+      owner,
+      spender,
+      value,
+      nonce,
+      deadline: deadline || Permit.MAX_UINT256,
+    };
+
+    const domain = await this._getDomainForToken(addressOrDomain);
+    const typedData = this._createTypedERC2612Data(message, domain);
+    // const sig = await this.sign(owner, typedData);
+
+    return { owner, typedData };
+  }
+
+  private _createTypedERC2612Data = (message: EIP2612PermitMessage, domain: EIP712Domain) => ({
+    types: {
+      EIP712Domain: Permit.EIP712_DOMAIN,
+      Permit: [
+        { name: "owner", type: "address" },
+        { name: "spender", type: "address" },
+        { name: "value", type: "uint256" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+      ],
+    },
+    primaryType: "Permit",
+    domain,
+    message,
+  })
 
   static NAME_FN = '0x06fdde03';
   static DECIMALS_FN = '0x313ce567';
