@@ -391,22 +391,72 @@ export class Silo {
     ]);
 
     // FIXME: doesn't work if _token is an instance of a token created by the SDK consumer
-    if (!Silo.sdk.tokens.siloWhitelist.has(_token)) throw new Error(`${_token.address} is not whitelisted in the Silo`)
+    if (!Silo.sdk.tokens.siloWhitelist.has(_token)) throw new Error(`${_token.address} is not whitelisted in the Silo`);
 
+    ///  SETUP
+    const whitelist = Silo.sdk.tokens.siloWhitelist;
     const balance : TokenSiloBalance = this._makeTokenSiloBalance();
 
+    if (source === DataSource.LEDGER) {
+      // Fetch and process events.
+      const seasonBN = new BigNumber(season);
+      const events = await Silo.sdk.events.getSiloEvents(account, _token.address);
+      const processor = new EventProcessor(Silo.sdk, account, { 
+        season: ethers.BigNumber.from(season.toString()), // FIXME: verbose
+        whitelist
+      });
+
+      const { deposits, withdrawals } = processor.ingestAll(events);
+
+      // Handle deposits
+      {
+        const _crates = deposits.get(_token);
+
+        for (let s in _crates) {
+          const rawCrate = {
+            season: s.toString(),
+            amount: _crates[s].amount.toString(),
+            bdv:    _crates[s].bdv.toString(),
+          }
+          // Update the total deposited of this token
+          // and return a parsed crate object
+          this._applyDeposit(balance.deposited, _token, rawCrate);
+        }
+
+        this._sortCrates(balance.deposited);
+      }
+
+      // Handle withdrawals
+      {
+        const _crates = withdrawals.get(_token);
+        if (_crates) {
+          const { withdrawn, claimable } = this._parseWithdrawalCrates(_token, _crates, seasonBN);
+          
+          balance.withdrawn = withdrawn;
+          balance.claimable = claimable;
+
+          this._sortCrates(balance.withdrawn);
+          this._sortCrates(balance.claimable);
+        }
+      }
+
+      return balance;
+    }
+
     /// SUBGRAPH
-    if (source === DataSource.SUBGRAPH) {
+    else if (source === DataSource.SUBGRAPH) {
       const query = await Silo.sdk.queries.getSiloBalance({
         token: _token.address.toLowerCase(),
         account,
         season,
       }); // crates ordered in asc order
       if (!query.farmer) return balance;
+
       const { deposited, withdrawn, claimable } = query.farmer!;
       deposited.forEach((crate) => this._applyDeposit(balance.deposited, _token, crate));
       withdrawn.forEach((crate) => this._applyWithdrawal(balance.withdrawn, _token, crate));
       claimable.forEach((crate) => this._applyWithdrawal(balance.claimable, _token, crate));
+
       return balance;
     }
 
@@ -444,10 +494,10 @@ export class Silo {
       Silo.sdk.sun.getSeason(),
     ]);
 
+    
+    /// SETUP
     const whitelist = Silo.sdk.tokens.siloWhitelist;
     const balances = new Map<Token, TokenSiloBalance>();
-
-    /// SETUP
     whitelist.forEach((token) => balances.set(token, this._makeTokenSiloBalance()));
 
     /// LEDGER

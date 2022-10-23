@@ -83,6 +83,13 @@ describe('Function: getBalance', function () {
     expect(balance.withdrawn.amount.toNumber()).to.be.eq(0);
     expect(balance.claimable.amount.toNumber()).to.be.eq(0);
   });
+  it('source: ledger === subgraph', async function () {
+    const [ledger, subgraph] = await Promise.all([
+      timer(sdk.silo.getBalance(sdk.tokens.BEAN, account1, { source: DataSource.LEDGER }), "Ledger result time"),
+      timer(sdk.silo.getBalance(sdk.tokens.BEAN, account1, { source: DataSource.SUBGRAPH }), "Subgraph result time"),
+    ]);
+    expect(ledger).to.deep.eq(subgraph);
+  });
 })
 
 ///

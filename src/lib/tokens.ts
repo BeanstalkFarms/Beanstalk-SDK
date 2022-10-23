@@ -214,6 +214,7 @@ export class Tokens {
     // this will help in the UI migration to SDK use
     this.map.set('eth', this.ETH);
     this.map.set(addresses.WETH.get(this.sdk.chainId), this.WETH);
+    this.map.set(addresses.ROOT.get(this.sdk.chainId), this.ROOT);
     this.map.set(addresses.BEAN.get(this.sdk.chainId), this.BEAN);
     this.map.set(addresses.CRV3.get(this.sdk.chainId), this.CRV3);
     this.map.set(addresses.DAI.get(this.sdk.chainId), this.DAI);
@@ -247,6 +248,15 @@ export class Tokens {
 
   _deriveAddress(value: string | Token) {
     return typeof value === 'string' ? value : value.address;
+  }
+
+  _deriveToken(value: string | Token) : [Token, string] {
+    if (typeof value === 'string') {
+      const _token = this.findByAddress(value);
+      if (!_token) throw new Error(`Unknown token: ${value}`);
+      return [_token, value];
+    }
+    return [value, value.address];
   }
 
   _balanceStructToTokenBalance(
@@ -283,9 +293,7 @@ export class Tokens {
     }
 
     // FIXME: use the ERC20 token contract directly to load decimals for parsing?
-    const tokenAddress = this._deriveAddress(_token);
-    const token = this.findByAddress(tokenAddress);
-    if (!token) throw new Error(`Unknown token: ${tokenAddress}`);
+    const [token, tokenAddress] = this._deriveToken(_token);
 
     const balance = await this.sdk.contracts.beanstalk.getAllBalance(
       account,
