@@ -17,10 +17,46 @@ export class EventManager {
     this.sdk = sdk;
   }
 
-  async getSiloEvents(_account: string, _fromBlock?: number, _toBlock?: number) {
-    if (!_account) throw new Error('account missing');
-    const rawEvents = await this.getRawEventsByType(EventType.SILO, _account, _fromBlock, _toBlock);
-    return this.reduceAndSort(rawEvents);
+  async getSiloEvents(
+    _account: string,
+    _token?: string,
+    _fromBlock?: number,
+    _toBlock?: number
+  ) {
+    const fromBlockOrGenesis = _fromBlock || Blocks[ChainId.MAINNET].BEANSTALK_GENESIS_BLOCK;
+    const toBlock = _toBlock || 'latest';
+    return Promise.all([
+      this.sdk.contracts.beanstalk.queryFilter(
+        this.sdk.contracts.beanstalk.filters.AddDeposit(_account, _token),
+        fromBlockOrGenesis,
+        toBlock
+      ),
+      this.sdk.contracts.beanstalk.queryFilter(
+        this.sdk.contracts.beanstalk.filters.AddWithdrawal(_account, _token),
+        fromBlockOrGenesis,
+        toBlock
+      ),
+      this.sdk.contracts.beanstalk.queryFilter(
+        this.sdk.contracts.beanstalk.filters.RemoveWithdrawal(_account, _token),
+        fromBlockOrGenesis,
+        toBlock
+      ),
+      this.sdk.contracts.beanstalk.queryFilter(
+        this.sdk.contracts.beanstalk.filters.RemoveWithdrawals(_account, _token),
+        fromBlockOrGenesis,
+        toBlock
+      ),
+      this.sdk.contracts.beanstalk.queryFilter(
+        this.sdk.contracts.beanstalk.filters.RemoveDeposit(_account, _token),
+        fromBlockOrGenesis,
+        toBlock
+      ),
+      this.sdk.contracts.beanstalk.queryFilter(
+        this.sdk.contracts.beanstalk.filters.RemoveDeposits(_account, _token),
+        fromBlockOrGenesis,
+        toBlock
+      ),
+    ]).then(this.reduceAndSort);
   }
 
   async getFieldEvents(_account: string, _fromBlock?: number, _toBlock?: number) {

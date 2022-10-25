@@ -19,7 +19,10 @@ import {
   CurveTriCrypto2Pool,
   CurveZap,
   BeanstalkFertilizer__factory,
-  CurvePlainPool__factory
+  CurvePlainPool__factory,
+  Root,
+  Root__factory,
+
 } from '../constants/generated';
 import { BaseContract } from 'ethers';
 
@@ -41,7 +44,9 @@ type CurveContracts = {
 
 export class Contracts {
   static sdk: BeanstalkSDK;
+
   public readonly beanstalk: Beanstalk;
+  public readonly root: Root;
   public readonly fertilizer: import("../constants/generated/index").BeanstalkFertilizer;
 
   public readonly curve: CurveContracts;
@@ -52,19 +57,22 @@ export class Contracts {
     Contracts.sdk = sdk;
 
     // Addressses
-    const beanstalkAddress = sdk.addresses.BEANSTALK.get(sdk.chainId)
-    const beanstalkFertilizerAddress = sdk.addresses.BEANSTALK_FERTILIZER.get(sdk.chainId)
-    const pool3Address= sdk.addresses.POOL3.get(sdk.chainId);
-    const tricrypto2Address= sdk.addresses.TRICRYPTO2.get(sdk.chainId);
-    const beancrv3Address= sdk.addresses.BEAN_CRV3.get(sdk.chainId);
-    const poolRegistryAddress= sdk.addresses.POOL_REGISTRY.get(sdk.chainId);
-    const metaFactoryAddress= sdk.addresses.META_FACTORY.get(sdk.chainId);
-    const cryptoFactoryAddress= sdk.addresses.CRYPTO_FACTORY.get(sdk.chainId);
-    const zapAddress= sdk.addresses.CURVE_ZAP.get(sdk.chainId);
+    const beanstalkAddress = sdk.addresses.BEANSTALK.get(sdk.chainId);
+    const rootAddress = sdk.addresses.ROOT.get(sdk.chainId);
+    const beanstalkFertilizerAddress = sdk.addresses.BEANSTALK_FERTILIZER.get(sdk.chainId);
+    const pool3Address = sdk.addresses.POOL3.get(sdk.chainId);
+    const tricrypto2Address = sdk.addresses.TRICRYPTO2.get(sdk.chainId);
+    const beancrv3Address = sdk.addresses.BEAN_CRV3.get(sdk.chainId);
+    const poolRegistryAddress = sdk.addresses.POOL_REGISTRY.get(sdk.chainId);
+    const metaFactoryAddress = sdk.addresses.META_FACTORY.get(sdk.chainId);
+    const cryptoFactoryAddress = sdk.addresses.CRYPTO_FACTORY.get(sdk.chainId);
+    const zapAddress = sdk.addresses.CURVE_ZAP.get(sdk.chainId);
 
     // Instances
     this.beanstalk = Beanstalk__factory.connect(beanstalkAddress, sdk.providerOrSigner);
+    this.root = Root__factory.connect(rootAddress, sdk.providerOrSigner);
     this.fertilizer = BeanstalkFertilizer__factory.connect(beanstalkFertilizerAddress, sdk.providerOrSigner);
+
     const pool3 = Curve3Pool__factory.connect(pool3Address, sdk.providerOrSigner);
     const tricrypto2 = CurveTriCrypto2Pool__factory.connect(tricrypto2Address, sdk.providerOrSigner);
     const beanCrv3 = CurveMetaPool__factory.connect(beancrv3Address, sdk.providerOrSigner);

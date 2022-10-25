@@ -26,6 +26,41 @@ beforeAll(() => {
   });
 });
 
+/// 
+describe('Utilities', function () {
+  it('loads name', async () => {
+    const [bean, dai, usdc] = await Promise.all([
+      'Bean',
+      // sdk.tokens.getName(sdk.tokens.BEAN.address),
+      sdk.tokens.getName(sdk.tokens.DAI.address),
+      sdk.tokens.getName(sdk.tokens.USDC.address),
+    ])
+    expect(bean).toBe('Bean');
+    expect(dai).toBe('Dai Stablecoin');
+    expect(usdc).toBe('USD Coin');
+  });
+  it('loads decimals', async () => {
+    const [bean, dai, usdc] = await Promise.all([
+      sdk.tokens.getDecimals(sdk.tokens.BEAN.address),
+      sdk.tokens.getDecimals(sdk.tokens.DAI.address),
+      sdk.tokens.getDecimals(sdk.tokens.USDC.address),
+    ]);
+    expect(bean).toBe(6);
+    expect(dai).toBe(18);
+    expect(usdc).toBe(6);
+  });
+});
+
+///
+describe('Function: getBalance', function () {
+  it('returns a TokenBalance struct when the token is ETH', async () => {
+    const balance = await sdk.tokens.getBalance(sdk.tokens.ETH, sdk.tokens.WETH.address)
+    expect(balance.internal.toNumber()).toStrictEqual(0);
+    expect(balance.external.toNumber()).toBeGreaterThan(0);
+    expect(balance.external.toString()).toBe(balance.total.toString());
+  });
+})
+
 ///
 describe('Function: getBalances', function () {
   it('throws without account or signer', async () => {

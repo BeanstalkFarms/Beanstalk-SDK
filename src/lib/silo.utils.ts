@@ -4,7 +4,21 @@ import { ZERO_BN } from "../constants";
 import { MapValueType } from "../types";
 import { toTokenUnitsBN } from "../utils/Tokens";
 import { EventProcessorData } from "./events/processor";
-import { TokenSiloBalance, WithdrawalCrate } from "./silo";
+import { EIP712PermitMessage } from "./permit";
+import { Crate, DepositCrate, TokenSiloBalance, WithdrawalCrate } from "./silo";
+
+// FIXME: resolve with EIP712PermitMessage
+export type DepositTokenPermitMessage = EIP712PermitMessage<{
+  token: string;
+  value: number | string;
+}>
+
+export type DepositTokensPermitMessage = EIP712PermitMessage<{
+  tokens: string[];
+  values: (number | string)[];
+}>
+
+export type CrateSortFn = <T extends Crate<BigNumber>>(crates: T[]) => T[];
 
 /**
  * Beanstalk doesn't automatically re-categorize withdrawals as "claimable".
@@ -60,3 +74,24 @@ export const _parseWithdrawalCrates = (
     },
   };
 }
+
+/**
+ * Order crates by Season.
+ */
+export function sortCratesBySeason<T extends Crate<BigNumber>>(crates: T[], direction : 'asc' | 'desc' = 'desc') {
+  const m = direction === 'asc' ? -1 : 1;
+  return [...crates].sort((a, b) => m * (b.season.minus(a.season).toNumber()));
+}
+
+/**
+ * Order crates by BDV.
+ */
+export function sortCratesByBDVRatio<T extends DepositCrate<BigNumber>>(crates: T[], direction : 'asc' | 'desc' = 'asc') {
+  const m = direction === 'asc' ? -1 : 1;
+  return [...crates].sort((a, b) => {
+    const _a = a.bdv.div(a.amount);
+    const _b = b.bdv.div(b.amount);
+    return m * _b.minus(_a).toNumber();
+  });
+}
+

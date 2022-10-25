@@ -11,6 +11,7 @@ export class ActionTemplate extends BaseAction implements Action {
   constructor() {}
 
   async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
+    // sdk is accessible as a static property on this class, for ex, ActionTemplate.sdk
     return {
       name,
       amountOut,

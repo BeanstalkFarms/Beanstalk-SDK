@@ -7,3 +7,9 @@ export const enumFromValue = <T extends Record<number, string>>(val: number, _en
   if (!enumName) throw Error(`The network id ${val} is not valid`);
   return _enum[enumName];
 };
+
+export function assert(condition: boolean, message?: string): asserts condition is true {
+  if (!condition) throw Error(message || 'Assertion failed');
+}
+
+export const zeros = (numZeros: number) => ''.padEnd(numZeros, '0');

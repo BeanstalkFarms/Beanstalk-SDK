@@ -30,12 +30,18 @@ export declare namespace P {
     price: PromiseOrValue<BigNumberish>;
     liquidity: PromiseOrValue<BigNumberish>;
     deltaB: PromiseOrValue<BigNumberish>;
+    lpSupply: PromiseOrValue<BigNumberish>;
+    lpUsd: PromiseOrValue<BigNumberish>;
+    lpBdv: PromiseOrValue<BigNumberish>;
   };
 
   export type PoolStructOutput = [
     string,
     [string, string],
     [BigNumber, BigNumber],
+    BigNumber,
+    BigNumber,
+    BigNumber,
     BigNumber,
     BigNumber,
     BigNumber
@@ -46,6 +52,9 @@ export declare namespace P {
     price: BigNumber;
     liquidity: BigNumber;
     deltaB: BigNumber;
+    lpSupply: BigNumber;
+    lpUsd: BigNumber;
+    lpBdv: BigNumber;
   };
 }
 

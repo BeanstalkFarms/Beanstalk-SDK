@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { FarmToMode } from '../../farm';
+import { FarmToMode } from '../types';
 import { Action, ActionResult, BaseAction } from '../types';
 
 export class WrapEth extends BaseAction implements Action {
@@ -15,11 +15,11 @@ export class WrapEth extends BaseAction implements Action {
       amountOut: _amountInStep, // amountInStep should be an amount of ETH.
       value: _amountInStep, // need to use this amount in the txn.
       encode: (_: ethers.BigNumber) =>
-        this.sdk.contracts.beanstalk.interface.encodeFunctionData('wrapEth', [
+        WrapEth.sdk.contracts.beanstalk.interface.encodeFunctionData('wrapEth', [
           _amountInStep, // ignore minAmountOut since there is no slippage
           this.toMode,
         ]),
-      decode: (data: string) => this.sdk.contracts.beanstalk.interface.decodeFunctionData('wrapEth', data),
+      decode: (data: string) => WrapEth.sdk.contracts.beanstalk.interface.decodeFunctionData('wrapEth', data),
     };
   }
 }
