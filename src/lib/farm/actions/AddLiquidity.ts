@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { CurveMetaPool__factory, CurvePlainPool__factory } from '../../../constants/generated';
 import { assert } from '../../../utils';
-import { FarmFromMode, FarmToMode } from '../../farm';
+import { FarmFromMode, FarmToMode } from '../types';
 import { Action, ActionResult, BaseAction } from '../types';
 
 export class AddLiquidity extends BaseAction implements Action {

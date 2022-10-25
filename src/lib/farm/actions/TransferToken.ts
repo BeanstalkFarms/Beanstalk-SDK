@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { FarmFromMode, FarmToMode } from '../../farm';
+import { FarmFromMode, FarmToMode } from '../types';
 import { Action, ActionResult, BaseAction } from '../types';
 
 export class TransferToken extends BaseAction implements Action {

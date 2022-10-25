@@ -21,7 +21,8 @@ import {
   BeanstalkFertilizer__factory,
   CurvePlainPool__factory,
   Root,
-  Root__factory
+  Root__factory,
+
 } from '../constants/generated';
 import { BaseContract } from 'ethers';
 

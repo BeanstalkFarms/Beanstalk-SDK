@@ -5,15 +5,13 @@ import { enumFromValue } from '../utils';
 import { addresses, ChainId } from '../constants';
 import { Tokens } from './tokens';
 import { Contracts } from './contracts';
-import { Swap } from './swap';
-import Farm from './farm';
+// import { Swap } from './swap';
 
 import { EventManager } from './events/EventManager';
 import { Silo } from './silo';
 import { Sun } from './sun';
 import { Sdk as Queries, getSdk as getQueries } from '../generated/graphql';
-import { Workflow } from './farm/Workflow';
-import { Workflows } from './workflows';
+import { Farm } from './farm';
 import { Permit } from './permit';
 import { Root } from './root';
 
@@ -36,11 +34,10 @@ export class BeanstalkSDK {
 
   //
   public readonly farm: Farm;
-  public readonly swap: Swap;
+  // public readonly swap: Swap;
   public readonly silo: Silo;
   public readonly events: EventManager;
   public readonly sun: Sun;
-  public readonly workflows: Workflows;
   public readonly permit: Permit;
   public readonly root: Root;
 
@@ -60,14 +57,15 @@ export class BeanstalkSDK {
     this.queries = getQueries(this.graphql);
 
     // Facets
-    this.farm = new Farm(this);
-    this.swap = new Swap(this);
+    // this.swap = new Swap(this);
     this.silo = new Silo(this);
     this.events = new EventManager(this);
     this.sun = new Sun(this);
-    this.workflows = new Workflows(this);
     this.permit = new Permit(this);
     this.root = new Root(this);
+
+    // Internal
+    this.farm = new Farm(this);
   }
 
   handleConfig(config: BeanstalkConfig = {}) {

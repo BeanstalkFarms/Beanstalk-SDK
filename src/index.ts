@@ -7,4 +7,4 @@ export { BigNumber } from 'ethers';
 import * as Utils from './utils';
 export { Utils };
 
-export { FarmFromMode, FarmToMode } from './lib/farm';
+export { FarmFromMode, FarmToMode } from './lib/farm/types';

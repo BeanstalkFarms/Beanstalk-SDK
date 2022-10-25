@@ -1,7 +1,7 @@
 import { Overrides } from "ethers";
 import { DepositTransferStruct } from "../constants/generated/Beanstalk/Root";
 import { BeanstalkSDK } from "./BeanstalkSDK";
-import { FarmToMode } from "./farm";
+import { FarmToMode } from "./farm/types";
 import { SignedPermit } from "./permit";
 import { DepositTokenPermitMessage, DepositTokensPermitMessage } from "./silo.utils";
 
