@@ -31,3 +31,8 @@ export enum DataSource {
   LEDGER   = 1,
   SUBGRAPH = 2, 
 }
+
+// export function excludeHead<T extends any[]>(arr: readonly [any, ...T]) {
+//   const [_, ...rest] = arr;
+//   return rest;
+// }

@@ -5,7 +5,7 @@ import BigNumber from 'bignumber.js';
 import { tokenBN } from './events/processor';
 import { TokenFacet } from '../constants/generated/Beanstalk/Beanstalk';
 import { ethers } from 'ethers';
-import { EIP2612PermitMessage, EIP712Domain, Permit } from './permit';
+import { EIP2612PermitMessage, EIP712Domain, EIP712TypedData, Permit } from './permit';
 import { zeros } from '../utils';
 
 export type TokenBalance = {
@@ -343,7 +343,7 @@ export class Tokens {
   /**
    * https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L85
    */
-  async _getDomainForToken(
+  private async _getEIP712Domain(
     _tokenOrDomain: string | EIP712Domain
   ): Promise<EIP712Domain> {
     if (typeof _tokenOrDomain !== 'string') {
@@ -356,7 +356,9 @@ export class Tokens {
     const [name, chainId] = await Promise.all([
       // FIXME: assumes that token.name === token.name() on-chain
       token ? token.name : this.getName(tokenAddress),
-      this.sdk.provider.getNetwork().then((network) => network.chainId),
+      // FIXME: switch to below after protocol patch
+      // this.sdk.provider.getNetwork().then((network) => network.chainId),
+      1,
     ]);
   
     return {
@@ -370,41 +372,44 @@ export class Tokens {
   //////////////////////// PERMIT: ERC-2612 (for ERC-20 tokens) ////////////////////////
 
   /**
-   * https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L126
    * 
+   * @ref https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L126
    * @fixme should this be in `tokens.ts`?
    * @fixme does the order of keys in `message` matter? if not we could make an abstraction here
+   * 
+   * @param token a Token instance representing an ERC20 token to permit
+   * @param owner 
+   * @param spender authorize this account to spend `token` on behalf of `owner`
+   * @param value the amount of `token` to authorize
+   * @param d
    */
   public async permitERC2612(
-    addressOrDomain: string | EIP712Domain,
-    owner: string,
+    token: ERC20Token,      
+    owner: string,          // 
     spender: string,
     value: string | number, // FIXME: included default on eth-permit
-    deadline?: number,      // FIXME: is MAX_UINT256 an appropriate default?
-    _nonce?: number,
-  ) {
-    const tokenAddress = (addressOrDomain as EIP712Domain).verifyingContract || addressOrDomain as string;
-    const nonce = _nonce ?? await this.sdk.provider.call({
-      to: tokenAddress,
-      data: `${Permit.NONCES_FN}${zeros(24)}${owner.substr(2)}`,
-    });
+    _nonce?: number,        //
+    _deadline?: number,      // FIXME: is MAX_UINT256 an appropriate default?
+  ) : Promise<EIP712TypedData<EIP2612PermitMessage>> {
+    const deadline = _deadline || Permit.MAX_UINT256;
+    const [domain, nonce] = await Promise.all([
+      this._getEIP712Domain(token.address),
+      _nonce ?? this.sdk.provider.call({
+        to: token.address,
+        data: `${Permit.NONCES_FN}${zeros(24)}${owner.substr(2)}`,
+      })
+    ]);
 
-    const message: EIP2612PermitMessage = {
+    return this._createTypedERC2612Data(domain, {
       owner,
       spender,
       value,
       nonce,
-      deadline: deadline || Permit.MAX_UINT256,
-    };
-
-    const domain = await this._getDomainForToken(addressOrDomain);
-    const typedData = this._createTypedERC2612Data(message, domain);
-    // const sig = await this.sign(owner, typedData);
-
-    return { owner, typedData };
+      deadline,
+    });
   }
 
-  private _createTypedERC2612Data = (message: EIP2612PermitMessage, domain: EIP712Domain) => ({
+  private _createTypedERC2612Data = (domain: EIP712Domain, message: EIP2612PermitMessage) => ({
     types: {
       EIP712Domain: Permit.EIP712_DOMAIN,
       Permit: [
@@ -418,7 +423,9 @@ export class Tokens {
     primaryType: "Permit",
     domain,
     message,
-  })
+  });
+
+  //////////////////////// On-chain Configuration ////////////////////////
 
   static NAME_FN = '0x06fdde03';
   static DECIMALS_FN = '0x313ce567';
@@ -454,4 +461,13 @@ export class Tokens {
       data: Tokens.DECIMALS_FN,
     }).then((d) => parseInt(d, 10));
   }
+
+  //////////////////////// Create New ////////////////////////
+  // public async createERC20<
+  //   T1 extends ConstructorParameters<typeof ERC20Token>,
+  //   T2 = [any]
+  // >(
+  //   ...args: T[]
+  // ) {
+  // }
 }
