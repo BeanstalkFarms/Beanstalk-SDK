@@ -1,6 +1,6 @@
 import { BigNumber as BNJS } from 'ethers';
 import BigNumber from 'bignumber.js';
-import { Token } from '../classes/Token/Token';
+import { Token } from '../classes/Token';
 // import type Token from '~/classes/Token';
 // import { ChainConstant, SupportedChainId } from '~/constants';
 // import { toTokenUnitsBN } from './Tokens';

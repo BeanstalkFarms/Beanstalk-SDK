@@ -1,7 +1,7 @@
 import { BigNumber } from 'bignumber.js';
 import { ethers } from 'ethers';
 import _ from 'lodash';
-import { Token } from '../classes/Token/Token';
+import { Token } from '../classes/Token';
 import { MAX_UINT256, ZERO_BN } from '../constants';
 import { getSdk } from '../generated/graphql';
 import { DataSource, StringMap } from '../types';

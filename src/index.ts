@@ -1,6 +1,6 @@
 export * from './lib/BeanstalkSDK';
 export { ChainId } from './constants/chains';
-export { NativeToken, ERC20Token, BeanstalkToken } from './classes/Token/Token';
+export { NativeToken, ERC20Token, BeanstalkToken } from './classes/Token';
 
 export * from './types';
 export { BigNumber } from 'ethers';

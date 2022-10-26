@@ -1,4 +1,3 @@
-
 import { BigNumber, ethers } from 'ethers';
 import { Token } from '../../classes/Token';
 import { BeanstalkSDK } from '../BeanstalkSDK';
