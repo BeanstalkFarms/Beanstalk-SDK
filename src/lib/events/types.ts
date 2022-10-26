@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js'
-import { FarmToMode } from '../farm';
+import { FarmToMode } from '../farm/types';
 
 // FIXME - this normally comes from generated/graphql
 //    tho there is a comment in UI to make it an enum. need to verify

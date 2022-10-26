@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { FarmToMode } from '../../farm';
+import { FarmToMode } from '../types';
 import { Action, ActionResult, BaseAction } from '../types';
 
 export class UnwrapEth extends BaseAction implements Action {

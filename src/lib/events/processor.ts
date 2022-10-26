@@ -19,10 +19,8 @@ import {
   PodOrderCancelledEvent,
   PodOrderFilledEvent,
 } from '../../constants/generated/Beanstalk/Beanstalk';
-import { MapValueType, StringMap } from '../../types';
+import {  StringMap } from '../../types';
 import { BeanstalkSDK } from '../BeanstalkSDK';
-import { FarmToMode } from '../farm';
-import { TokenSiloBalance, WithdrawalCrate } from '../silo';
 import { PodListing, PodOrder } from './types';
 
 // ----------------------------------------

@@ -19,6 +19,7 @@
     "size": "size-limit",
     "analyze": "size-limit --why",
     "generate:typechain": "typechain --target=ethers-v5 --ts-nocheck --out-dir=./src/constants/generated/ './src/constants/abi/**/*.json'",
+    "copyabis": "rm -rf ./src/constants/abi && cp -R ../Beanstalk-UI/src/constants/abi ./src/constants/abi",
     "generate:graphql": "graphql-codegen --config codegen.ts"
   },
   "husky": {
@@ -68,6 +69,9 @@
     "graphql-request": "^4",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21"
+  },
+  "resolutions": {
+    "typescript": "4.8.4"
   },
   "packageManager": "yarn@3.2.3"
 }
