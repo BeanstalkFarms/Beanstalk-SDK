@@ -16,6 +16,11 @@ export class Root {
    * Mint ROOT tokens. The `Root.sol` contract supports Beanstalk's 
    * Deposit Transfer permits; this function unpacks a provided
    * signed permit into the proper argument slots.
+   * 
+   * @dev Passing _overrides directly as the last parameter
+   * of a contract method seems to make ethers treat it like
+   * a parameter for the contract call. Instead, we unpack and
+   * thus pass an empty object for overrides if _overrides is undef.
    */
   async mint(
     _depositTransfers: DepositTransferStruct[],
@@ -35,9 +40,9 @@ export class Root {
           permit.split.v,
           permit.split.r,
           permit.split.s,
-          _overrides
+          { ..._overrides }
         );
-      } else if ((_permit.typedData.message as DepositTokensPermitMessage).tokens) {
+      } else if ((_permit as SignedPermit<DepositTokensPermitMessage>).typedData.message.tokens) {
         let permit = _permit as SignedPermit<DepositTokensPermitMessage>;
         return Root.sdk.contracts.root.mintWithTokensPermit(
           _depositTransfers,
@@ -48,8 +53,8 @@ export class Root {
           permit.split.v,
           permit.split.r,
           permit.split.s,
-          _overrides
-        )
+          { ..._overrides }
+        );
       } else {
         throw new Error('Malformatted permit')
       }
@@ -58,8 +63,8 @@ export class Root {
     return Root.sdk.contracts.root.mint(
       _depositTransfers,
       _destination,
-      _overrides
-    )
+      { ..._overrides }
+    );
   }
 
 }
