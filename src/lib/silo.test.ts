@@ -4,7 +4,7 @@ import { DataSource } from '../types';
 import { getProvider, setupConnection } from '../../test/provider';
 
 import { BeanstalkSDK } from './BeanstalkSDK';
-import { Token } from '../classes/Token';
+import { Token } from '../classes/Token/Token';
 import { TokenSiloBalance } from './silo';
 import { _parseWithdrawalCrates } from './silo.utils';
 import { ethers } from 'ethers';

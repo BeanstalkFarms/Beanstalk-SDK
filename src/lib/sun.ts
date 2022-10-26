@@ -1,5 +1,5 @@
 import { BigNumber } from 'bignumber.js';
-import { Token } from '../classes/Token';
+import { Token } from '../classes/Token/Token';
 
 import { BeanstalkSDK } from './BeanstalkSDK';
 

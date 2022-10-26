@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { Token } from '../../../classes/Token';
+import { Token } from '../../../classes/Token/Token';
 import { CurveMetaPool, CurveMetaPool__factory,  } from '../../../constants/generated';
 import { FarmFromMode, FarmToMode } from '../../farm';
 import { Action, ActionResult, BaseAction } from '../types';

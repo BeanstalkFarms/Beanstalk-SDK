@@ -1,15 +1,12 @@
 import BigNumber from 'bignumber.js';
-import { BaseContract, ContractTransaction } from 'ethers';
-import { ZERO_BN, MAX_UINT256, ChainId, NEW_BN } from '../constants';
-import { ERC20__factory } from '../constants/generated';
-import { PromiseOrValue } from '../constants/generated/common';
-import type { BeanstalkSDK } from '../lib/BeanstalkSDK';
-import { Provider } from '../types';
-import { bigNumberResult } from '../utils/Ledger';
-import { toStringBaseUnitBN, toTokenUnitsBN } from '../utils/Tokens';
-// import { erc20TokenContract } from '~/util/Contracts';
+import { BaseContract } from 'ethers';
+import { ZERO_BN } from '../../constants';
+import type { BeanstalkSDK } from '../../lib/BeanstalkSDK';
+import { bigNumberResult } from '../../utils/Ledger';
+import { toStringBaseUnitBN, toTokenUnitsBN } from '../../utils/Tokens';
 
-// import { toStringBaseUnitBN } from '~/util/Tokens';
+// import { BeanstalkToken } from './BeanstalkToken';
+// import { NativeToken } from './NativeToken';
 
 /**
  * A currency is any fungible financial instrument, including Ether, all ERC20 tokens, and other chain-native currencies
@@ -28,7 +25,7 @@ export abstract class Token {
   public readonly chainId: number;
 
   /** The name of the currency, i.e. a descriptive textual non-unique identifier */
-  public readonly name: string;
+  public name: string;
 
   /** The display name of the currency, i.e. a descriptive textual non-unique identifier */
   public readonly displayName: string;
@@ -82,8 +79,6 @@ export abstract class Token {
     }
   ) {
     Token.sdk = sdk;
-
-    if (!address && !(this instanceof NativeToken) && !(this instanceof BeanstalkToken)) throw new Error('address must be supplied for non-native and non-beanstalk tokens')
 
     /// Basic
     this.address = address ?? '';
@@ -169,94 +164,3 @@ export abstract class Token {
   };
 }
 
-export class NativeToken extends Token {
-  // eslint-disable-next-line class-methods-use-this
-  public getContract() {
-    return null;
-  }
-
-  public getBalance(account: string): Promise<BigNumber> {
-    // console.debug(`[NativeToken] ${this.symbol} (${this.chainId} / ${this.address}) -> getBalance(${account})`);
-    return Token.sdk.provider.getBalance(account)
-    .then(
-      // No need to convert decimals because ethers does this already
-      result => {
-        return bigNumberResult(result)
-      }
-    );
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  public getAllowance(): Promise<BigNumber | undefined> {
-    return Promise.resolve(new BigNumber(parseInt(MAX_UINT256, 16)));
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  public getTotalSupply() {
-    return undefined;
-  }
-
-  public equals(other: NativeToken): boolean {
-    return this.chainId === other.chainId;
-  }
-}
-
-export class ERC20Token extends Token {
-  public getContract() {
-    return ERC20__factory.connect(this.address, Token.sdk.providerOrSigner)
-  }
-
-  public getBalance(account: string) {
-    // console.debug(`[ERC20Token] ${this.symbol} (${this.chainId} / ${this.address}) -> balanceOf(${account})`);
-    return (
-      this.getContract()
-        .balanceOf(account)
-        .then(bigNumberResult)
-        .catch((err: Error) => {
-          console.error(`[ERC20Token] ${this.symbol} failed to call balanceOf(${account})`, err);
-          throw err;
-        })
-    );
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  public getAllowance(account: string, spender: string) {
-    // console.debug(`[ERC20Token] ${this.symbol} (${this.chainId} / ${this.address}) -> allowance(${account}, ${spender})`);
-    return this.getContract().allowance(account, spender)
-    .then(bigNumberResult);
-  }
-
-  public getTotalSupply() {
-    // console.debug(`[ERC20Token] ${this.symbol} (${this.chainId} / ${this.address}) -> totalSupply()`);
-    return this.getContract().totalSupply()
-    .then(bigNumberResult);
-  }
-
-  public approve(spender: PromiseOrValue<string>, value: PromiseOrValue<BigNumber>):Promise<ContractTransaction> {
-    return this.getContract().approve(spender, value.toString())
-  }
-}
-
-export class BeanstalkToken extends Token {
-  // eslint-disable-next-line class-methods-use-this
-  public getContract() {
-    return null;
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  public getBalance() {
-    return Promise.resolve(NEW_BN);
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  public getAllowance() {
-    return Promise.resolve(new BigNumber(parseInt(MAX_UINT256, 16)));
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  public getTotalSupply() {
-    return undefined;
-  }
-}
-
-export type AnyToken = BeanstalkToken | ERC20Token | NativeToken;

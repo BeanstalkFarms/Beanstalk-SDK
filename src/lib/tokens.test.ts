@@ -1,4 +1,6 @@
-import { getProvider } from '../../test/provider';
+import { Contract } from 'ethers';
+import { setupConnection } from '../../test/provider';
+import { ERC20Token } from '../classes/Token';
 
 import { BeanstalkSDK } from './BeanstalkSDK';
 import { _parseWithdrawalCrates } from './silo.utils';
@@ -19,21 +21,44 @@ const account3 = '0x21DE18B6A8f78eDe6D16C50A167f6B222DC08DF7'; // BF Multisig
 
 /// Setup
 let sdk : BeanstalkSDK;
-beforeAll(() => {
+let account : string;
+
+beforeAll(async () => {
+  const { signer, provider, account: _account } = await setupConnection();
   sdk = new BeanstalkSDK({
-    provider: getProvider(),
+    provider,
+    signer,
     subgraphUrl: 'https://graph.node.bean.money/subgraphs/name/beanstalk-testing'
+  });
+  account = _account;
+});
+
+
+describe('Instantiation', function () {
+  it('sets up .contract on ERC20Token instances', () => {
+    // by default, no instance in memory
+    const token = sdk.tokens.BEAN;
+    expect(token.contract).toBeUndefined();
+
+    // calling first time returns a new instance
+    const c1 = token.getContract();
+    expect(c1).toBeInstanceOf(Contract);
+    expect(c1).toBe(token.contract); // stored internally
+
+    // calling a second time returns the old instance
+    const c2 = token.getContract();
+    expect(c2).toBe(c1);
+    expect(c2).toBe(token.contract);
   });
 });
 
-/// 
 describe('Utilities', function () {
   it('loads name', async () => {
     const [bean, dai, usdc] = await Promise.all([
       'Bean',
       // sdk.tokens.getName(sdk.tokens.BEAN.address),
-      sdk.tokens.getName(sdk.tokens.DAI.address),
-      sdk.tokens.getName(sdk.tokens.USDC.address),
+      ERC20Token.getName(sdk.tokens.DAI.address),
+      ERC20Token.getName(sdk.tokens.USDC.address),
     ])
     expect(bean).toBe('Bean');
     expect(dai).toBe('Dai Stablecoin');
@@ -41,9 +66,9 @@ describe('Utilities', function () {
   });
   it('loads decimals', async () => {
     const [bean, dai, usdc] = await Promise.all([
-      sdk.tokens.getDecimals(sdk.tokens.BEAN.address),
-      sdk.tokens.getDecimals(sdk.tokens.DAI.address),
-      sdk.tokens.getDecimals(sdk.tokens.USDC.address),
+      ERC20Token.getDecimals(sdk.tokens.BEAN.address),
+      ERC20Token.getDecimals(sdk.tokens.DAI.address),
+      ERC20Token.getDecimals(sdk.tokens.USDC.address),
     ]);
     expect(bean).toBe(6);
     expect(dai).toBe(18);
@@ -51,7 +76,6 @@ describe('Utilities', function () {
   });
 });
 
-///
 describe('Function: getBalance', function () {
   it('returns a TokenBalance struct when the token is ETH', async () => {
     const balance = await sdk.tokens.getBalance(sdk.tokens.ETH, sdk.tokens.WETH.address)
@@ -61,11 +85,10 @@ describe('Function: getBalance', function () {
   });
 })
 
-///
 describe('Function: getBalances', function () {
-  it('throws without account or signer', async () => {
-    await expect(sdk.tokens.getBalances()).rejects.toThrow();
-  });
+  // it('throws without account or signer', async () => {
+  //   await expect(sdk.tokens.getBalances()).rejects.toThrow();
+  // });
   it('throws if a provided address is not a valid address', async () => {
     await expect(sdk.tokens.getBalances(account1, ['foo'])).rejects.toThrow();
   })
@@ -91,4 +114,39 @@ describe('Function: getBalances', function () {
     expect(result.has(sdk.tokens.DAI)).toBe(true);
     expect(result.has(sdk.tokens.BEAN_CRV3_LP)).toBe(false);
   });
+});
+
+describe('Permits', function () {
+  it('submits an ERC-2636 permit for a token', async () => {
+    const token = sdk.tokens.BEAN;
+    const owner = account;
+    const spender = sdk.contracts.beanstalk.address;
+    const amount = token.stringify(1000);
+    const contract = token.getContract()
+
+    const permitData = await sdk.permit.sign(
+      account,
+      await sdk.tokens.permitERC2612(
+        token,
+        owner,
+        spender,
+        amount,
+        undefined,
+        undefined,
+      )
+    );
+
+    await contract.permit(
+      account,
+      permitData.typedData.message.spender,
+      permitData.typedData.message.value,
+      permitData.typedData.message.deadline,
+      permitData.split.v,
+      permitData.split.r,
+      permitData.split.s,
+    );
+
+    const newAllowance = (await contract.allowance(owner, spender)).toString();
+    expect(newAllowance).toBe(amount);
+  })
 });

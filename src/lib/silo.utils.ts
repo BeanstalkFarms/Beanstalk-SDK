@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import { Token } from "../classes/Token";
+import { Token } from "../classes/Token/Token";
 import { ZERO_BN } from "../constants";
 import { MapValueType } from "../types";
 import { toTokenUnitsBN } from "../utils/Tokens";

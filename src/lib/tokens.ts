@@ -2,11 +2,9 @@ import { addresses } from '../constants';
 import { Token, BeanstalkToken, ERC20Token, NativeToken } from '../classes/Token';
 import { BeanstalkSDK } from './BeanstalkSDK';
 import BigNumber from 'bignumber.js';
-import { tokenBN } from './events/processor';
 import { TokenFacet } from '../constants/generated/Beanstalk/Beanstalk';
-import { ethers } from 'ethers';
 import { EIP2612PermitMessage, EIP712Domain, EIP712TypedData, Permit } from './permit';
-import { zeros } from '../utils';
+import { ERC20__factory } from '../constants/generated';
 
 export type TokenBalance = {
   internal: BigNumber;
@@ -69,6 +67,7 @@ export class Tokens {
       6,
       {
         name: 'Bean',
+        displayName: 'Bean',
         symbol: 'BEAN',
       },
       {
@@ -82,7 +81,8 @@ export class Tokens {
       addresses.BEAN_CRV3.get(this.sdk.chainId),
       18,
       {
-        name: 'BEAN:3CRV LP',
+        name: 'Curve.fi Factory USD Metapool: Bean', // see .name()
+        displayName: 'BEAN:3CRV LP',
         symbol: 'BEAN3CRV',
         isLP: true,
         color: '#DFB385',
@@ -98,7 +98,8 @@ export class Tokens {
       addresses.UNRIPE_BEAN.get(this.sdk.chainId),
       6,
       {
-        name: 'Unripe Bean',
+        name: 'Unripe Bean', // see `.name()`
+        displayName: 'Unripe Bean',
         symbol: 'urBEAN',
         displayDecimals: 2,
         isUnripe: true,
@@ -114,7 +115,8 @@ export class Tokens {
       addresses.UNRIPE_BEAN_CRV3.get(this.sdk.chainId),
       6,
       {
-        name: 'Unripe BEAN:3CRV LP',
+        name: 'Unripe BEAN3CRV', // see `.name()`
+        displayName: 'Unripe BEAN:3CRV LP',
         symbol: 'urBEAN3CRV',
         displayDecimals: 2,
         isUnripe: true,
@@ -341,63 +343,57 @@ export class Tokens {
   //////////////////////// Permit Data ////////////////////////
 
   /**
-   * https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L85
+   * Create the domain for an particular ERC-2636 signature.
+   * Look up the name of an ERC-20 token for signing.
+   * 
+   * @ref https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L85
    */
-  private async _getEIP712Domain(
-    _tokenOrDomain: string | EIP712Domain
+  private async _getEIP712DomainForToken(
+    token: ERC20Token
   ): Promise<EIP712Domain> {
-    if (typeof _tokenOrDomain !== 'string') {
-      return _tokenOrDomain as EIP712Domain;
-    }
-  
-    const tokenAddress = _tokenOrDomain as string;
-    const token = this.findByAddress(tokenAddress);
-  
-    const [name, chainId] = await Promise.all([
-      // FIXME: assumes that token.name === token.name() on-chain
-      token ? token.name : this.getName(tokenAddress),
-      // FIXME: switch to below after protocol patch
-      // this.sdk.provider.getNetwork().then((network) => network.chainId),
-      1,
+    const [name, chainId] = await Promise.all([ 
+      token.getName(),
+      this.sdk.provider.getNetwork().then((network) => network.chainId),
     ]);
   
     return {
       name,
       version: '1',
       chainId,
-      verifyingContract: tokenAddress
+      verifyingContract: token.address,
     };
   };
 
-  //////////////////////// PERMIT: ERC-2612 (for ERC-20 tokens) ////////////////////////
+  //////////////////////// PERMIT: ERC-2612 (for other ERC-20 tokens) ////////////////////////
 
   /**
+   * Sign a permit for an arbitrary ERC-20 token. This allows `spender` to use `value`
+   * of `owner`'s `token`.
    * 
-   * @ref https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L126
    * @fixme should this be in `tokens.ts`?
    * @fixme does the order of keys in `message` matter? if not we could make an abstraction here
+   * @fixme `permitERC2612` -> `getERC20Permit`
    * 
+   * @ref https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L126
    * @param token a Token instance representing an ERC20 token to permit
    * @param owner 
    * @param spender authorize this account to spend `token` on behalf of `owner`
    * @param value the amount of `token` to authorize
-   * @param d
+   * @param _nonce
+   * @param _deadline
    */
   public async permitERC2612(
     token: ERC20Token,      
-    owner: string,          // 
+    owner: string,           // 
     spender: string,
-    value: string | number, // FIXME: included default on eth-permit
-    _nonce?: number,        //
+    value: string | number,  // FIXME: included default on eth-permit, see @ref
+    _nonce?: number,         //
     _deadline?: number,      // FIXME: is MAX_UINT256 an appropriate default?
   ) : Promise<EIP712TypedData<EIP2612PermitMessage>> {
     const deadline = _deadline || Permit.MAX_UINT256;
     const [domain, nonce] = await Promise.all([
-      this._getEIP712Domain(token.address),
-      _nonce ?? this.sdk.provider.call({
-        to: token.address,
-        data: `${Permit.NONCES_FN}${zeros(24)}${owner.substr(2)}`,
-      })
+      this._getEIP712DomainForToken(token),
+      token.getContract().nonces(owner).then(r => r.toString()),
     ]);
 
     return this._createTypedERC2612Data(domain, {
@@ -425,44 +421,11 @@ export class Tokens {
     message,
   });
 
-  //////////////////////// On-chain Configuration ////////////////////////
+  //////////////////////// PERMIT: Beanstalk "Token" (for internal balances) ////////////////////////
 
-  static NAME_FN = '0x06fdde03';
-  static DECIMALS_FN = '0x313ce567';
+  // TODO
 
-  /**
-   * Get the on-chain `.name()` for an ERC-20 token.
-   * @todo make this work with ERC-1155 (does it already?)
-   * @note stored onchain in hex format, need to decode.
-   * @ref https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L81
-   */
-  public async getName(tokenAddress: string) {
-    return this.sdk.provider.call({
-      to: tokenAddress,
-      data: Tokens.NAME_FN,
-    }).then((n) => {
-      const utf8 = ethers.utils.toUtf8String(n);
-      return utf8;
-      // const decoder = new TextDecoder('utf-8');
-      // return .replace(/^\s+|\s+$/g, '');
-      // return utf8ToASCII(ethers.utils.toUtf8String(n)).replace(/^\s+|\s+$/g, '').trim();
-      // return hexToUtf8(n).substring(130)
-    });
-  }
-
-  /**
-   * Get the on-chain `.decimals()` for an ERC-20 token.
-   * @todo make this work with ERC-1155 (does it already?)
-   * @note stored onchain in hex format, need to decode.
-   */
-  public async getDecimals(tokenAddress: string) {
-    return this.sdk.provider.call({
-      to: tokenAddress,
-      data: Tokens.DECIMALS_FN,
-    }).then((d) => parseInt(d, 10));
-  }
-
-  //////////////////////// Create New ////////////////////////
+  //////////////////////// Create new Token instance ////////////////////////
   // public async createERC20<
   //   T1 extends ConstructorParameters<typeof ERC20Token>,
   //   T2 = [any]

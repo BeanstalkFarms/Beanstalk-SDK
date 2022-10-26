@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js';
 import { BigNumber as EBN, ethers } from 'ethers';
-import { Token } from '../../classes/Token';
+import { Token } from '../../classes/Token/Token';
 import { ZERO_BN } from '../../constants';
 import {
   SowEvent,

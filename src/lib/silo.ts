@@ -1,7 +1,7 @@
 import { BigNumber } from 'bignumber.js';
 import { ethers } from 'ethers';
 import _ from 'lodash';
-import { Token } from '../classes/Token';
+import { Token } from '../classes/Token/Token';
 import { MAX_UINT256, ZERO_BN } from '../constants';
 import { getSdk } from '../generated/graphql';
 import { DataSource, StringMap } from '../types';
@@ -634,6 +634,8 @@ export class Silo {
    * Created typed permit data to authorize `spender` to transfer
    * the `owner`'s deposit balance of `token`.
    * 
+   * @fixme `permitDepositToken` -> `getPermitForToken`
+   * 
    * @param owner the Farmer whose Silo deposit can be transferred
    * @param spender the account authorized to make a transfer
    * @param token the whitelisted token that can be transferred
@@ -671,6 +673,8 @@ export class Silo {
   /**
    * Created typed permit data to authorize `spender` to transfer
    * the `owner`'s deposit balance of `tokens`.
+   * 
+   * @fixme `permitDepositTokens` -> `getPermitForTokens`
    * 
    * @param owner the Farmer whose Silo deposit can be transferred
    * @param spender the account authorized to make a transfer
