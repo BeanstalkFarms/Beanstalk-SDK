@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import { ContractTransaction } from "ethers";
-import { PromiseOrValue } from "graphql/jsutils/PromiseOrValue";
 import { ERC20__factory } from "../../constants/generated";
+import { PromiseOrValue } from "../../constants/generated/common";
 import { ERC20Permit } from "../../constants/generated/ERC20Permit";
 import { ERC20Permit__factory } from "../../constants/generated/factories/ERC20Permit__factory";
 import { bigNumberResult } from "../../utils/Ledger";
@@ -12,10 +12,13 @@ export class ERC20Token extends Token {
 
   //////////////////////// Setup ////////////////////////
   
-  constructor(...args: ConstructorParameters<typeof Token>) {
-    super(...args);
-    if (!this.address) throw new Error('Address is required for ERC20 token instancess');
-  }
+  // @fixme this throws the following error:
+  // src/lib/tokens.ts(57,32): semantic error TS2345: Argument of type 'BeanstalkSDK' is not assignable to parameter of type 'never'.
+  //
+  // constructor(...args: ConstructorParameters<typeof Token>) {
+  //   super(...args);
+  //   if (!this.address) throw new Error('Address is required for ERC20 token instancess');
+  // } 
   
   //////////////////////// Contract Instance ////////////////////////
 
