@@ -631,21 +631,22 @@ export class Silo {
   //////////////////////// Permits ////////////////////////
 
   /**
-   * Get the EIP-712 domain for the Silo.
+   * Created typed permit data to authorize `spender` to transfer
+   * the `owner`'s deposit balance of `token`.
    * 
-   * @note applies to both `depositToken` and `depositTokens` permits.
+   * @fixme `permitDepositToken` -> `getPermitForToken`
+   * 
+   * @param owner the Farmer whose Silo deposit can be transferred
+   * @param spender the account authorized to make a transfer
+   * @param token the whitelisted token that can be transferred
+   * @param value the amount of the token that can be transferred
+   * @param _nonce a nonce to include when signing permit.
+   * Defaults to `beanstalk.depositPermitNonces(owner)`.
+   * @param _deadline the permit deadline. 
+   * Defaults to `MAX_UINT256` (effectively no deadline).
+   * @returns typed permit data. This can be signed with `sdk.permit.sign()`.
    */
-  async _getEIP712Domain() {
-    return {
-      name: "SiloDeposit",
-      version: "1",
-      chainId: 1, // FIXME: switch to below after protocol patch
-      // chainId: (await Silo.sdk.provider.getNetwork()).chainId,
-      verifyingContract: "0xc1e088fc1323b20bcbee9bd1b9fc9546db5624c5"
-    }
-  }
-
-  async permitDepositToken(
+  public async permitDepositToken(
     owner: string,
     spender: string,
     token: string,
@@ -653,29 +654,40 @@ export class Silo {
     _nonce?: string,
     _deadline?: string,
   ) : Promise<EIP712TypedData<DepositTokenPermitMessage>> {
-    // domain is dependent on current chainId
-    // if not provided grab nonce from Beanstalk
+    const deadline = _deadline || MAX_UINT256;
     const [domain, nonce] = await Promise.all([
       this._getEIP712Domain(), 
       _nonce || (Silo.sdk.contracts.beanstalk.depositPermitNonces(owner).then((nonce) => nonce.toString())),
     ]);
 
-    const deadline = _deadline || MAX_UINT256;
-    const message : DepositTokenPermitMessage = {
+    return this._createTypedDepositTokenPermitData(domain, {
       owner,
       spender,
       token,
       value,
       nonce,
       deadline
-    };
-
-    const typedData = this._createTypedDepositTokenPermitData(message, domain);
-
-    return typedData;
+    });
   }
 
-  async permitDepositTokens(
+  /**
+   * Created typed permit data to authorize `spender` to transfer
+   * the `owner`'s deposit balance of `tokens`.
+   * 
+   * @fixme `permitDepositTokens` -> `getPermitForTokens`
+   * 
+   * @param owner the Farmer whose Silo deposit can be transferred
+   * @param spender the account authorized to make a transfer
+   * @param tokens the whitelisted tokens that can be transferred.
+   * @param values the amount of each token in `tokens` that can be transferred.
+   * `values[0]` = how much of `tokens[0]` can be transferred, etc.
+   * @param _nonce a nonce to include when signing permit.
+   * Defaults to `beanstalk.depositPermitNonces(owner)`.
+   * @param _deadline the permit deadline. 
+   * Defaults to `MAX_UINT256` (effectively no deadline).
+   * @returns typed permit data. This can be signed with `sdk.permit.sign()`.
+   */
+  public async permitDepositTokens(
     owner: string,
     spender: string,
     tokens: string[],
@@ -684,34 +696,42 @@ export class Silo {
     _deadline?: string,
   ): Promise<EIP712TypedData<DepositTokensPermitMessage>> {
     if (tokens.length !== values.length) throw new Error('Input mismatch: number of tokens does not equal number of values');
+    if (tokens.length === 1) console.warn('Optimization: use permitDepositToken when permitting one Silo Token.')
 
-    // domain is dependent on current chainId
-    // if not provided grab nonce from Beanstalk
     const deadline = _deadline || MAX_UINT256;
     const [domain, nonce] = await Promise.all([
       this._getEIP712Domain(), 
       _nonce || (Silo.sdk.contracts.beanstalk.depositPermitNonces(owner).then((nonce) => nonce.toString())),
     ]);
 
-    // TO DISCUSS: 
-    if (tokens.length === 1) console.warn('Optimization: use permitDepositToken when permitting one Silo Token.')
-
-    const message = {
+    return this._createTypedDepositTokensPermitData(domain, {
       owner,
       spender,
       tokens,
       values,
       nonce,
       deadline
-    };
-    const typedData = this._createTypedDepositTokensPermitData(message, domain);
-
-    return typedData;
+    });
+  }
+  
+  /**
+   * Get the EIP-712 domain for the Silo.
+   * @note applies to both `depositToken` and `depositTokens` permits.
+   */
+  private async _getEIP712Domain() {
+    return {
+      name: "SiloDeposit",
+      version: "1",
+      // FIXME: switch to below after protocol patch
+      // chainId: (await Silo.sdk.provider.getNetwork()).chainId,
+      chainId: 1, 
+      verifyingContract: "0xc1e088fc1323b20bcbee9bd1b9fc9546db5624c5"
+    }
   }
 
-  _createTypedDepositTokenPermitData = (
-    message: DepositTokenPermitMessage,
+  private _createTypedDepositTokenPermitData = (
     domain: EIP712Domain,
+    message: DepositTokenPermitMessage,
   ) => ({
     types: {
       EIP712Domain: Permit.EIP712_DOMAIN,
@@ -729,9 +749,9 @@ export class Silo {
     message,
   });
 
-  _createTypedDepositTokensPermitData = (
-    message: DepositTokensPermitMessage,
+  private _createTypedDepositTokensPermitData = (
     domain: EIP712Domain,
+    message: DepositTokensPermitMessage,
   ) => ({
     types: {
       EIP712Domain: Permit.EIP712_DOMAIN,
