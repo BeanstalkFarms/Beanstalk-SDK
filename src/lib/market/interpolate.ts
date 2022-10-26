@@ -29,7 +29,7 @@ export class Interpolate {
     ys: any[],
   ) {
     var length = xs.length;
-    if(length < 2) throw new Error(`Interpolate: must have > 2 points`);
+    if(length < 2) throw new Error(`Interpolate: must have >= 2 points`);
     if(length > 64) throw new Error(`Interpolate: must have <= 64 points`);
     if(ys.length != length) throw new Error(`Interpolate: dimensions of x and y must match`);
 
