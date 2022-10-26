@@ -6,7 +6,7 @@ const config: CodegenConfig = {
   schema: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing",
   documents: "src/queries/**/*.graphql",
   generates: {
-    "src/generated/graphql.ts": {
+    "src/constants/generated-gql/graphql.ts": {
       plugins: [
         "typescript",
         "typescript-operations",

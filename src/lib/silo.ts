@@ -3,7 +3,6 @@ import { ethers } from 'ethers';
 import _ from 'lodash';
 import { Token } from '../classes/Token';
 import { MAX_UINT256, ZERO_BN } from '../constants';
-import { getSdk } from '../generated/graphql';
 import { DataSource, StringMap } from '../types';
 import { toTokenUnitsBN } from '../utils/Tokens';
 

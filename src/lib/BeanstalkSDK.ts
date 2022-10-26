@@ -10,7 +10,7 @@ import { Contracts } from './contracts';
 import { EventManager } from './events/EventManager';
 import { Silo } from './silo';
 import { Sun } from './sun';
-import { Sdk as Queries, getSdk as getQueries } from '../generated/graphql';
+import { Sdk as Queries, getSdk as getQueries } from '../constants/generated-gql/graphql';
 import { Farm } from './farm';
 import { Permit } from './permit';
 import { Root } from './root';

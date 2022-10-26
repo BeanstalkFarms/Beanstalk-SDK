@@ -3,4 +3,6 @@
 node_modules
 dist
 cache
-generated
+src/constants/generated/**/*
+src/constants/generated-gql/**/*
+

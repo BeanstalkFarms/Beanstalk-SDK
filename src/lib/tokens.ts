@@ -393,6 +393,7 @@ export class Tokens {
     const deadline = _deadline || Permit.MAX_UINT256;
     const [domain, nonce] = await Promise.all([
       this._getEIP712DomainForToken(token),
+      // @ts-ignore FIXME
       token.getContract().nonces(owner).then(r => r.toString()),
     ]);
 

@@ -18,9 +18,10 @@
     "lint": "tsdx lint",
     "size": "size-limit",
     "analyze": "size-limit --why",
+    "generate": "yarn generate:typechain && yarn generate:graphql",
     "generate:typechain": "typechain --target=ethers-v5 --ts-nocheck --out-dir=./src/constants/generated/ './src/constants/abi/**/*.json'",
-    "copyabis": "rm -rf ./src/constants/abi && cp -R ../Beanstalk-UI/src/constants/abi ./src/constants/abi",
-    "generate:graphql": "graphql-codegen --config codegen.ts"
+    "generate:graphql": "graphql-codegen --config codegen.ts",
+    "copyabis": "rm -rf ./src/constants/abi && cp -R ../Beanstalk-UI/src/constants/abi ./src/constants/abi"
   },
   "husky": {
     "hooks": {
