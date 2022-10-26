@@ -20,9 +20,6 @@ export class Polynomial {
     return this.breakpoints.length;
   }
 
-  /**
-   * 
-   */
   public evalulate(x: number, pieceIndex: number) {
     // refactor: evaluatePolynomial where f === this
   }
@@ -30,6 +27,8 @@ export class Polynomial {
   public integrate(start: number, end: number, pieceIndex: number) {
     // refactor: evaluatePolynomialIntegration where f === this
   }
+
+  // FIXME: later we may move these into `market/pods`.
 
   public getAmountListing(placeInLine: BigInt, amountBeans: BigInt) {
     // refactor: getAmountListing where f === this
