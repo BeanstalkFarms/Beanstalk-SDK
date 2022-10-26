@@ -123,18 +123,17 @@ describe('Function: getBalances', function() {
 });
 
 ///
-describe('Permits', function () {
+describe('Silo Deposit Permits', function () {
   it('permits', async () => {
     const owner   = account;
     const spender = sdk.contracts.root.address;
     const token   = sdk.tokens.BEAN.address;
     const amount  = sdk.tokens.BEAN.stringify(100);
 
-    const startAllowance = await sdk.contracts.beanstalk.depositAllowance(owner, spender, token);
-    const depositPermitNonces = await sdk.contracts.beanstalk.depositPermitNonces(owner);
-    
-    console.log("Initial allowance: ", startAllowance.toString())
-    console.log("Nonce: ", depositPermitNonces.toString())
+    // const startAllowance = await sdk.contracts.beanstalk.depositAllowance(owner, spender, token);
+    // const depositPermitNonces = await sdk.contracts.beanstalk.depositPermitNonces(owner);
+    // console.log("Initial allowance: ", startAllowance.toString())
+    // console.log("Nonce: ", depositPermitNonces.toString())
 
     // Get permit
     const permitData = await sdk.silo.permitDepositToken(
@@ -148,7 +147,7 @@ describe('Permits', function () {
 
     const sig = await sdk.permit.sign(owner, permitData);
 
-    console.log("Signed permit", permitData, sig)
+    // console.log("Signed permit", permitData, sig)
 
     // Send permit
     await sdk.contracts.beanstalk.permitDeposit(
@@ -160,11 +159,11 @@ describe('Permits', function () {
       sig.split.v,
       sig.split.r,
       sig.split.s,
-    );
+    ).then(txn => txn.wait());
 
     // Verify
     const allowance = await sdk.contracts.beanstalk.depositAllowance(owner, spender, token);
-    expect(allowance.toString()).to.be(amount);
+    expect(allowance.toString()).to.be.eq(amount);
   });
 })
 
