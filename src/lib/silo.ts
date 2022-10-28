@@ -599,8 +599,8 @@ export class Silo {
   //////////////////////// Crates ////////////////////////
 
   pickCrates(
-    token: Token,
     crates: Crate<BigNumber>[],
+    token: Token,
     amount: BigNumber.Value,
     sort: CrateSortFn = (crates) => sortCratesBySeason(crates, 'desc'),
   ) {
