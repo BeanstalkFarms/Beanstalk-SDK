@@ -1,6 +1,5 @@
-import * as tokens from './Tokens';
-export { tokens };
-  
+export * as tokens from './Tokens';
+
 export const enumFromValue = <T extends Record<number, string>>(val: number, _enum: T) => {
   // @ts-ignore
   const enumName = (Object.keys(_enum) as Array<keyof T>).find(k => _enum[k] === val);
