@@ -3,8 +3,8 @@ export { ChainId } from './constants/chains';
 export { NativeToken, ERC20Token, BeanstalkToken } from './classes/Token';
 
 export * from './types';
-export { BigNumber } from 'ethers';
-import * as Utils from './utils';
-export { Utils };
+export * as Utils from './utils';
 
+
+export { BeanNumber } from './utils/BeanNumber';
 export { FarmFromMode, FarmToMode } from './lib/farm/types';

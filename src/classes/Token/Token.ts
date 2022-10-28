@@ -2,6 +2,7 @@ import BigNumber from 'bignumber.js';
 import { BaseContract } from 'ethers';
 import { ZERO_BN } from '../../constants';
 import type { BeanstalkSDK } from '../../lib/BeanstalkSDK';
+import { BeanNumber } from '../../utils/BeanNumber/BeanNumber';
 import { bigNumberResult } from '../../utils/Ledger';
 import { toStringBaseUnitBN, toTokenUnitsBN } from '../../utils/Tokens';
 
@@ -115,7 +116,7 @@ export abstract class Token {
 
   abstract getContract(): BaseContract | null;
 
-  abstract getBalance(account: string): Promise<BigNumber>;
+  abstract getBalance(account: string): Promise<BeanNumber>;
 
   abstract getAllowance(account: string, spender: string): Promise<BigNumber | undefined>;
 

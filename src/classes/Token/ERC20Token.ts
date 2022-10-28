@@ -4,6 +4,7 @@ import { ERC20__factory } from "../../constants/generated";
 import { PromiseOrValue } from "../../constants/generated/common";
 import { ERC20Permit } from "../../constants/generated/ERC20Permit";
 import { ERC20Permit__factory } from "../../constants/generated/factories/ERC20Permit__factory";
+import { BeanNumber } from "../../utils/BeanNumber";
 import { bigNumberResult } from "../../utils/Ledger";
 import { Token } from "./Token";
 
@@ -60,7 +61,7 @@ export class ERC20Token extends Token {
     return (
       this.getContract()
         .balanceOf(account)
-        .then(bigNumberResult)
+        .then(result => BeanNumber.fromBigNumber(result, this.decimals))
         .catch((err: Error) => {
           console.error(`[ERC20Token] ${this.symbol} failed to call balanceOf(${account})`, err);
           throw err;

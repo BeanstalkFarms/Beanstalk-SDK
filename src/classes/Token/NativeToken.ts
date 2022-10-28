@@ -1,7 +1,7 @@
-import BigNumber from "bignumber.js";
-import { MAX_UINT256 } from "../../constants";
-import { bigNumberResult } from "../../utils/Ledger";
-import { Token } from "./Token";
+import BigNumber from 'bignumber.js';
+import { MAX_UINT256 } from '../../constants';
+import { BeanNumber } from '../../utils/BeanNumber';
+import { Token } from './Token';
 
 export class NativeToken extends Token {
   // eslint-disable-next-line class-methods-use-this
@@ -9,14 +9,11 @@ export class NativeToken extends Token {
     return null;
   }
 
-  public getBalance(account: string): Promise<BigNumber> {
+  public getBalance(account: string): Promise<BeanNumber> {
     // console.debug(`[NativeToken] ${this.symbol} (${this.chainId} / ${this.address}) -> getBalance(${account})`);
-    return Token.sdk.provider.getBalance(account)
-    .then(
+    return Token.sdk.provider.getBalance(account).then(
       // No need to convert decimals because ethers does this already
-      result => {
-        return bigNumberResult(result)
-      }
+      result => BeanNumber.fromBigNumber(result, this.decimals)
     );
   }
 
