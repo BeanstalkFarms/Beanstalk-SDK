@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import { MAX_UINT256, NEW_BN } from "../../constants";
+import { MAX_UINT256, NEW_BeanNumber, NEW_BN } from "../../constants";
 import { Token } from "./Token";
 
 export class BeanstalkToken extends Token {
@@ -10,7 +10,7 @@ export class BeanstalkToken extends Token {
 
   // eslint-disable-next-line class-methods-use-this
   public getBalance() {
-    return Promise.resolve(NEW_BN);
+    return Promise.resolve(NEW_BeanNumber);
   }
 
   // eslint-disable-next-line class-methods-use-this
