@@ -1,5 +1,7 @@
+import { expect } from 'chai';
+
 describe("Pod Market", () => {
   it('works', () => {
-    expect(true).toBe(true);
+    expect(true).to.be.equal(true);
   })
 })

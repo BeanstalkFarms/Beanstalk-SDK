@@ -1,5 +1,7 @@
-
-
+import { DecimalBigNumber as DBN } from '../../utils/DecimalBigNumber';
+import { BigNumber } from 'ethers';
+import { Polynomial } from './polynomial';
+// BigNumber.config({DECIMAL_PLACES:128, EXPONENTIAL_AT:1e+9})
 /**
  * @FIXME 
  * - math.js uses https://github.com/MikeMcl/decimal.js/ (unknown size)
@@ -17,98 +19,123 @@
  * - add some helper func for calculateShifts
  * - figure out what math.format is doing
  */
+
+ export function calcShifts (n:string, c:number) {
+  let val = +n;
+  if(Math.abs(val) == 0) {
+      return 0;
+  }
+  while(val > 1) {
+      val /= 10;
+      c--;
+  }
+  if(val <= 0.1 && val > 0) {
+      while(val <= 0.1) {
+          val *= 10;
+          c++;
+      }
+  }
+  return c;
+}
+
+export function convertToRaisedInt(n: DBN, d: number): DBN {
+  let r = n.abs().mul((new DBN('10')).pow(d));
+  return r;
+}
+
 export class Interpolate {
+  static exponentBase: number = 24;
   /**
    * @ref https://www.wikiwand.com/en/Monotone_cubic_interpolation
    * @param xs 
    * @param ys 
    * @returns 
    */
+
   static fromPoints(
-    xs: any[],
-    ys: any[],
+    xs: DBN[],
+    ys: DBN[],
   ) {
     var length = xs.length;
     if(length < 2) throw new Error(`Interpolate: must have >= 2 points`);
-    if(length > 64) throw new Error(`Interpolate: must have <= 64 points`);
     if(ys.length != length) throw new Error(`Interpolate: dimensions of x and y must match`);
 
-    // var dys = [], dxs = [], ms = [];
-    // for(let i = 0; i < (length-1); i++) {
-    //   const deltax = math.subtract(math.bignumber(xs[i+1]), math.bignumber(xs[i]));
-    //   const deltay = math.subtract(math.bignumber(ys[i+1]), math.bignumber(ys[i]));
+    const dys: Array<DBN> = [], dxs: Array<DBN> = [], ms: Array<DBN> = [];
+    for(let i = 0; i < (length-1); i++) {
+      const deltax = xs[i+1].sub(xs[i]);
+      const deltay = ys[i+1].sub(ys[i]);
 
-    //   dxs.push(deltax);
-    //   dys.push(deltay);
-    //   ms.push(math.divide(deltay, deltax));
-    // }
+      dxs.push(deltax);
+      dys.push(deltay);
+      ms.push(deltay.div(deltax, this.exponentBase)); //
+    }
 
-    // var c1s = [ms[0]];
-    // for(let i = 0; i < (dxs.length-1); i++) {
-    //   if(ms[i] * ms[i+1] <= 0) {
-    //     c1s.push(math.bignumber(0));
-    //   } else {
-    //     c1s.push(math.divide(math.multiply(math.bignumber(3), math.add(dxs[i], dxs[i+1])), math.add(math.divide(math.add(math.add(dxs[i], dxs[i+1]), dxs[i+1]), ms[i]), math.divide(math.add(math.add(dxs[i], dxs[i+1]), dxs[i]), ms[i+1]))));
-    //   }
-    // }
+    const c1s: Array<DBN> = [ms[0]];
+    for(let i = 0; i < (dxs.length-1); i++) {
+      if(ms[i].mul(ms[i+1]).lt('0') || ms[i].mul(ms[i+1]).eq('0')) {
+        c1s.push(new DBN('0'));
+      } else {
+        const m_ = ms[i];
+        const mNext = ms[i+1];
+        const dx_ = dxs[i];
+        const dxNext = dxs[i+1];
+        const common = dx_.add(dxNext);
+        console.log(m_.toString(), mNext.toString())
+        const r = common.mul('3').div((common.add(dxNext).div(m_, this.exponentBase)).add((common.add(dx_)).div(mNext, this.exponentBase)), this.exponentBase)
+        c1s.push(r);
+      }
+    }
     
-    // c1s.push(ms[ms.length - 1]);
+    c1s.push(ms[ms.length - 1]);
 
-    // var c2s = [], c3s = [];
+    const c2s: Array<DBN> = [], c3s:Array<DBN> = [];
 
-    // for(let i = 0; i < c1s.length - 1; i++) {
-    //   var invDx = math.divide(math.bignumber(1), dxs[i]);
-    //   var common_ = math.chain(c1s[i]).add(c1s[i+1]).subtract(ms[i]).subtract(ms[i]).done();
-    //   c2s.push(math.multiply(math.chain(ms[i]).subtract(c1s[i]).subtract(common_).done(), invDx));
-    //   c3s.push(math.chain(common_).multiply(invDx).multiply(invDx).done());
-    // }
+    for(let i = 0; i < c1s.length - 1; i++) {
+      const c1 = c1s[i];
+      const m_ = ms[i];
+      const invDx = (new DBN('1')).div(dxs[i], this.exponentBase);
+      const common_ = c1.add(c1s[i+1]).sub(m_.mul('2'))
+
+      c2s.push((m_.sub(c1).sub(common_).mul(invDx)));
+      c3s.push(common_.mul(invDx).mul(invDx));
+    }
     
-    var breakpoints = new Array(length);
-    var coefficients = new Array(length*4);
-    var exponents = new Array(length*4);
-    var signs = new Array(length*4);
+    var breakpoints: Array<DBN> = new Array(length);
+    var coefficients: Array<DBN> = new Array(length*4);
+    var exponents: Array<number> = new Array(length*4);
+    var signs: Array<boolean> = new Array(length*4);
 
-    // for(let i = 0; i < length; i++){
-    //   signs[i*4] = math.sign(ys[i]) == 1 || math.sign(ys[i]) == 0;
-    //   signs[i*4 + 1] = math.sign(c1s[i]) == 1 || math.sign(c1s[i]) == 0;
+    for(let i = 0; i < length; i++){
+      signs[i*4] = ys[i].isPositive();
+      signs[i*4 + 1] = c1s[i].isPositive();
 
-    //   exponents[i*4] = math.number(ys[i]).calculateShifts(startingExponent);
-    //   exponents[i*4 + 1] = math.number(c1s[i]).calculateShifts(startingExponent);
-      
-    //   let exponentDeg0 = math.pow(math.bignumber(10), math.bignumber(math.number(ys[i]).calculateShifts(startingExponent)))
-    //   let exponentDeg1 = math.pow(math.bignumber(10), math.bignumber(math.number(c1s[i]).calculateShifts(startingExponent)))
-      
-    //   coefficients[i*4] = math.format(math.floor(math.abs(math.multiply(ys[i], exponentDeg0))), {notation: "fixed"});
-    //   coefficients[i*4 + 1] = math.format(math.floor(math.abs(math.multiply(c1s[i], exponentDeg1))), {notation: "fixed"});
-      
-    //   breakpoints[i] = math.format(xs[i], {notation: "fixed"});
+      exponents[i*4] = calcShifts(ys[i].toString(), this.exponentBase)
+      exponents[i*4 + 1] = calcShifts(c1s[i].toString(), this.exponentBase)
+    
+      coefficients[i*4]= convertToRaisedInt(ys[i], exponents[i*4]) 
+      coefficients[i*4 + 1] = convertToRaisedInt(c1s[i], exponents[i*4 + 1])
 
-    //   if(i<(dxs.length)) {
-    //     signs[i*4 + 2] = math.sign(c2s[i]) == 1 || math.sign(c2s[i]) == 0;
-    //     signs[i*4 + 3] = math.sign(c3s[i]) == 1 || math.sign(c3s[i]) == 0;
+      breakpoints[i] = xs[i];
 
-    //     exponents[i*4 + 2] = math.number(c2s[i]).calculateShifts(startingExponent);
-    //     exponents[i*4 + 3] = math.number(c3s[i]).calculateShifts(startingExponent);
+      if(i<(dxs.length)) {
+        signs[i*4 + 2] = c2s[i].isPositive();
+        signs[i*4 + 3] = c3s[i].isPositive();
 
-    //     let exponentDeg2 = math.pow(math.bignumber(10), math.bignumber(math.number(c2s[i]).calculateShifts(startingExponent)))
-    //     let exponentDeg3 = math.pow(math.bignumber(10), math.bignumber(math.number(c3s[i]).calculateShifts(startingExponent)))
-    //     coefficients[i*4 + 2] = math.format(math.floor(math.abs(math.multiply(c2s[i], exponentDeg2))), {notation: "fixed"});
-    //     coefficients[i*4 + 3] = math.format(math.floor(math.abs(math.multiply(c3s[i], exponentDeg3))), {notation: "fixed"});
-    //   } else {
-    //     signs[i*4 + 2] = false;
-    //     signs[i*4 + 3] = false;
-    //     exponents[i*4 + 2] = 0;
-    //     exponents[i*4 + 3] = 0;
-    //     coefficients[i*4 + 2] = '0';
-    //     coefficients[i*4 + 3] = '0';
-    //   }
-    // }
+        exponents[i*4 + 2] = calcShifts(c2s[i].toString(), this.exponentBase);
+        exponents[i*4 + 3] = calcShifts(c3s[i].toString(), this.exponentBase);
 
-    return {
-      breakpoints: breakpoints, 
-      coefficients: coefficients, 
-      exponents: exponents, 
-      signs: signs, 
-    };
+        coefficients[i*4 + 2]= convertToRaisedInt(c2s[i], exponents[i*4 + 2]) 
+        coefficients[i*4 + 3] = convertToRaisedInt(c3s[i], exponents[i*4 + 3])
+      } else {
+        signs[i*4 + 2] = false;
+        signs[i*4 + 3] = false;
+        exponents[i*4 + 2] = 0;
+        exponents[i*4 + 3] = 0;
+        coefficients[i*4 + 2] = new DBN('0');
+        coefficients[i*4 + 3] = new DBN('0');
+      }
+    }
+
+    return {breakpoints, coefficients, exponents, signs};
   }
 }
