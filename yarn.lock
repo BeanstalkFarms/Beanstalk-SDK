@@ -143,7 +143,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/core@npm:^7.1.0, @babel/core@npm:^7.11.6, @babel/core@npm:^7.12.3, @babel/core@npm:^7.14.0, @babel/core@npm:^7.4.4, @babel/core@npm:^7.7.5, @babel/core@npm:^7.7.7":
+"@babel/core@npm:7.19.6, @babel/core@npm:^7.1.0, @babel/core@npm:^7.11.6, @babel/core@npm:^7.12.3, @babel/core@npm:^7.14.0, @babel/core@npm:^7.4.4, @babel/core@npm:^7.7.5, @babel/core@npm:^7.7.7":
   version: 7.19.6
   resolution: "@babel/core@npm:7.19.6"
   dependencies:
@@ -210,7 +210,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/helper-create-class-features-plugin@npm:^7.18.6":
+"@babel/helper-create-class-features-plugin@npm:^7.18.6, @babel/helper-create-class-features-plugin@npm:^7.19.0":
   version: 7.19.0
   resolution: "@babel/helper-create-class-features-plugin@npm:7.19.0"
   dependencies:
@@ -898,6 +898,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/plugin-syntax-typescript@npm:^7.20.0":
+  version: 7.20.0
+  resolution: "@babel/plugin-syntax-typescript@npm:7.20.0"
+  dependencies:
+    "@babel/helper-plugin-utils": ^7.19.0
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 6189c0b5c32ba3c9a80a42338bd50719d783b20ef29b853d4f03929e971913d3cefd80184e924ae98ad6db09080be8fe6f1ffde9a6db8972523234f0274d36f7
+  languageName: node
+  linkType: hard
+
 "@babel/plugin-syntax-typescript@npm:^7.7.2":
   version: 7.18.6
   resolution: "@babel/plugin-syntax-typescript@npm:7.18.6"
@@ -1302,6 +1313,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/plugin-transform-typescript@npm:^7.18.6":
+  version: 7.20.0
+  resolution: "@babel/plugin-transform-typescript@npm:7.20.0"
+  dependencies:
+    "@babel/helper-create-class-features-plugin": ^7.19.0
+    "@babel/helper-plugin-utils": ^7.19.0
+    "@babel/plugin-syntax-typescript": ^7.20.0
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 7cc335a95374d03e09ec48fe313dccde477ab4784f26f7b24fdc7a9db3c670759c3c8177a671a68365467c0885dad82b5dda3f57ba0b6bf7459f4ae55fae4ee4
+  languageName: node
+  linkType: hard
+
 "@babel/plugin-transform-unicode-escapes@npm:^7.18.10":
   version: 7.18.10
   resolution: "@babel/plugin-transform-unicode-escapes@npm:7.18.10"
@@ -1325,7 +1349,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/preset-env@npm:^7.11.0":
+"@babel/preset-env@npm:7.19.4, @babel/preset-env@npm:^7.11.0":
   version: 7.19.4
   resolution: "@babel/preset-env@npm:7.19.4"
   dependencies:
@@ -1422,6 +1446,19 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 8430e0e9e9d520b53e22e8c4c6a5a080a12b63af6eabe559c2310b187bd62ae113f3da82ba33e9d1d0f3230930ca702843aae9dd226dec51f7d7114dc1f51c10
+  languageName: node
+  linkType: hard
+
+"@babel/preset-typescript@npm:7.18.6":
+  version: 7.18.6
+  resolution: "@babel/preset-typescript@npm:7.18.6"
+  dependencies:
+    "@babel/helper-plugin-utils": ^7.18.6
+    "@babel/helper-validator-option": ^7.18.6
+    "@babel/plugin-transform-typescript": ^7.18.6
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 7fe0da5103eb72d3cf39cf3e138a794c8cdd19c0b38e3e101507eef519c46a87a0d6d0e8bc9e28a13ea2364001ebe7430b9d75758aab4c3c3a8db9a487b9dc7c
   languageName: node
   linkType: hard
 
@@ -3824,7 +3861,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/babel__core@npm:^7.1.14, @types/babel__core@npm:^7.1.7":
+"@types/babel__core@npm:^7, @types/babel__core@npm:^7.1.14, @types/babel__core@npm:^7.1.7":
   version: 7.1.19
   resolution: "@types/babel__core@npm:7.1.19"
   dependencies:
@@ -3843,6 +3880,13 @@ __metadata:
   dependencies:
     "@babel/types": ^7.0.0
   checksum: 20effbbb5f8a3a0211e95959d06ae70c097fb6191011b73b38fe86deebefad8e09ee014605e0fd3cdaedc73d158be555866810e9166e1f09e4cfd880b874dcb0
+  languageName: node
+  linkType: hard
+
+"@types/babel__preset-env@npm:^7":
+  version: 7.9.2
+  resolution: "@types/babel__preset-env@npm:7.9.2"
+  checksum: a905ed92a3f602384966153e74a94790425e98af54e392a7fcfb5c5ded2f2a58c49a9fa64a0cb506fbffb8169ad25b56ea87983c812a4fb880f0716668c8c085
   languageName: node
   linkType: hard
 
@@ -13379,7 +13423,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "root@workspace:."
   dependencies:
+    "@babel/core": 7.19.6
+    "@babel/preset-env": 7.19.4
+    "@babel/preset-typescript": 7.18.6
     "@preconstruct/cli": 2.2.2
+    "@types/babel__core": ^7
+    "@types/babel__preset-env": ^7
   languageName: unknown
   linkType: soft
 

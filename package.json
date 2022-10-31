@@ -6,6 +6,20 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@preconstruct/cli": "2.2.2"
+    "@babel/core": "7.19.6",
+    "@babel/preset-env": "7.19.4",
+    "@babel/preset-typescript": "7.18.6",
+    "@preconstruct/cli": "2.2.2",
+    "@types/babel__core": "^7",
+    "@types/babel__preset-env": "^7"
+  },
+  "preconstruct": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "scripts": {
+    "build": "preconstruct build",
+    "postinstall": "preconstruct dev"
   }
 }

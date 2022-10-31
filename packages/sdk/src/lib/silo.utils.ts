@@ -89,6 +89,7 @@ export function sortCratesBySeason<T extends Crate<BigNumber>>(crates: T[], dire
 export function sortCratesByBDVRatio<T extends DepositCrate<BigNumber>>(crates: T[], direction : 'asc' | 'desc' = 'asc') {
   const m = direction === 'asc' ? -1 : 1;
   return [...crates].sort((a, b) => {
+    // FIXME
     const _a = a.bdv.div(a.amount);
     const _b = b.bdv.div(b.amount);
     return m * _b.minus(_a).toNumber();

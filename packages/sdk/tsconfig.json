@@ -42,5 +42,6 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "strictPropertyInitialization": false,
+    "isolatedModules": true
   }
 }

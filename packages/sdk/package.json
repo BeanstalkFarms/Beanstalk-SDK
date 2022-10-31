@@ -2,7 +2,7 @@
   "name": "@beanstalk/sdk",
   "version": "0.1.0",
   "license": "MIT",
-  "main": "dist/index.js",
+  "main": "dist/beanstalk-sdk.cjs.js",
   "typings": "dist/index.d.ts",
   "files": [
     "dist",
@@ -12,12 +12,6 @@
     "node": ">=16"
   },
   "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build",
-    "test": "npx --node-options=\"--no-warnings\" hardhat test",
-    "lint": "tsdx lint",
-    "size": "size-limit",
-    "analyze": "size-limit --why",
     "generate": "yarn generate:typechain && yarn generate:graphql",
     "generate:typechain": "typechain --target=ethers-v5 --ts-nocheck --out-dir=./src/constants/generated/ './src/constants/abi/**/*.json'",
     "generate:graphql": "graphql-codegen --config codegen.ts",
@@ -34,7 +28,7 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "module": "dist/sdk.esm.js",
+  "module": "dist/beanstalk-sdk.esm.js",
   "peerDependencies": {
     "ethers": ">=5.6.8"
   },
@@ -48,6 +42,7 @@
     "@graphql-codegen/typescript-resolvers": "2.7.4",
     "@nomiclabs/hardhat-ethers": "^2.1.1",
     "@typechain/ethers-v5": "^10.1.0",
+    "@types/bn.js": "^5",
     "@types/jest": "^29.1.2",
     "@types/lodash": "^4.14.186",
     "@types/lodash-es": "^4",
@@ -66,9 +61,13 @@
     "typescript": "^4.8.4"
   },
   "dependencies": {
+    "@ethersproject/bytes": "5.7.0",
+    "@ethersproject/logger": "5.7.0",
     "bignumber.js": "^9.1.0",
+    "bn.js": "5.2.1",
     "graphql": "^16.6.0",
     "graphql-request": "^4",
+    "graphql-tag": "2.12.6",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21"
   },
