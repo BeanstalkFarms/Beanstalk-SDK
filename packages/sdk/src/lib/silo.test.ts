@@ -9,6 +9,7 @@ import { TokenSiloBalance } from './silo';
 import { _parseWithdrawalCrates } from './silo.utils';
 import { ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
+import { BeanNumber } from '../utils/BeanNumber';
 
 /// Utilities
 const RUN_TIMER = false;
@@ -50,7 +51,7 @@ describe('Utilities', function () {
         '6075': crate2, // => withdrawn
         '6076': crate3, // => withdrawn
       },
-      new BigNumber(6074)
+      BeanNumber.from(6074)
     );
     expect(result.claimable.amount).to.be.instanceOf(BigNumber);
     expect(result.withdrawn.amount).to.be.instanceOf(BigNumber);
@@ -128,7 +129,7 @@ describe('Silo Deposit Permits', function () {
     const owner   = account;
     const spender = sdk.contracts.root.address;
     const token   = sdk.tokens.BEAN.address;
-    const amount  = sdk.tokens.BEAN.stringify(100);
+    const amount  = sdk.tokens.BEAN.fromHuman('100').toString();
 
     // const startAllowance = await sdk.contracts.beanstalk.depositAllowance(owner, spender, token);
     // const depositPermitNonces = await sdk.contracts.beanstalk.depositPermitNonces(owner);

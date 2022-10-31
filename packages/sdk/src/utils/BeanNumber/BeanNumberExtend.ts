@@ -20,7 +20,6 @@ declare module './BeanNumber' {
 }
 
 BeanNumber.fromBigNumber = function(bn: BigNumber, decimals?: number): BeanNumber {
-  console.log(decimals);
   const n = BeanNumber.from(bn);
   if (decimals) n.decimals = decimals;
 

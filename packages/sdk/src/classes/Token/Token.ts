@@ -1,14 +1,8 @@
-// import BeanNumber from 'BeanNumber.js';
 import { BaseContract } from 'ethers';
 import { ZERO_BeanNumber, ZERO_BN } from '../../constants';
 import type { BeanstalkSDK } from '../../lib/BeanstalkSDK';
 import { BeanNumber } from '../../utils/BeanNumber/BeanNumber';
-import { bigNumberResult } from '../../utils/Ledger';
-// import { BeanNumberResult } from '../../utils/Ledger';
-import { toStringBaseUnitBN, toTokenUnitsBN } from '../../utils/Tokens';
 
-// import { BeanstalkToken } from './BeanstalkToken';
-// import { NativeToken } from './NativeToken';
 
 /**
  * A currency is any fungible financial instrument, including Ether, all ERC20 tokens, and other chain-native currencies
@@ -144,27 +138,26 @@ export abstract class Token {
   }
 
   /**
-   * Convert an `amount` of this Token into a string value
-   * based on the configured number of decimals.
-   *
-   * FIXME: better name
-   * FIXME: provide other side (toTokenUnitsBN)
-   *
-   * @param amount amount to convert
+   * Converts from a human amount to a block chain value stored in BeanNumber
+   * 
+   * Ex: BEAN.fromHuman("3.14") => BeanNumber holding value "3140000"
+   * 
+   * @param amount human readable amout, ex: "3.14" ether
+   * @returns BeanNumber
+   */
+  fromHuman(amount: string): BeanNumber {
+    return BeanNumber.fromHuman(amount, this.decimals)
+  }
+
+  /**
+   * Converts from a blockchain value to a human readable form
+   * 
+   * Ex: BEAN.toHuman(BeanNumber.from('3140000)) => "3.14"
+   * @param value A BeanNumber with a value of this token, for ex: 1000000 would be 1 BEAN
    * @returns string
    */
-  public stringify(amount: BeanNumber) {
-    // FIXME
-    // return toStringBaseUnitBN(amount, this.decimals);
+  toHuman(value: BeanNumber): string {
+    return value.toHuman(this.decimals);
   }
-
-  public stringifyToDecimal(amount: BeanNumber) {
-    // FIXME
-    // return toTokenUnitsBN(amount, this.decimals)
-  }
-
-  public tokenResult (){
-    return (result: BeanNumber) => toTokenUnitsBN(bigNumberResult(result), this.decimals);
-  };
 }
 

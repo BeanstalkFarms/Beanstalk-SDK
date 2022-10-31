@@ -1,8 +1,9 @@
-import BigNumber from "bignumber.js";
+// import BigNumber from "bignumber.js";
 import { Token } from "../classes/Token";
-import { ZERO_BN } from "../constants";
+import { ZERO_BeanNumber, ZERO_BN } from "../constants";
 import { MapValueType } from "../types";
-import { toTokenUnitsBN } from "../utils/Tokens";
+import { BeanNumber } from "../utils/BeanNumber";
+// import { toTokenUnitsBN } from "../utils/Tokens";
 import { EventProcessorData } from "./events/processor";
 import { EIP712PermitMessage } from "./permit";
 import { Crate, DepositCrate, TokenSiloBalance, WithdrawalCrate } from "./silo";
@@ -18,7 +19,7 @@ export type DepositTokensPermitMessage = EIP712PermitMessage<{
   values: (number | string)[];
 }>
 
-export type CrateSortFn = <T extends Crate<BigNumber>>(crates: T[]) => T[];
+export type CrateSortFn = <T extends Crate<BeanNumber>>(crates: T[]) => T[];
 
 /**
  * Beanstalk doesn't automatically re-categorize withdrawals as "claimable".
@@ -34,30 +35,32 @@ export type CrateSortFn = <T extends Crate<BigNumber>>(crates: T[]) => T[];
 export const _parseWithdrawalCrates = (
   token: Token,
   withdrawals: MapValueType<EventProcessorData['withdrawals']>,
-  currentSeason: BigNumber
+  currentSeason: BeanNumber
 ) : {
   withdrawn: TokenSiloBalance['withdrawn'];
   claimable: TokenSiloBalance['claimable'];
 } => {
-  let withdrawnBalance = ZERO_BN;           // aka "transit"
-  let claimableBalance = ZERO_BN;           // aka "receivable"
+  let withdrawnBalance = ZERO_BeanNumber;           // aka "transit"
+  let claimableBalance = ZERO_BeanNumber;           // aka "receivable"
   const withdrawn : WithdrawalCrate[] = []; // aka "transit"
   const claimable : WithdrawalCrate[] = []; // aka "receivable"
 
   // Split each withdrawal between `receivable` and `transit`.
   Object.keys(withdrawals).forEach((season) => {
-    const amt = toTokenUnitsBN(withdrawals[season].amount.toString(), token.decimals);
-    const szn = new BigNumber(season);
+    // const amt = toTokenUnitsBN(withdrawals[season].amount.toString(), token.decimals);
+    // FIXME... we don't have decimals on amt here, do we need them?
+    const amt = withdrawals[season].amount
+    const szn = BeanNumber.from(season);
     if (szn.lte(currentSeason)) {
-      claimableBalance = claimableBalance.plus(amt);
+      claimableBalance = claimableBalance.add(amt);
       claimable.push({
-        amount: amt,
+        amount: BeanNumber.from(amt),
         season: szn,
       });
     } else {
-      withdrawnBalance = withdrawnBalance.plus(amt);
+      withdrawnBalance = withdrawnBalance.add(amt);
       withdrawn.push({
-        amount: amt,
+        amount: BeanNumber.from(amt),
         season: szn,
       });
     }
@@ -78,21 +81,21 @@ export const _parseWithdrawalCrates = (
 /**
  * Order crates by Season.
  */
-export function sortCratesBySeason<T extends Crate<BigNumber>>(crates: T[], direction : 'asc' | 'desc' = 'desc') {
+export function sortCratesBySeason<T extends Crate<BeanNumber>>(crates: T[], direction : 'asc' | 'desc' = 'desc') {
   const m = direction === 'asc' ? -1 : 1;
-  return [...crates].sort((a, b) => m * (b.season.minus(a.season).toNumber()));
+  return [...crates].sort((a, b) => m * (b.season.sub(a.season).toNumber()));
 }
 
 /**
  * Order crates by BDV.
  */
-export function sortCratesByBDVRatio<T extends DepositCrate<BigNumber>>(crates: T[], direction : 'asc' | 'desc' = 'asc') {
+export function sortCratesByBDVRatio<T extends DepositCrate<BeanNumber>>(crates: T[], direction : 'asc' | 'desc' = 'asc') {
   const m = direction === 'asc' ? -1 : 1;
   return [...crates].sort((a, b) => {
     // FIXME
     const _a = a.bdv.div(a.amount);
     const _b = b.bdv.div(b.amount);
-    return m * _b.minus(_a).toNumber();
+    return m * _b.sub(_a).toNumber();
   });
 }
 

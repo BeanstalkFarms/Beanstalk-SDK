@@ -70,14 +70,14 @@ export class ERC20Token extends Token {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  public getAllowance(account: string, spender: string) {
+  public getAllowance(account: string, spender: string): Promise<BeanNumber | undefined> {
     return this.getContract().allowance(account, spender)
-    .then(bigNumberResult);
+    .then(BeanNumber.from);
   }
 
   public getTotalSupply() {
     return this.getContract().totalSupply()
-    .then(bigNumberResult);
+    .then(BeanNumber.from);
   }
 
   public approve(spender: PromiseOrValue<string>, value: PromiseOrValue<BigNumber>):Promise<ContractTransaction> {

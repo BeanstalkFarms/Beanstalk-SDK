@@ -1,4 +1,8 @@
+// This file is temporary during migration
+
 import BigNumber from 'bignumber.js';
+import { BigNumberish } from 'ethers';
+import { BeanNumber } from './BeanNumber';
 // import {Token} from '../classes/Token';
 // import { ZERO_BN } from '../constants';
 // import { bigNumberResult } from './Ledger';
@@ -172,46 +176,53 @@ export function displayFullBN(bn: BigNumber, maxDecimals: number = 18, minDecima
 // // Token Unit Conversions
 // // -------------------------
 
-/**
- * Convert a "decimal amount" (decimal form) to "token amount" (integer form).
- * This is what's stored on chain.
- *
- * @param decimalAmt
- * @param decimals
- * @returns int
- */
-export function toBaseUnitBN(decimalAmt: BigNumber.Value, decimals: BigNumber.Value): BigNumber {
-  const amt = new BigNumber(decimalAmt);
-  const base = new BigNumber(10);
-  const decimalsBN = new BigNumber(decimals);
-  const digits = base.pow(decimalsBN);
-  return amt.multipliedBy(digits).integerValue();
-}
+// /**
+//  * Convert a "decimal amount" (decimal form) to "token amount" (integer form).
+//  * This is what's stored on chain.
+//  *
+//  * @param decimalAmt
+//  * @param decimals
+//  * @returns int
+//  */
+// export function toBaseUnitBN(decimalAmt: BeanNumber, decimals: BeanNumber): BeanNumber {
+//   const amt = new BigNumber(decimalAmt);
+//   const base = new BigNumber(10);
+//   const decimalsBN = new BigNumber(decimals);
+//   const digits = base.pow(decimalsBN);
+//   return amt.multipliedBy(digits).integerValue();
+// }
 
-/**
- * Convert a "token amount" (integer form) to "decimal amount" (decimal form).
- * This is typically what's displayed to users within the application.
- *
- * @param tokenAmt BigNumber.Value
- * @param decimals BigNumber.Value
- * @returns BigNumber
- */
-export function toTokenUnitsBN(tokenAmt: BigNumber.Value, decimals: BigNumber.Value): BigNumber {
-  const amt = new BigNumber(tokenAmt.toString());
-  const base = new BigNumber(10);
-  const decimalsBN = new BigNumber(decimals);
-  const digits = base.pow(decimalsBN);
-  return amt.dividedBy(digits);
-}
+// /**
+//  * Convert a "token amount" (integer form) to "decimal amount" (decimal form).
+//  * This is typically what's displayed to users within the application.
+//  * Ex:
+//  *    let n = toTokenUnitsBN('3140000', 6)
+//  *    n.toString()  // '3.14'
+//  * @param tokenAmt BigNumber.Value
+//  * @param decimals BigNumber.Value
+//  * @returns BigNumber
+//  */
+// export function toTokenUnitsBN(tokenAmt: BigNumber.Value, decimals: BigNumber.Value): BigNumber {
+//   const amt = new BigNumber(tokenAmt.toString());
+//   const base = new BigNumber(10);
+//   const decimalsBN = new BigNumber(decimals);
+//   const digits = base.pow(decimalsBN);
+//   return amt.dividedBy(digits);
+// }
 
-/**
- * Convert a "raw amount" (decimal form) to "token amount" (integer form).
- * This is what's stored on chain.
- *
- * @param decimalAmt
- * @param decimals
- * @returns string
- */
-export function toStringBaseUnitBN(decimalAmt: BigNumber.Value, decimals: BigNumber.Value): string {
-  return toBaseUnitBN(decimalAmt, decimals).toFixed();
-}
+// /**
+//  * Convert a "raw amount" (decimal form) to "token amount" (integer form).
+//  * This is what's stored on chain.
+//  * 
+//  * Ex: 
+//  *    toStringBaseUnitBN(new BigNumber("3.14"), 6);
+//  *    returns "3140000"
+//  * 
+//  *
+//  * @param decimalAmt
+//  * @param decimals
+//  * @returns string
+//  */
+// export function toStringBaseUnitBN(decimalAmt: BigNumber.Value, decimals: BigNumber.Value): string {
+//   return toBaseUnitBN(decimalAmt, decimals).toFixed();
+// }
