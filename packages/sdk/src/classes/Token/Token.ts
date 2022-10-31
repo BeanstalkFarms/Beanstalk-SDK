@@ -1,9 +1,10 @@
-import BigNumber from 'bignumber.js';
+// import BeanNumber from 'BeanNumber.js';
 import { BaseContract } from 'ethers';
-import { ZERO_BN } from '../../constants';
+import { ZERO_BeanNumber, ZERO_BN } from '../../constants';
 import type { BeanstalkSDK } from '../../lib/BeanstalkSDK';
 import { BeanNumber } from '../../utils/BeanNumber/BeanNumber';
 import { bigNumberResult } from '../../utils/Ledger';
+// import { BeanNumberResult } from '../../utils/Ledger';
 import { toStringBaseUnitBN, toTokenUnitsBN } from '../../utils/Tokens';
 
 // import { BeanstalkToken } from './BeanstalkToken';
@@ -101,26 +102,26 @@ export abstract class Token {
   }
 
   /** Get the amount of Stalk rewarded per deposited BDV of this Token. */
-  public getStalk(bdv?: BigNumber): BigNumber {
-    if (!this.rewards?.stalk) return ZERO_BN;
-    if (!bdv) return new BigNumber(this.rewards.stalk);
-    return bdv.times(this.rewards.stalk);
+  public getStalk(bdv?: BeanNumber): BeanNumber {
+    if (!this.rewards?.stalk) return ZERO_BeanNumber;
+    if (!bdv) return BeanNumber.from(this.rewards.stalk);
+    return bdv.mul(this.rewards.stalk);
   }
 
   /** Get the amount of Seeds rewarded per deposited BDV of this Token. */
-  public getSeeds(bdv?: BigNumber): BigNumber {
-    if (!this.rewards?.seeds) return ZERO_BN;
-    if (!bdv) return new BigNumber(this.rewards.seeds);
-    return bdv.times(this.rewards.seeds);
+  public getSeeds(bdv?: BeanNumber): BeanNumber {
+    if (!this.rewards?.seeds) return ZERO_BeanNumber;
+    if (!bdv) return BeanNumber.from(this.rewards.seeds);
+    return bdv.mul(this.rewards.seeds);
   }
 
   abstract getContract(): BaseContract | null;
 
   abstract getBalance(account: string): Promise<BeanNumber>;
 
-  abstract getAllowance(account: string, spender: string): Promise<BigNumber | undefined>;
+  abstract getAllowance(account: string, spender: string): Promise<BeanNumber | undefined>;
 
-  abstract getTotalSupply(): Promise<BigNumber> | undefined;
+  abstract getTotalSupply(): Promise<BeanNumber> | undefined;
 
   /**
    * Returns whether this currency is functionally equivalent to the other currency
@@ -152,16 +153,18 @@ export abstract class Token {
    * @param amount amount to convert
    * @returns string
    */
-  public stringify(amount: BigNumber.Value) {
-    return toStringBaseUnitBN(amount, this.decimals);
+  public stringify(amount: BeanNumber) {
+    // FIXME
+    // return toStringBaseUnitBN(amount, this.decimals);
   }
 
-  public stringifyToDecimal(amount: BigNumber.Value) {
-    return toTokenUnitsBN(amount, this.decimals)
+  public stringifyToDecimal(amount: BeanNumber) {
+    // FIXME
+    // return toTokenUnitsBN(amount, this.decimals)
   }
 
   public tokenResult (){
-    return (result: BigNumber) => toTokenUnitsBN(bigNumberResult(result), this.decimals);
+    return (result: BeanNumber) => toTokenUnitsBN(bigNumberResult(result), this.decimals);
   };
 }
 
