@@ -1,5 +1,5 @@
 import { BeanstalkSDK } from "@beanstalk/sdk";
-import { BeanNumber } from "@beanstalk/sdk/beannumber";
+import { BeanNumber } from "@beanstalk/sdk/BeanNumber";
 import { ethers } from "ethers";
 
 const account = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8";
@@ -20,10 +20,10 @@ async function main() {
   const sdk = new BeanstalkSDK({ signer, DEBUG: false });
 
   await run(sdk);
-  console.log(sdk.foo);
+
 }
 
 async function run(sdk: BeanstalkSDK) {
   let n = BeanNumber.from(await sdk.tokens.ETH.getBalance(account))
-  console.log(n.toHuman(18));
+  console.log(`${n.toHuman(18)} ETH`);
 }
