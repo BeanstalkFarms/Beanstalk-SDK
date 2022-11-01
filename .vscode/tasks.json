@@ -1,0 +1,24 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "check-types",
+			"path": "packages/sdk",
+			"problemMatcher": {
+				"base": "$tsc",
+				"fileLocation": ["relative", "${workspaceFolder}/packages/sdk"]
+			}
+		}
+		{
+			"type": "npm",
+			"script": "check-types-watch",
+			"path": "packages/sdk",
+			"problemMatcher": {
+				"base": "$tsc-watch",
+				"fileLocation": ["relative", "${workspaceFolder}/packages/sdk"]
+			},
+			"isBackground": true
+		}
+	]
+}
