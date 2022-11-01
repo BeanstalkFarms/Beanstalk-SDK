@@ -16,10 +16,10 @@
     "generate": "yarn generate:typechain && yarn generate:graphql",
     "generate:typechain": "typechain --target=ethers-v5 --ts-nocheck --out-dir=./src/constants/generated/ './src/constants/abi/**/*.json'",
     "generate:graphql": "graphql-codegen --config codegen.ts",
-    "copyabis": "rm -rf ./src/constants/abi && cp -R ../Beanstalk-UI/src/constants/abi ./src/constants/abi",
     "dev": "tsc --noEmit --watch",
     "ts": "rimraf dist && tsc",
-    "build": "yarn ts && rollup -c --bundleConfigAsCjs --silent && rimraf dist/js"
+    "build": "yarn ts && rollup -c --bundleConfigAsCjs --silent && rimraf dist/js",
+    "test": "jest"
   },
   "peerDependencies": {
     "ethers": "5.6.8"
@@ -54,16 +54,12 @@
     "@types/lodash": "^4.14.186",
     "@types/lodash-es": "^4",
     "@types/rimraf": "^3",
-    "chai": "^4.3.6",
     "dotenv": "^16.0.3",
     "eslint": "8.26.0",
-    "hardhat": "^2.11.2",
     "jest": "^29.2.0",
-    "mocha": "^10.0.0",
     "rimraf": "3.0.2",
     "rollup": "3.2.5",
     "rollup-plugin-exclude-dependencies-from-bundle": "1.1.23",
-    "rollup-plugin-polyfill-node": "0.11.0",
     "rollup-plugin-typescript2": "0.34.1",
     "ts-jest": "^29.0.3",
     "ts-node": "10.9.1",

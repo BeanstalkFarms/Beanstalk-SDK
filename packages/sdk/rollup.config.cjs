@@ -3,8 +3,6 @@ import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import multi from "@rollup/plugin-multi-entry";
-
-// import nodePolyfills from 'rollup-plugin-polyfill-node';
 import excludeDeps from "rollup-plugin-exclude-dependencies-from-bundle";
 
 const pkg = require("./package.json");

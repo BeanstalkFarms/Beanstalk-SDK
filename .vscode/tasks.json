@@ -3,22 +3,22 @@
 	"tasks": [
 		{
 			"type": "npm",
-			"script": "check-types",
-			"path": "packages/sdk",
-			"problemMatcher": {
-				"base": "$tsc",
-				"fileLocation": ["relative", "${workspaceFolder}/packages/sdk"]
-			}
-		}
-		{
-			"type": "npm",
-			"script": "check-types-watch",
+			"script": "dev",
 			"path": "packages/sdk",
 			"problemMatcher": {
 				"base": "$tsc-watch",
 				"fileLocation": ["relative", "${workspaceFolder}/packages/sdk"]
 			},
 			"isBackground": true
+		}
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "packages/sdk",
+			"problemMatcher": {
+				"base": "$tsc",
+				"fileLocation": ["relative", "${workspaceFolder}/packages/sdk"]
+			}
 		}
 	]
 }
