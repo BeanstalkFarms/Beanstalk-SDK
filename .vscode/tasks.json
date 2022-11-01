@@ -1,0 +1,24 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "dev",
+			"path": "packages/sdk",
+			"problemMatcher": {
+				"base": "$tsc-watch",
+				"fileLocation": ["relative", "${workspaceFolder}/packages/sdk"]
+			},
+			"isBackground": true
+		}
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "packages/sdk",
+			"problemMatcher": {
+				"base": "$tsc",
+				"fileLocation": ["relative", "${workspaceFolder}/packages/sdk"]
+			}
+		}
+	]
+}

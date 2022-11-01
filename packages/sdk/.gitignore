@@ -1,0 +1,7 @@
+*.log
+.DS_Store
+node_modules
+dist
+cache
+src/constants/generated/**/*
+src/constants/generated-gql/**/*

@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "./src/generated/**/*",
+    "**/*.test.ts",
+    "dist"
+  ],
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "dist/js",
+    "declaration": true,
+    "declarationDir": "dist/types",
+    "isolatedModules": true
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "name": "@beanstalk/sdk",
+  "version": "0.1.0",
+  "license": "MIT",
+  "main": "./dist/sdk/sdk.cjs.js",
+  "module": "./dist/sdk/sdk.esm.js",
+  "browser": "./dist/sdk/sdk.udm.js",
+  "typings": "./dist/types/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "scripts": {
+    "generate": "yarn generate:typechain && yarn generate:graphql",
+    "generate:typechain": "typechain --target=ethers-v5 --ts-nocheck --out-dir=./src/constants/generated/ './src/constants/abi/**/*.json'",
+    "generate:graphql": "graphql-codegen --config codegen.ts",
+    "dev": "tsc --noEmit --watch",
+    "ts": "rimraf dist && tsc",
+    "build": "yarn ts && rollup -c --bundleConfigAsCjs --silent && rimraf dist/js",
+    "test": "jest"
+  },
+  "peerDependencies": {
+    "ethers": "5.6.8"
+  },
+  "dependencies": {
+    "@ethersproject/bytes": "5.7.0",
+    "@ethersproject/logger": "5.7.0",
+    "bignumber.js": "^9.1.0",
+    "bn.js": "5.2.1",
+    "graphql": "16.6.0",
+    "graphql-request": "^4",
+    "graphql-tag": "2.12.6",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21"
+  },
+  "devDependencies": {
+    "@foundry-rs/hardhat-anvil": "^0.1.6",
+    "@graphql-codegen/cli": "2.13.7",
+    "@graphql-codegen/typescript": "2.7.4",
+    "@graphql-codegen/typescript-graphql-request": "^4.5.6",
+    "@graphql-codegen/typescript-operations": "^2.5.4",
+    "@graphql-codegen/typescript-resolvers": "2.7.4",
+    "@nomiclabs/hardhat-ethers": "^2.1.1",
+    "@rollup/plugin-commonjs": "23.0.2",
+    "@rollup/plugin-json": "5.0.1",
+    "@rollup/plugin-multi-entry": "6.0.0",
+    "@rollup/plugin-node-resolve": "15.0.1",
+    "@typechain/ethers-v5": "^10.1.0",
+    "@types/bn.js": "^5",
+    "@types/eslint": "^8",
+    "@types/jest": "^29.1.2",
+    "@types/lodash": "^4.14.186",
+    "@types/lodash-es": "^4",
+    "@types/rimraf": "^3",
+    "dotenv": "^16.0.3",
+    "eslint": "8.26.0",
+    "jest": "^29.2.0",
+    "rimraf": "3.0.2",
+    "rollup": "3.2.5",
+    "rollup-plugin-exclude-dependencies-from-bundle": "1.1.23",
+    "rollup-plugin-typescript2": "0.34.1",
+    "ts-jest": "^29.0.3",
+    "ts-node": "10.9.1",
+    "tslib": "2.4.1",
+    "typechain": "^8.1.0",
+    "typescript": "4.8.4"
+  },
+  "resolutions": {
+    "typescript": "4.8.4"
+  },
+  "packageManager": "yarn@3.2.3",
+  "exports": {
+    ".": {
+      "module": "./dist/sdk/sdk.esm.js",
+      "default": "./dist/sdk/sdk.cjs.js",
+      "browser": "./dist/sdk/sdk.umd.js"
+    },
+    "./BeanNumber": {
+      "module": "./dist/BeanNumber/BeanNumber.esm.js",
+      "default": "./dist/BeanNumber/BeanNumber.cjs.js",
+      "browser": "./dist/BeanNumber/BeanNumber.umd.js"
+    }
+  }
+}
