@@ -1496,6 +1496,8 @@ __metadata:
   resolution: "@beanstalk/sdk@workspace:."
   dependencies:
     "@0x/abi-gen": ^5.8.1
+    "@ethersproject/bytes": 5.7.0
+    "@ethersproject/logger": 5.7.0
     "@foundry-rs/hardhat-anvil": ^0.1.6
     "@graphql-codegen/cli": 2.13.7
     "@graphql-codegen/typescript": 2.7.4
@@ -1504,17 +1506,19 @@ __metadata:
     "@graphql-codegen/typescript-resolvers": 2.7.4
     "@nomiclabs/hardhat-ethers": ^2.1.1
     "@typechain/ethers-v5": ^10.1.0
+    "@types/bn.js": ^5
     "@types/jest": ^29.1.2
     "@types/lodash": ^4.14.186
     "@types/lodash-es": ^4
     bignumber.js: ^9.1.0
+    bn.js: 5.2.1
     chai: ^4.3.6
     dotenv: ^16.0.3
-    ethers: ">=5.6.8"
-    graphql: ^16.6.0
+    ethers: 5.7.2
+    graphql: 16.6.0
     graphql-request: ^4
+    graphql-tag: 2.12.6
     hardhat: ^2.11.2
-    husky: ^8.0.1
     jest: ^29.2.0
     lodash: ^4.17.21
     lodash-es: ^4.17.21
@@ -1525,7 +1529,7 @@ __metadata:
     typechain: ^8.1.0
     typescript: ^4.8.4
   peerDependencies:
-    ethers: ">=5.6.8"
+    ethers: 5.7.2
   languageName: unknown
   linkType: soft
 
@@ -3738,7 +3742,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/bn.js@npm:*, @types/bn.js@npm:^5.1.0":
+"@types/bn.js@npm:*, @types/bn.js@npm:^5, @types/bn.js@npm:^5.1.0":
   version: 5.1.1
   resolution: "@types/bn.js@npm:5.1.1"
   dependencies:
@@ -5156,17 +5160,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bn.js@npm:5.2.1, bn.js@npm:^5.1.2, bn.js@npm:^5.2.0, bn.js@npm:^5.2.1":
+  version: 5.2.1
+  resolution: "bn.js@npm:5.2.1"
+  checksum: 3dd8c8d38055fedfa95c1d5fc3c99f8dd547b36287b37768db0abab3c239711f88ff58d18d155dd8ad902b0b0cee973747b7ae20ea12a09473272b0201c9edd3
+  languageName: node
+  linkType: hard
+
 "bn.js@npm:^4.11.0, bn.js@npm:^4.11.8, bn.js@npm:^4.11.9":
   version: 4.12.0
   resolution: "bn.js@npm:4.12.0"
   checksum: 39afb4f15f4ea537b55eaf1446c896af28ac948fdcf47171961475724d1bb65118cca49fa6e3d67706e4790955ec0e74de584e45c8f1ef89f46c812bee5b5a12
-  languageName: node
-  linkType: hard
-
-"bn.js@npm:^5.1.2, bn.js@npm:^5.2.0, bn.js@npm:^5.2.1":
-  version: 5.2.1
-  resolution: "bn.js@npm:5.2.1"
-  checksum: 3dd8c8d38055fedfa95c1d5fc3c99f8dd547b36287b37768db0abab3c239711f88ff58d18d155dd8ad902b0b0cee973747b7ae20ea12a09473272b0201c9edd3
   languageName: node
   linkType: hard
 
@@ -7180,7 +7184,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethers@npm:>=5.6.8, ethers@npm:^5.0.0":
+"ethers@npm:5.7.2, ethers@npm:^5.0.0":
   version: 5.7.2
   resolution: "ethers@npm:5.7.2"
   dependencies:
@@ -8149,7 +8153,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql-tag@npm:^2.11.0":
+"graphql-tag@npm:2.12.6, graphql-tag@npm:^2.11.0":
   version: 2.12.6
   resolution: "graphql-tag@npm:2.12.6"
   dependencies:
@@ -8169,7 +8173,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql@npm:^16.6.0":
+"graphql@npm:16.6.0":
   version: 16.6.0
   resolution: "graphql@npm:16.6.0"
   checksum: bf1d9e3c1938ce3c1a81e909bd3ead1ae4707c577f91cff1ca2eca474bfbc7873d5d7b942e1e9777ff5a8304421dba57a4b76d7a29eb19de8711cb70e3c2415e
@@ -8560,15 +8564,6 @@ __metadata:
   dependencies:
     ms: ^2.0.0
   checksum: 9c7a74a2827f9294c009266c82031030eae811ca87b0da3dceb8d6071b9bde22c9f3daef0469c3c533cc67a97d8a167cd9fc0389350e5f415f61a79b171ded16
-  languageName: node
-  linkType: hard
-
-"husky@npm:^8.0.1":
-  version: 8.0.1
-  resolution: "husky@npm:8.0.1"
-  bin:
-    husky: lib/bin.js
-  checksum: 943a73a13d0201318fd30e83d299bb81d866bd245b69e6277804c3b462638dc1921694cb94c2b8c920a4a187060f7d6058d3365152865406352e934c5fff70dc
   languageName: node
   linkType: hard
 
