@@ -12,7 +12,7 @@
     // output .d.ts declaration files for consumers
     "declaration": true,
     // output .js.map sourcemap files for consumers
-    "sourceMap": true,
+    "sourceMap": false,
     // stricter type-checking for stronger correctness. Recommended by TS
     "strict": true,
     // linter checks for common issues

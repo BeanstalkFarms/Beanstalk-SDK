@@ -1,1 +1,1 @@
-export { BeanNumber } from './utils/BeanNumber';
+export { BeanNumber } from "./utils/BeanNumber";
