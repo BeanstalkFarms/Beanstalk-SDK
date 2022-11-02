@@ -9,7 +9,7 @@ import { TokenSiloBalance } from './silo';
 import { _parseWithdrawalCrates } from './silo.utils';
 import { ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
-import { BeanNumber } from '../utils/BeanNumber';
+import { BigNumber } from '../utils/BigNumber';
 
 /// Utilities
 const RUN_TIMER = false;
@@ -51,7 +51,7 @@ describe('Utilities', function () {
         '6075': crate2, // => withdrawn
         '6076': crate3, // => withdrawn
       },
-      BeanNumber.from(6074)
+      BigNumber.from(6074)
     );
     expect(result.claimable.amount).to.be.instanceOf(BigNumber);
     expect(result.withdrawn.amount).to.be.instanceOf(BigNumber);

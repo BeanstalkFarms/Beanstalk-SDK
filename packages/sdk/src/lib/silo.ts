@@ -1,40 +1,46 @@
-import { BigNumber } from 'bignumber.js';
-import { ethers } from 'ethers';
-import _ from 'lodash';
-import { Token } from '../classes/Token';
-import { MAX_UINT256, ZERO_BeanNumber } from '../constants';
-import { DataSource, StringMap } from '../types';
-import { BeanNumber } from '../utils/BeanNumber';
-// import { toTokenUnitsBN } from '../utils/Tokens';
-
-import { BeanstalkSDK } from './BeanstalkSDK';
-import EventProcessor from './events/processor';
-import { EIP712Domain, EIP712TypedData, Permit } from './permit';
+import { ethers, BigNumber } from "ethers";
+import _ from "lodash";
+import { Token } from "../classes/Token";
+import { DataSource, StringMap } from "../types";
+import { BeanstalkSDK } from "./BeanstalkSDK";
+import EventProcessor from "./events/processor";
+import { EIP712Domain, EIP712TypedData, Permit } from "./permit";
 import {
   CrateSortFn,
   DepositTokenPermitMessage,
   DepositTokensPermitMessage,
   sortCratesBySeason,
   _parseWithdrawalCrates,
-} from './silo.utils';
+} from "./silo.utils";
+import { TokenValue } from "../classes/TokenValue";
+import { MAX_UINT256 } from "../constants";
+
+//  TODO: Do we need this typing? What does this do?
+// type BigNumbers = TokenValue | BigNumber | ethers.BigNumber;
+// export type Crate<T extends BigNumbers = BigNumber> = {
+//   /** The amount of this Crate that was created, denominated in the underlying Token. */
+//   amount: T;
+//   /** The Season that the Crate was created. */
+//   season: T;
+// };
 
 /**
  * A Crate is an `amount` of a token Deposited or
  * Withdrawn during a given `season`.
  */
-type BigNumbers = BigNumber | BeanNumber | ethers.BigNumber;
-export type Crate<T extends BigNumbers = BeanNumber> = {
+type BigNumbers = TokenValue;
+export type Crate<T extends BigNumbers = TokenValue> = {
   /** The amount of this Crate that was created, denominated in the underlying Token. */
   amount: T;
   /** The Season that the Crate was created. */
-  season: T;
+  season: BigNumber;
 };
 
 /**
  * A "Deposit" represents an amount of a Whitelisted Silo Token
  * that has been added to the Silo.
  */
-export type DepositCrate<T extends BigNumbers = BeanNumber> = Crate<T> & {
+export type DepositCrate<T extends BigNumbers = TokenValue> = Crate<T> & {
   /** The BDV of the Deposit, determined upon Deposit. */
   bdv: T;
   /** The amount of Stalk granted for this Deposit. */
@@ -43,7 +49,7 @@ export type DepositCrate<T extends BigNumbers = BeanNumber> = Crate<T> & {
   seeds: T;
 };
 
-export type WithdrawalCrate<T extends BigNumbers = BeanNumber> = Crate<T> & {};
+export type WithdrawalCrate<T extends BigNumbers = TokenValue> = Crate<T> & {};
 
 /**
  * A "Silo Balance" provides all information
@@ -52,21 +58,21 @@ export type WithdrawalCrate<T extends BigNumbers = BeanNumber> = Crate<T> & {};
 export type TokenSiloBalance = {
   deposited: {
     /** The total amount of this Token currently in the Deposited state. */
-    amount: BeanNumber;
+    amount: TokenValue;
     /** The BDV of this Token currently in the Deposited state. */
-    bdv: BeanNumber;
+    bdv: TokenValue;
     /** All Deposit crates. */
-    crates: DepositCrate<BeanNumber>[];
+    crates: DepositCrate<TokenValue>[];
   };
   withdrawn: {
     /** The total amount of this Token currently in the Withdrawn state. */
-    amount: BeanNumber;
+    amount: TokenValue;
     /** All Withdrawal crates. */
-    crates: WithdrawalCrate<BeanNumber>[];
+    crates: WithdrawalCrate<TokenValue>[];
   };
   claimable: {
     /** The total amount of this Token currently in the Claimable state. */
-    amount: BeanNumber;
+    amount: TokenValue;
     /** All Claimable crates. */
     crates: Crate[];
   };
@@ -250,7 +256,7 @@ export class Silo {
     const copy = new Map<Token, T>(map);
     const ordered = new Map<Token, T>();
     // by default, order by whitelist
-    whitelist.forEach(token => {
+    whitelist.forEach((token) => {
       const v = copy.get(token);
       if (v) {
         ordered.set(token, v);
@@ -274,10 +280,10 @@ export class Silo {
    * @todo Get name, decimals since these are ERC20 tokens.
    */
   public async getWhitelist(options?: { source: DataSource.LEDGER } | { source: DataSource.SUBGRAPH }) {
-    const source = Silo.sdk.deriveConfig('source', options);
+    const source = Silo.sdk.deriveConfig("source", options);
     if (source === DataSource.SUBGRAPH) {
       const query = await Silo.sdk.queries.getSiloWhitelist();
-      return query.whitelistTokens.map(e => ({
+      return query.whitelistTokens.map((e) => ({
         token: e.token,
         stalk: parseInt(e.stalk),
         seeds: parseInt(e.seeds) / 1e4,
@@ -293,16 +299,16 @@ export class Silo {
   private _makeTokenSiloBalance(): TokenSiloBalance {
     return {
       deposited: {
-        amount: ZERO_BeanNumber,
-        bdv: ZERO_BeanNumber,
+        amount: TokenValue.ZERO,
+        bdv: TokenValue.ZERO,
         crates: [] as DepositCrate[],
       },
       withdrawn: {
-        amount: ZERO_BeanNumber,
+        amount: TokenValue.ZERO,
         crates: [] as WithdrawalCrate[],
       },
       claimable: {
-        amount: ZERO_BeanNumber,
+        amount: TokenValue.ZERO,
         crates: [] as WithdrawalCrate[],
       },
     };
@@ -314,7 +320,7 @@ export class Silo {
    * @note expects inputs to be stringified (no decimals).
    */
   private _applyDeposit(
-    state: TokenSiloBalance['deposited'],
+    state: TokenSiloBalance["deposited"],
     token: Token,
     rawCrate: {
       season: string | number;
@@ -322,13 +328,11 @@ export class Silo {
       bdv: string;
     }
   ) {
-    const season = BeanNumber.from(rawCrate.season);
-    // const amount = toTokenUnitsBN(rawCrate.amount, token.decimals);
-    const amount = token.fromHuman(rawCrate.amount);
-    // const bdv    = toTokenUnitsBN(rawCrate.bdv, Silo.sdk.tokens.BEAN.decimals);
-    const bdv = Silo.sdk.tokens.BEAN.fromHuman(rawCrate.bdv);
+    const season = BigNumber.from(rawCrate.season);
+    const amount = token.fromHumanToTokenValue(rawCrate.amount);
+    const bdv = Silo.sdk.tokens.BEAN.fromHumanToTokenValue(rawCrate.bdv);
 
-    const crate = {
+    const crate: DepositCrate<TokenValue> = {
       season: season,
       amount: amount,
       bdv: bdv,
@@ -349,18 +353,18 @@ export class Silo {
    * @note expects inputs to be stringified (no decimals).
    */
   private _applyWithdrawal(
-    state: TokenSiloBalance['withdrawn' | 'claimable'],
+    state: TokenSiloBalance["withdrawn" | "claimable"],
     token: Token,
     rawCrate: {
       season: string | number;
       amount: string;
     }
   ) {
-    const season = BeanNumber.from(rawCrate.season);
+    const season = BigNumber.from(rawCrate.season);
     // const amount = toTokenUnitsBN(rawCrate.amount, token.decimals);
-    const amount = token.fromHuman(rawCrate.amount);
+    const amount = token.fromHumanToTokenValue(rawCrate.amount);
 
-    const crate = {
+    const crate:Crate<TokenValue> = {
       season: season,
       amount: amount,
     };
@@ -371,7 +375,7 @@ export class Silo {
     return crate;
   }
 
-  private _sortCrates(state: TokenSiloBalance['deposited' | 'withdrawn' | 'claimable']) {
+  private _sortCrates(state: TokenSiloBalance["deposited" | "withdrawn" | "claimable"]) {
     state.crates = state.crates.sort(
       (a, b) => a.season.sub(b.season).toNumber() // sort by season asc
     );
@@ -385,7 +389,7 @@ export class Silo {
     _account?: string,
     options?: { source: DataSource.LEDGER } | { source: DataSource.SUBGRAPH }
   ): Promise<TokenSiloBalance> {
-    const source = Silo.sdk.deriveConfig('source', options);
+    const source = Silo.sdk.deriveConfig("source", options);
     const [account, season] = await Promise.all([Silo.sdk.getAccount(_account), Silo.sdk.sun.getSeason()]);
 
     // FIXME: doesn't work if _token is an instance of a token created by the SDK consumer
@@ -397,7 +401,7 @@ export class Silo {
 
     if (source === DataSource.LEDGER) {
       // Fetch and process events.
-      const seasonBN = BeanNumber.from(season);
+      const seasonBN = BigNumber.from(season);
       const events = await Silo.sdk.events.getSiloEvents(account, _token.address);
       const processor = new EventProcessor(Silo.sdk, account, {
         season: ethers.BigNumber.from(season.toString()), // FIXME: verbose
@@ -451,9 +455,9 @@ export class Silo {
       if (!query.farmer) return balance;
 
       const { deposited, withdrawn, claimable } = query.farmer!;
-      deposited.forEach(crate => this._applyDeposit(balance.deposited, _token, crate));
-      withdrawn.forEach(crate => this._applyWithdrawal(balance.withdrawn, _token, crate));
-      claimable.forEach(crate => this._applyWithdrawal(balance.claimable, _token, crate));
+      deposited.forEach((crate) => this._applyDeposit(balance.deposited, _token, crate));
+      withdrawn.forEach((crate) => this._applyWithdrawal(balance.withdrawn, _token, crate));
+      claimable.forEach((crate) => this._applyWithdrawal(balance.claimable, _token, crate));
 
       return balance;
     }
@@ -483,18 +487,18 @@ export class Silo {
     _account?: string,
     options?: { source: DataSource.LEDGER } | { source: DataSource.SUBGRAPH }
   ): Promise<Map<Token, TokenSiloBalance>> {
-    const source = Silo.sdk.deriveConfig('source', options);
+    const source = Silo.sdk.deriveConfig("source", options);
     const [account, season] = await Promise.all([Silo.sdk.getAccount(_account), Silo.sdk.sun.getSeason()]);
 
     /// SETUP
     const whitelist = Silo.sdk.tokens.siloWhitelist;
     const balances = new Map<Token, TokenSiloBalance>();
-    whitelist.forEach(token => balances.set(token, this._makeTokenSiloBalance()));
+    whitelist.forEach((token) => balances.set(token, this._makeTokenSiloBalance()));
 
     /// LEDGER
     if (source === DataSource.LEDGER) {
       // Fetch and process events.
-      const seasonBN = BeanNumber.from(season);
+      const seasonBN = BigNumber.from(season);
       const events = await Silo.sdk.events.getSiloEvents(account);
       const processor = new EventProcessor(Silo.sdk, account, {
         season: ethers.BigNumber.from(season.toString()), // FIXME: verbose
@@ -571,7 +575,7 @@ export class Silo {
       // Handle withdrawals.
       // Claimable = withdrawals from the past. The GraphQL query enforces this.
       type WithdrawalEntity = typeof withdrawn[number];
-      const handleWithdrawal = (key: 'withdrawn' | 'claimable') => (crate: WithdrawalEntity) => {
+      const handleWithdrawal = (key: "withdrawn" | "claimable") => (crate: WithdrawalEntity) => {
         const token = prep(crate.token);
         if (!token) return;
         const state = balances.get(token)![key];
@@ -579,8 +583,8 @@ export class Silo {
       };
 
       deposited.forEach(handleDeposit);
-      withdrawn.forEach(handleWithdrawal('withdrawn'));
-      claimable.forEach(handleWithdrawal('claimable'));
+      withdrawn.forEach(handleWithdrawal("withdrawn"));
+      claimable.forEach(handleWithdrawal("claimable"));
 
       return this._sortTokenMapByWhitelist(balances);
     }
@@ -591,16 +595,16 @@ export class Silo {
   //////////////////////// Crates ////////////////////////
 
   pickCrates(
-    crates: Crate<BeanNumber>[],
+    crates: Crate<TokenValue>[],
     token: Token,
-    amount: BeanNumber,
-    sort: CrateSortFn = crates => sortCratesBySeason(crates, 'desc')
+    amount: BigNumber | TokenValue,
+    sort: CrateSortFn = (crates) => sortCratesBySeason(crates, "desc")
   ) {
     const sortedCrates = sort(crates);
     const seasons: string[] = [];
     const amounts: string[] = [];
-    let remaining = amount;
-    sortedCrates.some(crate => {
+    let remaining = TokenValue.from(amount, token.decimals);
+    sortedCrates.some((crate) => {
       const thisAmount = crate.amount.gt(remaining) ? crate.amount.sub(remaining) : crate.amount;
       seasons.push(crate.season.toString());
       // amounts.push(token.stringify(thisAmount));
@@ -608,7 +612,7 @@ export class Silo {
       remaining = remaining.sub(thisAmount);
       return remaining.eq(0); // done
     });
-    if (!remaining.eq(0)) throw new Error('Not enough amount in crates');
+    if (!remaining.eq(0)) throw new Error("Not enough amount in crates");
     return { seasons, amounts };
   }
 
@@ -649,7 +653,7 @@ export class Silo {
     const deadline = _deadline || MAX_UINT256;
     const [domain, nonce] = await Promise.all([
       this._getEIP712Domain(),
-      _nonce || Silo.sdk.contracts.beanstalk.depositPermitNonces(owner).then(nonce => nonce.toString()),
+      _nonce || Silo.sdk.contracts.beanstalk.depositPermitNonces(owner).then((nonce) => nonce.toString()),
     ]);
 
     return this._createTypedDepositTokenPermitData(domain, {
@@ -687,13 +691,13 @@ export class Silo {
     _nonce?: string,
     _deadline?: string
   ): Promise<EIP712TypedData<DepositTokensPermitMessage>> {
-    if (tokens.length !== values.length) throw new Error('Input mismatch: number of tokens does not equal number of values');
-    if (tokens.length === 1) console.warn('Optimization: use permitDepositToken when permitting one Silo Token.');
+    if (tokens.length !== values.length) throw new Error("Input mismatch: number of tokens does not equal number of values");
+    if (tokens.length === 1) console.warn("Optimization: use permitDepositToken when permitting one Silo Token.");
 
     const deadline = _deadline || MAX_UINT256;
     const [domain, nonce] = await Promise.all([
       this._getEIP712Domain(),
-      _nonce || Silo.sdk.contracts.beanstalk.depositPermitNonces(owner).then(nonce => nonce.toString()),
+      _nonce || Silo.sdk.contracts.beanstalk.depositPermitNonces(owner).then((nonce) => nonce.toString()),
     ]);
 
     return this._createTypedDepositTokensPermitData(domain, {
@@ -712,12 +716,12 @@ export class Silo {
    */
   private async _getEIP712Domain() {
     return {
-      name: 'SiloDeposit',
-      version: '1',
+      name: "SiloDeposit",
+      version: "1",
       // FIXME: switch to below after protocol patch
       // chainId: (await Silo.sdk.provider.getNetwork()).chainId,
       chainId: 1,
-      verifyingContract: '0xc1e088fc1323b20bcbee9bd1b9fc9546db5624c5',
+      verifyingContract: "0xc1e088fc1323b20bcbee9bd1b9fc9546db5624c5",
     };
   }
 
@@ -725,15 +729,15 @@ export class Silo {
     types: {
       EIP712Domain: Permit.EIP712_DOMAIN,
       Permit: [
-        { name: 'owner', type: 'address' },
-        { name: 'spender', type: 'address' },
-        { name: 'token', type: 'address' },
-        { name: 'value', type: 'uint256' },
-        { name: 'nonce', type: 'uint256' },
-        { name: 'deadline', type: 'uint256' },
+        { name: "owner", type: "address" },
+        { name: "spender", type: "address" },
+        { name: "token", type: "address" },
+        { name: "value", type: "uint256" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
       ],
     },
-    primaryType: 'Permit',
+    primaryType: "Permit",
     domain,
     message,
   });
@@ -742,15 +746,15 @@ export class Silo {
     types: {
       EIP712Domain: Permit.EIP712_DOMAIN,
       Permit: [
-        { name: 'owner', type: 'address' },
-        { name: 'spender', type: 'address' },
-        { name: 'tokens', type: 'address[]' },
-        { name: 'values', type: 'uint256[]' },
-        { name: 'nonce', type: 'uint256' },
-        { name: 'deadline', type: 'uint256' },
+        { name: "owner", type: "address" },
+        { name: "spender", type: "address" },
+        { name: "tokens", type: "address[]" },
+        { name: "values", type: "uint256[]" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
       ],
     },
-    primaryType: 'Permit',
+    primaryType: "Permit",
     domain,
     message,
   });
