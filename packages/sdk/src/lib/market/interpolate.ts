@@ -1,7 +1,5 @@
 import { DecimalBigNumber as DBN } from '../../utils/DecimalBigNumber';
 import { BigNumber } from 'ethers';
-import { Polynomial } from './polynomial';
-// BigNumber.config({DECIMAL_PLACES:128, EXPONENTIAL_AT:1e+9})
 /**
  * @FIXME 
  * - math.js uses https://github.com/MikeMcl/decimal.js/ (unknown size)
@@ -38,9 +36,10 @@ import { Polynomial } from './polynomial';
   return c;
 }
 
-export function convertToRaisedInt(n: DBN, d: number): DBN {
+export function convertToRaisedInt(n: DBN, d: number): BigNumber {
+
   let r = n.abs().mul((new DBN('10')).pow(d));
-  return r;
+  return r.toBigNumber();
 }
 
 export class Interpolate {
@@ -52,22 +51,29 @@ export class Interpolate {
    * @returns 
    */
 
+
+  //FIXME: Implement using Ethers Bignumbers (elim. decimal usage)
   static fromPoints(
-    xs: DBN[],
-    ys: DBN[],
-  ) {
+    xs: BigNumber[],
+    ys: BigNumber[],
+  ): {breakpoints: BigNumber[], coefficients: BigNumber[], exponents: number[], signs: boolean[]} {
     var length = xs.length;
     if(length < 2) throw new Error(`Interpolate: must have >= 2 points`);
     if(ys.length != length) throw new Error(`Interpolate: dimensions of x and y must match`);
+    let allYsAndXsPositive = true;
+    allYsAndXsPositive = xs.every(x => x.gte(0));
+    if(!allYsAndXsPositive) throw new Error(`Negative x values are not allowed.`)
+    allYsAndXsPositive = ys.every(x => x.gte(0));
+    if(!allYsAndXsPositive) throw new Error(`Negative y values are not allowed.`)
 
     const dys: Array<DBN> = [], dxs: Array<DBN> = [], ms: Array<DBN> = [];
     for(let i = 0; i < (length-1); i++) {
-      const deltax = xs[i+1].sub(xs[i]);
-      const deltay = ys[i+1].sub(ys[i]);
+      const deltax = new DBN((xs[i+1].sub(xs[i])).toString());
+      const deltay = new DBN((ys[i+1].sub(ys[i])).toString());
 
       dxs.push(deltax);
       dys.push(deltay);
-      ms.push(deltay.div(deltax, this.exponentBase)); //
+      ms.push(deltay.div(deltax, this.exponentBase)); //store numerator and denominator
     }
 
     const c1s: Array<DBN> = [ms[0]];
@@ -80,8 +86,7 @@ export class Interpolate {
         const dx_ = dxs[i];
         const dxNext = dxs[i+1];
         const common = dx_.add(dxNext);
-        console.log(m_.toString(), mNext.toString())
-        const r = common.mul('3').div((common.add(dxNext).div(m_, this.exponentBase)).add((common.add(dx_)).div(mNext, this.exponentBase)), this.exponentBase)
+        const r = common.mul('3').div((common.add(dxNext).div(m_, this.exponentBase)).add((common.add(dx_)).div(mNext, this.exponentBase)), this.exponentBase) //store numerator and denominator
         c1s.push(r);
       }
     }
@@ -93,26 +98,27 @@ export class Interpolate {
     for(let i = 0; i < c1s.length - 1; i++) {
       const c1 = c1s[i];
       const m_ = ms[i];
-      const invDx = (new DBN('1')).div(dxs[i], this.exponentBase);
+      const invDx = (new DBN('1')).div(dxs[i], this.exponentBase); //store numerator and denominator
       const common_ = c1.add(c1s[i+1]).sub(m_.mul('2'))
 
       c2s.push((m_.sub(c1).sub(common_).mul(invDx)));
       c3s.push(common_.mul(invDx).mul(invDx));
     }
     
-    var breakpoints: Array<DBN> = new Array(length);
-    var coefficients: Array<DBN> = new Array(length*4);
+    var breakpoints: Array<BigNumber> = new Array(length);
+    var coefficients: Array<BigNumber> = new Array(length*4);
     var exponents: Array<number> = new Array(length*4);
     var signs: Array<boolean> = new Array(length*4);
 
     for(let i = 0; i < length; i++){
-      signs[i*4] = ys[i].isPositive();
+      signs[i*4] = true;
       signs[i*4 + 1] = c1s[i].isPositive();
 
       exponents[i*4] = calcShifts(ys[i].toString(), this.exponentBase)
       exponents[i*4 + 1] = calcShifts(c1s[i].toString(), this.exponentBase)
     
-      coefficients[i*4]= convertToRaisedInt(ys[i], exponents[i*4]) 
+
+      coefficients[i*4]= convertToRaisedInt(new DBN(ys[i].toString()), exponents[i*4]) 
       coefficients[i*4 + 1] = convertToRaisedInt(c1s[i], exponents[i*4 + 1])
 
       breakpoints[i] = xs[i];
@@ -131,8 +137,8 @@ export class Interpolate {
         signs[i*4 + 3] = false;
         exponents[i*4 + 2] = 0;
         exponents[i*4 + 3] = 0;
-        coefficients[i*4 + 2] = new DBN('0');
-        coefficients[i*4 + 3] = new DBN('0');
+        coefficients[i*4 + 2] = BigNumber.from('0');
+        coefficients[i*4 + 3] = BigNumber.from('0');
       }
     }
 
