@@ -4,7 +4,6 @@ import { PromiseOrValue } from "../../constants/generated/common";
 import { ERC20Permit } from "../../constants/generated/ERC20Permit";
 import { ERC20Permit__factory } from "../../constants/generated/factories/ERC20Permit__factory";
 import { BigNumber } from "ethers";
-import { bigNumberResult } from "../../utils/Ledger";
 import { Token } from "./Token";
 import { TokenValue } from "../TokenValue";
 

@@ -1,4 +1,4 @@
-import BigNumber from 'bignumber.js'
+import { BigNumber } from 'ethers';
 import { FarmToMode } from '../farm/types';
 
 // FIXME - this normally comes from generated/graphql

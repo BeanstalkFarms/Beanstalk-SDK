@@ -1,6 +1,3 @@
-import { BigNumber } from 'bignumber.js';
-import { Token } from '../classes/Token';
-
 import { BeanstalkSDK } from './BeanstalkSDK';
 
 export class Sun {

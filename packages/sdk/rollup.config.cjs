@@ -18,8 +18,7 @@ const config = [
 
   // This is just an example of how to create a new module entry.
   // This lets you do this on the client side:
-  // import {BeanNumber} from "@beanstalk/sdk/BeanNumber"
-  makeEntry("dist/js/BeanNumber.js", "BeanNumber"),
+  // import { Thing } from "@beanstalk/sdk/Thing"
   makeEntry("dist/js/DecimalBigNumber.js", "DecimalBigNumber"),
 ];
 

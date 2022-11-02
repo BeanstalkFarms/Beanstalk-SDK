@@ -1,4 +1,3 @@
-import BigNumber from "bignumber.js";
 import { Overrides } from "ethers";
 import { Token } from "../classes/Token";
 import { getSdk } from "../constants/generated-gql/graphql";
@@ -88,8 +87,8 @@ export class Root {
    * passage of n = 1 or n > 1
    */
   // async permit<
-  //   T extends readonly Token[],
-  //   A extends readonly BigNumber[],
+  //   T extends readonly 
+  //   A extends readonlyBigNumber[],
   // > (
   //   _tokens: T,
   //   _amounts: A,

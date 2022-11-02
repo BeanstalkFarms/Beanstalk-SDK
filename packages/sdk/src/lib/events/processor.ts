@@ -1,7 +1,5 @@
-import BigNumber from 'bignumber.js';
 import { BigNumber as EBN, ethers } from 'ethers';
 import { Token } from '../../classes/Token';
-import { ZERO_BN } from '../../constants';
 import {
   SowEvent,
   HarvestEvent,
@@ -49,10 +47,10 @@ const SupportedEventsSet = new Set(SupportedEvents);
 
 // ----------------------------------------
 
-/** */
-export const BN = (v: EBN | BigNumber.Value) => (v instanceof EBN ? new BigNumber(v.toString()) : new BigNumber(v));
-export const decimalBN = (v: EBN | BigNumber.Value, decimals: number) => BN(v).div(10 ** decimals);
-export const tokenBN = (v: EBN | BigNumber.Value, token: Token) => decimalBN(v, token.decimals);
+// TODO: commeting these out for now, tbd if they're needed.
+// export const BN = (v: EBN | BigNumber.Value) => (v instanceof EBN ? new BigNumber(v.toString()) : new BigNumber(v));
+// export const decimalBN = (v: EBN | BigNumber.Value, decimals: number) => BN(v).div(10 ** decimals);
+// export const tokenBN = (v: EBN | BigNumber.Value, token: Token) => decimalBN(v, token.decimals);
 
 export const setToMap = (tokens: Set<Token>): Map<Token, any> => {
   const map = new Map<Token, any>();
