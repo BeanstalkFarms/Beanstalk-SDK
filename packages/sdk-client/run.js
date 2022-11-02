@@ -21,25 +21,29 @@ require("@swc/register")({
   },
 });
 
-const arg = process.argv[2]
+const arg = process.argv[2];
 if (!arg) {
-  console.log('Usage:')
+  console.log("Usage:");
   console.log("yarn x [file in src folder]");
   console.log("yarn x sdk.ts");
   console.log("yarn x play/myfile.ts");
 }
 let path;
-if (arg.startsWith('./src/')){
+
+if (arg.startsWith("./src/")) {
   path = arg;
-}else if (arg.startsWith('src/')){
-  path = `./${arg}`
-}else{
-  path = `./src/${arg}`
+} else if (arg.startsWith("src/")) {
+  path = `./${arg}`;
+} else {
+  path = `./src/${arg}`;
 }
-try{
+
+try {
   require(path);
-}catch(err){
-  if (err.code === 'MODULE_NOT_FOUND'){
-    console.log('File not found: ', path)
+} catch (err) {
+  if (err.code === "MODULE_NOT_FOUND") {
+    console.log("File not found: ", path);
+    process.exit(-1);
   }
+  console.log(err);
 }
