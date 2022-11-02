@@ -1,5 +1,6 @@
 import { BigNumber } from 'ethers';
 import { formatUnits, parseUnits, commify } from 'ethers/lib/utils';
+import { BeanNumber } from './BeanNumber';
 
 export function assert(value: boolean, message?: string): asserts value;
 export function assert<T>(value: T | null | undefined, message?: string): asserts value is T;
@@ -27,6 +28,7 @@ export class DecimalBigNumber {
    *
    * The constructor accepts the following as inputs to the number parameter:
    * - `BigNumber` (from @ethersproject/bignumber): to easily shift from `BigNumber` used in smart contracts to `DecimalBigNumber`
+   * - `BeanNumber` (from @beanstalk/sdk/BeanNumber): a clone of @ethersproject/bignumber with some utilities used in @beanstalk/sdk
    * - `string`: to take input from the user
    *
    * Given these design decisions, there are some recommended approaches:
@@ -39,7 +41,8 @@ export class DecimalBigNumber {
    */
   constructor(value: string, decimals?: number);
   constructor(value: BigNumber, decimals: number);
-  constructor(value: BigNumber | string, decimals?: number) {
+  constructor(value: BeanNumber, decimals: number);
+  constructor(value: BigNumber | BeanNumber | string, decimals?: number) {
     if (typeof value === 'string') {
       const _value = value.trim() === '' || isNaN(Number(value)) ? '0' : value;
       const _decimals =
