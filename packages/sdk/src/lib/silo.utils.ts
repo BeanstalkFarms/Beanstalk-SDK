@@ -3,6 +3,7 @@ import { Token } from "../classes/Token";
 import { ZERO_BeanNumber, ZERO_BN } from "../constants";
 import { MapValueType } from "../types";
 import { BeanNumber } from "../utils/BeanNumber";
+import { DecimalBigNumber } from "../utils/DecimalBigNumber";
 // import { toTokenUnitsBN } from "../utils/Tokens";
 import { EventProcessorData } from "./events/processor";
 import { EIP712PermitMessage } from "./permit";
@@ -93,9 +94,13 @@ export function sortCratesByBDVRatio<T extends DepositCrate<BeanNumber>>(crates:
   const m = direction === 'asc' ? -1 : 1;
   return [...crates].sort((a, b) => {
     // FIXME
-    const _a = a.bdv.div(a.amount);
-    const _b = b.bdv.div(b.amount);
-    return m * _b.sub(_a).toNumber();
+    // const _a = a.bdv.div(a.amount);
+    // const _b = b.bdv.div(b.amount);
+    // return m * _b.sub(_a).toNumber();
+
+    const aRatio = new DecimalBigNumber(a.bdv, 6).div(new DecimalBigNumber(a.amount, 6));
+    const bRatio = new DecimalBigNumber(b.bdv, 6).div(new DecimalBigNumber(b.amount, 6));
+    return m * bRatio.sub(aRatio).toNumber();
   });
 }
 

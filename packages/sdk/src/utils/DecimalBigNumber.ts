@@ -1,12 +1,12 @@
-import { BigNumber } from 'ethers';
-import { formatUnits, parseUnits, commify } from 'ethers/lib/utils';
-import { BeanNumber } from './BeanNumber';
+import { BigNumber } from "ethers";
+import { formatUnits, parseUnits, commify } from "ethers/lib/utils";
+import { BeanNumber } from "./BeanNumber";
 
 export function assert(value: boolean, message?: string): asserts value;
 export function assert<T>(value: T | null | undefined, message?: string): asserts value is T;
 export function assert(value: any, message?: string) {
-  if (value === false || value === null || typeof value === 'undefined') {
-    throw new Error(message || 'Assertion failed');
+  if (value === false || value === null || typeof value === "undefined") {
+    throw new Error(message || "Assertion failed");
   }
 }
 
@@ -43,10 +43,9 @@ export class DecimalBigNumber {
   constructor(value: BigNumber, decimals: number);
   constructor(value: BeanNumber, decimals: number);
   constructor(value: BigNumber | BeanNumber | string, decimals?: number) {
-    if (typeof value === 'string') {
-      const _value = value.trim() === '' || isNaN(Number(value)) ? '0' : value;
-      const _decimals =
-        decimals === undefined ? this._inferDecimalAmount(value) : this._ensurePositive(decimals);
+    if (typeof value === "string") {
+      const _value = value.trim() === "" || isNaN(Number(value)) ? "0" : value;
+      const _decimals = decimals === undefined ? this._inferDecimalAmount(value) : this._ensurePositive(decimals);
       const formatted = this._setDecimalAmount(_value, _decimals);
 
       this._value = parseUnits(formatted, _decimals);
@@ -55,14 +54,14 @@ export class DecimalBigNumber {
       return;
     }
 
-    assert(decimals !== undefined, 'Decimal cannot be undefined');
+    assert(decimals !== undefined, "Decimal cannot be undefined");
 
     this._value = value;
     this._decimals = decimals;
   }
 
   private _inferDecimalAmount(value: string): number {
-    const [, decimalStringOrUndefined] = value.split('.');
+    const [, decimalStringOrUndefined] = value.split(".");
 
     return decimalStringOrUndefined?.length || 0;
   }
@@ -77,13 +76,13 @@ export class DecimalBigNumber {
    * @param decimals Desired decimal amount
    */
   private _setDecimalAmount(value: string, decimals: number): string {
-    const [integer, _decimalsOrUndefined] = value.split('.');
+    const [integer, _decimalsOrUndefined] = value.split(".");
 
-    const _decimals = _decimalsOrUndefined || '';
+    const _decimals = _decimalsOrUndefined || "";
 
     const paddingRequired = this._ensurePositive(decimals - _decimals.length);
 
-    return integer + '.' + _decimals.substring(0, decimals) + '0'.repeat(paddingRequired);
+    return integer + "." + _decimals.substring(0, decimals) + "0".repeat(paddingRequired);
   }
 
   /**
@@ -100,9 +99,11 @@ export class DecimalBigNumber {
    * an argument to a contract method
    */
   public toBigNumber(decimals?: number): BigNumber {
-    return decimals === undefined
-      ? this._value
-      : new DecimalBigNumber(this.toString(), decimals)._value;
+    return decimals === undefined ? this._value : new DecimalBigNumber(this.toString(), decimals)._value;
+  }
+
+  public toNumber(): number {
+    return this._value.toNumber();
   }
 
   /**
@@ -139,7 +140,7 @@ export class DecimalBigNumber {
     result = this._setDecimalAmount(result, _decimals);
 
     // We default to trimming trailing zeroes (and decimal points), unless there is an override
-    if (trim) result = result.replace(/(?:\.|(\..*?))\.?0*$/, '$1');
+    if (trim) result = result.replace(/(?:\.|(\..*?))\.?0*$/, "$1");
 
     return result;
   }
@@ -186,10 +187,7 @@ export class DecimalBigNumber {
     const normalisedThis = new DecimalBigNumber(this.toString(), largestDecimalAmount);
     const normalisedValue = new DecimalBigNumber(valueAsDBN.toString(), largestDecimalAmount);
 
-    return new DecimalBigNumber(
-      normalisedThis._value.sub(normalisedValue._value),
-      largestDecimalAmount,
-    );
+    return new DecimalBigNumber(normalisedThis._value.sub(normalisedValue._value), largestDecimalAmount);
   }
 
   /**
@@ -205,10 +203,7 @@ export class DecimalBigNumber {
     const normalisedThis = new DecimalBigNumber(this.toString(), largestDecimalAmount);
     const normalisedValue = new DecimalBigNumber(valueAsDBN.toString(), largestDecimalAmount);
 
-    return new DecimalBigNumber(
-      normalisedThis._value.add(normalisedValue._value),
-      largestDecimalAmount,
-    );
+    return new DecimalBigNumber(normalisedThis._value.add(normalisedValue._value), largestDecimalAmount);
   }
 
   public isPositive(): boolean {
@@ -273,10 +268,7 @@ export class DecimalBigNumber {
   public div(value: DecimalBigNumber | string, decimals?: number): DecimalBigNumber {
     const valueAsDBN = value instanceof DecimalBigNumber ? value : new DecimalBigNumber(value);
 
-    const _decimals =
-      decimals === undefined
-        ? this._decimals + valueAsDBN._decimals
-        : this._ensurePositive(decimals);
+    const _decimals = decimals === undefined ? this._decimals + valueAsDBN._decimals : this._ensurePositive(decimals);
 
     // When we divide two BigNumbers, the result will never
     // include any decimal places because BigNumber only deals
@@ -309,7 +301,7 @@ export class DecimalBigNumber {
 
   public abs(): DecimalBigNumber {
     if (this._value.lt(0)) {
-      return new DecimalBigNumber(this._value.mul('-1'), this._decimals);
+      return new DecimalBigNumber(this._value.mul("-1"), this._decimals);
     } else {
       return this;
     }
@@ -317,20 +309,18 @@ export class DecimalBigNumber {
 
   //only works for positive exponents
   public pow(n: number): DecimalBigNumber {
-    if (n==0) return new DecimalBigNumber('1');
-    else if (n==1) return this;
-    else if (this.eq('0') && n !== 0) return new DecimalBigNumber('0');
+    if (n == 0) return new DecimalBigNumber("1");
+    else if (n == 1) return this;
+    else if (this.eq("0") && n !== 0) return new DecimalBigNumber("0");
     else {
       var z = new DecimalBigNumber(this._value, this._decimals);
-      for(let i = 1; i < n; i++) {
+      for (let i = 1; i < n; i++) {
         z = z.mul(this);
       }
       return z;
     }
   }
 }
-
-
 
 // var dbn1 = new DecimalBigNumber('22')
 // var dbn2 = new DecimalBigNumber('5')
