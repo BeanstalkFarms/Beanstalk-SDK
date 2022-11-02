@@ -12,6 +12,6 @@
   "scripts": {
     "sdk:dev": "yarn workspace @beanstalk/sdk dev",
     "sdk:build": "yarn workspace @beanstalk/sdk build",
-    "generate":"yarn workspace @beanstalk/sdk generate"
+    "generate": "yarn workspace @beanstalk/sdk generate"
   }
 }

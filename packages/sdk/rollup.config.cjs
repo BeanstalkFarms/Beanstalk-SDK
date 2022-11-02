@@ -12,18 +12,22 @@ delete pkg.exports;
  * @type {import('rollup').RollupOptions}
  */
 const config = [
-  makeEntry("dist/js/index.js", "sdk"), // do not change the "sdk" name
+  // do not change the "sdk" value, it is a 'magic string' that represents
+  // the main entry point in various ways
+  makeEntry("dist/js/index.js", "sdk"),
 
   // This is just an example of how to create a new module entry.
   // This lets you do this on the client side:
   // import {BeanNumber} from "@beanstalk/sdk/BeanNumber"
-  makeEntry("dist/js/beannumber.js", "BeanNumber"),
+  makeEntry("dist/js/BeanNumber.js", "BeanNumber"),
+  makeEntry("dist/js/DecimalBigNumber.js", "DecimalBigNumber"),
 ];
 
 export default config;
 
 function makeEntry(inputFile, name) {
   const outRoot = "dist";
+  const typesPath = `./${outRoot}/types/${name === "sdk" ? "index" : name}.d.ts`;
   const esmPath = `./${outRoot}/${name}/${name}.esm.js`;
   const cjsPath = `./${outRoot}/${name}/${name}.cjs.js`;
   const udmPath = `./${outRoot}/${name}/${name}.umd.js`;
@@ -40,6 +44,7 @@ function makeEntry(inputFile, name) {
   };
 
   const pkgExport = {
+    types: typesPath,
     module: esmPath,
     default: cjsPath,
     browser: udmPath,

@@ -3,9 +3,7 @@
   "include": [
     "src"
   ],
-  "ts-node": {
-    "compilerOptions": {
-      "module": "commonjs"
-    }
+  "compilerOptions": {
+    "moduleResolution": "node16"
   }
 }
