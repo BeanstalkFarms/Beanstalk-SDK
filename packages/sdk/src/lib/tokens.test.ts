@@ -54,8 +54,7 @@ describe("Instantiation", function () {
 describe("Utilities", function () {
   it("loads name", async () => {
     const [bean, dai, usdc] = await Promise.all([
-      "Bean",
-      // sdk.tokens.getName(sdk.tokens.BEAN.address),
+      ERC20Token.getName(sdk.tokens.BEAN.address),
       ERC20Token.getName(sdk.tokens.DAI.address),
       ERC20Token.getName(sdk.tokens.USDC.address),
     ]);
