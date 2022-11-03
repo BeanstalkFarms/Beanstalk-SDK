@@ -79,12 +79,6 @@
       "default": "./dist/sdk/sdk.cjs.js",
       "browser": "./dist/sdk/sdk.umd.js"
     },
-    "./BeanNumber": {
-      "types": "./dist/types/BeanNumber.d.ts",
-      "module": "./dist/BeanNumber/BeanNumber.esm.js",
-      "default": "./dist/BeanNumber/BeanNumber.cjs.js",
-      "browser": "./dist/BeanNumber/BeanNumber.umd.js"
-    },
     "./DecimalBigNumber": {
       "types": "./dist/types/DecimalBigNumber.d.ts",
       "module": "./dist/DecimalBigNumber/DecimalBigNumber.esm.js",

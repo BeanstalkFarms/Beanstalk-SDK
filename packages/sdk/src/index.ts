@@ -1,9 +1,10 @@
-export * from './lib/BeanstalkSDK';
-export { ChainId } from './constants/chains';
-export { NativeToken, ERC20Token, BeanstalkToken } from './classes/Token';
+export * from "./lib/BeanstalkSDK";
+export { ChainId } from "./constants/chains";
+export { NativeToken, ERC20Token, BeanstalkToken } from "./classes/Token";
+export { TokenValue } from "./classes/TokenValue";
 
-export * from './types';
-export * as Utils from './utils';
+export * from "./types";
+export * as Utils from "./utils";
 
-export { DecimalBigNumber } from './utils/DecimalBigNumber';
-export { FarmFromMode, FarmToMode } from './lib/farm/types';
+export { DecimalBigNumber } from "./utils/DecimalBigNumber";
+export { FarmFromMode, FarmToMode } from "./lib/farm/types";
