@@ -98,15 +98,15 @@ export abstract class Token {
 
   /** Get the amount of Stalk rewarded per deposited BDV of this Token. */
   public getStalk(bdv?: TokenValue): TokenValue {
-    if (!this.rewards?.stalk) return TokenValue.from(ZERO_BN, 0);
-    if (!bdv) return TokenValue.from(this.rewards.stalk, this.decimals);
+    if (!this.rewards?.stalk) return TokenValue.fromHuman(ZERO_BN, 0);
+    if (!bdv) return TokenValue.fromHuman(this.rewards.stalk, this.decimals);
     return bdv.mul(this.rewards.stalk);
   }
 
   /** Get the amount of Seeds rewarded per deposited BDV of this Token. */
   public getSeeds(bdv?: TokenValue): TokenValue {
-    if (!this.rewards?.seeds) return TokenValue.from(ZERO_BN, 0);
-    if (!bdv) return TokenValue.from(this.rewards.seeds, this.decimals);
+    if (!this.rewards?.seeds) return TokenValue.fromHuman(ZERO_BN, 0);
+    if (!bdv) return TokenValue.fromHuman(this.rewards.seeds, this.decimals);
     return bdv.mul(this.rewards.seeds);
   }
 
@@ -144,7 +144,7 @@ export abstract class Token {
    * @returns BigNumber
    */
   fromHuman(amount: string): BigNumber {
-    return TokenValue.from(amount, this.decimals).toBigNumber();
+    return TokenValue.fromHuman(amount, this.decimals).toBigNumber();
   }
 
   /**
@@ -156,7 +156,7 @@ export abstract class Token {
    * @returns TokenValue
    */
   fromBigNumberToTokenValue(amount: BigNumberish): TokenValue {
-    return TokenValue.from(BigNumber.from(amount), this.decimals);
+    return TokenValue.fromBlockchain(BigNumber.from(amount), this.decimals);
   }
 
   /**
@@ -168,7 +168,7 @@ export abstract class Token {
    * @returns TokenValue
    */
   fromHumanToTokenValue(amount: string): TokenValue {
-    return TokenValue.from(amount, this.decimals);
+    return TokenValue.fromHuman(amount, this.decimals);
   }
 
   /**
@@ -183,6 +183,6 @@ export abstract class Token {
   }
 
   toTokenValue(value: BigNumber): TokenValue {
-    return TokenValue.from(value, this.decimals);
+    return TokenValue.fromBlockchain(value, this.decimals);
   }
 }

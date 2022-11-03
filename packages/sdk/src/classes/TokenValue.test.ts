@@ -3,15 +3,69 @@ import { BigNumber } from "ethers";
 import { TokenValue } from "./TokenValue";
 
 describe("TokenValues", function () {
-  const n1 = TokenValue.from("100", 6);
-  const n2 = TokenValue.from("5.3", 6);
-  const n3 = TokenValue.from("1.5", 2);
-  const n4 = TokenValue.from("1.5", 6);
+  const n1 = TokenValue.fromHuman("100", 6);
+  const n2 = TokenValue.fromHuman("5.3", 6);
+  const n3 = TokenValue.fromHuman("1.5", 2);
+  const n4 = TokenValue.fromHuman("1.5", 6);
 
-  it("from", () => {});
+  describe("Instatiation", () => {
+    const decimals = 6;
+    describe("fromHuman()", () => {
+      it("fromHuman(string)", () => {
+        expect(TokenValue.fromHuman("3", decimals).toHuman()).toEqual("3");
+        expect(TokenValue.fromHuman("3", decimals).toBlockchain()).toEqual("3000000");
+        expect(TokenValue.fromHuman("3140000", decimals).toHuman()).toEqual("3140000");
+        expect(TokenValue.fromHuman("3140000", decimals).toBlockchain()).toEqual("3140000000000");
+      });
+      it("fromHuman(number)", () => {
+        expect(TokenValue.fromHuman(3, decimals).toHuman()).toEqual("3");
+        expect(TokenValue.fromHuman(3, decimals).toBlockchain()).toEqual("3000000");
+        expect(TokenValue.fromHuman(3140000, decimals).toHuman()).toEqual("3140000");
+        expect(TokenValue.fromHuman(3140000, decimals).toBlockchain()).toEqual("3140000000000");
+      });
+      it("fromHuman(BigNumber)", () => {
+        const bn = BigNumber.from("3140000");
+        expect(TokenValue.fromHuman(bn, decimals).toHuman()).toEqual("3140000");
+        expect(TokenValue.fromHuman(bn, decimals).toBlockchain()).toEqual("3140000000000");
+      });
+    });
+
+    describe("fromBlockchain()", () => {
+      it("fromBlockchain(string)", () => {
+        expect(TokenValue.fromBlockchain("3", decimals).toHuman()).toEqual("0.000003");
+        expect(TokenValue.fromBlockchain("3", decimals).toBlockchain()).toEqual("3");
+        expect(TokenValue.fromBlockchain("3140000", decimals).toHuman()).toEqual("3.14");
+        expect(TokenValue.fromBlockchain("3140000", decimals).toBlockchain()).toEqual("3140000");
+      });
+      it("fromBlockchain(number)", () => {
+        expect(TokenValue.fromBlockchain(3, decimals).toHuman()).toEqual("0.000003");
+        expect(TokenValue.fromBlockchain(3, decimals).toBlockchain()).toEqual("3");
+        expect(TokenValue.fromBlockchain(3140000, decimals).toHuman()).toEqual("3.14");
+        expect(TokenValue.fromBlockchain(3140000, decimals).toBlockchain()).toEqual("3140000");
+      });
+      it("fromBlockchain(BigNumber)", () => {
+        const bn = BigNumber.from("3140000");
+        expect(TokenValue.fromBlockchain(bn, decimals).toHuman()).toEqual("3.14");
+        expect(TokenValue.fromBlockchain(bn, decimals).toBlockchain()).toEqual("3140000");
+      });
+    });
+
+    describe("from()", () => {
+      it("from(other)", () => {
+        // @ts-ignore
+        expect(() => TokenValue.from(BigNumber.from(3140000))).toThrow();
+        // @ts-ignore
+        expect(() => TokenValue.from(3140000)).toThrow();
+        // @ts-ignore
+        expect(() => TokenValue.from("3140000")).toThrow();
+        // @ts-ignore
+        expect(() => TokenValue.from(BigNumber.from("1"))).toThrow();
+      });
+    });
+  });
 
   it("value are immutable", () => {
-    const t = TokenValue.from("123", 1);
+    const t = TokenValue.fromHuman("123", 1);
     expect(t.decimals).toBe(1);
     expect(() => (t.decimals = 2)).toThrow("Cannot assign to read only property");
     // @ts-ignore
@@ -68,7 +122,7 @@ describe("TokenValues", function () {
   it("eq", () => {
     expect(n1.eq(100)).toBe(true);
     expect(n1.eq(BigNumber.from("100000000"))).toBe(true);
-    expect(n1.eq(TokenValue.from("100", 6))).toBe(true);
+    expect(n1.eq(TokenValue.fromHuman("100", 6))).toBe(true);
 
     expect(n1.eq(99)).toBe(false);
     expect(n1.eq(101)).toBe(false);
@@ -76,9 +130,9 @@ describe("TokenValues", function () {
 
   it("gt", () => {
     expect(n1.gt(99)).toBe(true);
-    expect(n1.gt(TokenValue.from("99", 6))).toBe(true);
-    expect(n1.gt(TokenValue.from("99.999999", 6))).toBe(true);
-    expect(n1.gt(TokenValue.from("99.999999999999", 6))).toBe(true);
+    expect(n1.gt(TokenValue.fromHuman("99", 6))).toBe(true);
+    expect(n1.gt(TokenValue.fromHuman("99.999999", 6))).toBe(true);
+    expect(n1.gt(TokenValue.fromHuman("99.999999999999", 6))).toBe(true);
     expect(n1.gt(BigNumber.from(50000000))).toBe(true);
 
     expect(n1.gt(100)).toBe(false);
@@ -93,10 +147,10 @@ describe("TokenValues", function () {
 
   it("lt", () => {
     expect(n1.lt(101)).toBe(true);
-    expect(n1.lt(TokenValue.from("101", 6))).toBe(true);
-    expect(n1.lt(TokenValue.from("100.111111", 6))).toBe(true);
-    expect(n1.lt(TokenValue.from("100.111111111111111111", 6))).toBe(true);
-    expect(n1.lt(TokenValue.from("100.11111111111111111111111111111", 6))).toBe(true);
+    expect(n1.lt(TokenValue.fromHuman("101", 6))).toBe(true);
+    expect(n1.lt(TokenValue.fromHuman("100.111111", 6))).toBe(true);
+    expect(n1.lt(TokenValue.fromHuman("100.111111111111111111", 6))).toBe(true);
+    expect(n1.lt(TokenValue.fromHuman("100.11111111111111111111111111111", 6))).toBe(true);
 
     expect(n1.lt(BigNumber.from(100000001))).toBe(true);
     expect(n1.lt(BigNumber.from(100000000))).toBe(false);
@@ -114,8 +168,8 @@ describe("TokenValues", function () {
   });
 
   it("abs", () => {
-    const n1 = TokenValue.from("123.45", 6);
-    const n2 = TokenValue.from("-123.45", 6);
+    const n1 = TokenValue.fromHuman("123.45", 6);
+    const n2 = TokenValue.fromHuman("-123.45", 6);
 
     // sanity check
     expect(n2.toBlockchain()).toEqual("-123450000");
@@ -127,9 +181,17 @@ describe("TokenValues", function () {
   });
 
   it("pow", () => {
-    expect(TokenValue.from(5, 0).pow(2).toHuman()).toEqual("25");
+    expect(TokenValue.fromHuman(5, 0).pow(2).toHuman()).toEqual("25");
     expect(n2.pow(2).toHuman()).toEqual("28.09");
     expect(n2.pow(1).toHuman()).toEqual(n2.toHuman());
     expect(n2.pow(0).toHuman()).toEqual("1");
+  });
+
+  it("pct", () => {
+    expect(TokenValue.fromHuman(100, 6).pct(5).toHuman()).toEqual("5");
+    expect(TokenValue.fromHuman(100, 6).pct(0.01).toHuman()).toEqual("0.01");
+    expect(TokenValue.fromHuman(100, 0).pct(0.01).toHuman()).toEqual("0.01");
+    expect(TokenValue.fromHuman(100, 3).pct(0).toHuman()).toEqual("0");
+    expect(() => TokenValue.fromHuman(100, 3).pct(-1)).toThrow("Percent value must be bigger than 0");
   });
 });

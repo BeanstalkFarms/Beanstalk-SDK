@@ -4,25 +4,50 @@ import { DecimalBigNumber } from "../DecimalBigNumber";
 import { constants } from "ethers";
 
 export class TokenValue {
-  static ZERO = TokenValue.from(0, 0);
-  static NEGATIVE_ONE = TokenValue.from(-1, 0);
-  static ONE = TokenValue.from(1, 0);
-  static MAX_UINT32 = TokenValue.from(4294967295, 0);
-  static MAX_UINT256 = TokenValue.from(constants.MaxUint256, 0);
+  static ZERO = TokenValue.fromHuman(0, 0);
+  static NEGATIVE_ONE = TokenValue.fromHuman(-1, 0);
+  static ONE = TokenValue.fromHuman(1, 0);
+  static MAX_UINT32 = TokenValue.fromHuman(4294967295, 0);
+  static MAX_UINT256 = TokenValue.fromBlockchain(constants.MaxUint256, 0);
 
   public decimals: number;
   public value: DecimalBigNumber;
 
-  static from(value: DecimalBigNumber | TokenValue | BigNumber | number | string, decimals?: number): TokenValue {
-    if (value instanceof DecimalBigNumber && !decimals) {
-      return new TokenValue(value.toBigNumber(), value.getDecimals());
-    } else if (decimals == undefined || decimals == null) {
-      throw new Error("Decimals required");
-    }
-
+  static fromHuman(value: string | number | BigNumber, decimals: number): TokenValue {
     if (typeof value === "string") return TokenValue.fromString(value, decimals);
     if (typeof value === "number") return TokenValue.fromString(value.toString(), decimals);
+    if (value instanceof BigNumber) {
+      // TODO: are we ok with this warning? should we add ability to ignore it?
+      console.warn(
+        "WARNING: calling TokenValue.fromHuman(BigNumber). This may have unexpected results. Are you sure you didn't mean TokenValue.fromBlockchain(BigNumber)?"
+      );
+      return TokenValue.fromString(value.toString(), decimals);
+    }
+
+    throw new Error("Invalid value parameter");
+  }
+
+  static fromBlockchain(value: string | number | BigNumber, decimals: number): TokenValue {
+    if (typeof value === "string" || typeof value === "number") {
+      const units = utils.formatUnits(value, decimals);
+      return TokenValue.fromString(units, decimals);
+    }
     if (value instanceof BigNumber) return TokenValue.fromBigNumber(value, decimals);
+
+    throw new Error("Invalid value parameter");
+  }
+
+  /**
+   *
+   * @param value
+   * @param decimals
+   * @returns
+   */
+  static from(value: DecimalBigNumber | TokenValue): TokenValue {
+    if (value instanceof DecimalBigNumber) {
+      return new TokenValue(value.toBigNumber(), value.getDecimals());
+    }
+
     if (value instanceof TokenValue) return value;
 
     throw new Error('Invalid "value" parameter');
@@ -70,22 +95,32 @@ export class TokenValue {
   }
   /**
    * @deprecated
-   * Ambiguous function. This exists only as a safety, otherwise the .toString() 
+   * Ambiguous function. This exists only as a safety, otherwise the .toString()
    * call would go to Object.toString().
-   * @returns 
+   * @returns
    */
   toString(): string {
     return this.toBlockchain();
   }
 
+  /**
+   * Returns a human readable string, for example "3.14"
+   * @returns string
+   */
   public toHuman(): string {
     return this.value.toString();
   }
 
   // Used mostly by the math functions to normalize the input
   private toDBN(num: TokenValue | BigNumber | number): DecimalBigNumber {
-    // TODO: confirm it's safe to default to this.decimals
-    return TokenValue.from(num, this.decimals).value;
+    if (num instanceof TokenValue) {
+      return TokenValue.from(num).value;
+    } else if (num instanceof BigNumber) {
+      return TokenValue.fromBlockchain(num, this.decimals).value;
+    } else {
+      // TODO: confirm it's safe to assume the divisor is 'fromHuman()'
+      return TokenValue.fromHuman(num, this.decimals).value;
+    }
   }
 
   ////// Math Functions //////
@@ -102,8 +137,7 @@ export class TokenValue {
     return TokenValue.from(this.value.div(this.toDBN(num)));
   }
   eq(num: TokenValue | BigNumber | number): boolean {
-    const d = this.toDBN(num);
-    return this.value.eq(d);
+    return this.value.eq(this.toDBN(num));
   }
   gt(num: TokenValue | BigNumber | number): boolean {
     return this.value.gt(this.toDBN(num));
@@ -122,5 +156,9 @@ export class TokenValue {
   }
   pow(num: number): TokenValue {
     return TokenValue.from(this.value.pow(num));
+  }
+  pct(num: number): TokenValue {
+    if (num < 0) throw new Error("Percent value must be bigger than 0");
+    return TokenValue.from(this.value.mul(num.toString()).div("100"));
   }
 }

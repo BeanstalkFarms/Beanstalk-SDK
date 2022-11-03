@@ -364,7 +364,7 @@ export class Silo {
     // const amount = toTokenUnitsBN(rawCrate.amount, token.decimals);
     const amount = token.fromHumanToTokenValue(rawCrate.amount);
 
-    const crate:Crate<TokenValue> = {
+    const crate: Crate<TokenValue> = {
       season: season,
       amount: amount,
     };
@@ -603,7 +603,7 @@ export class Silo {
     const sortedCrates = sort(crates);
     const seasons: string[] = [];
     const amounts: string[] = [];
-    let remaining = TokenValue.from(amount, token.decimals);
+    let remaining = amount instanceof TokenValue ? TokenValue.from(amount) : TokenValue.fromBlockchain(amount, token.decimals);
     sortedCrates.some((crate) => {
       const thisAmount = crate.amount.gt(remaining) ? crate.amount.sub(remaining) : crate.amount;
       seasons.push(crate.season.toString());

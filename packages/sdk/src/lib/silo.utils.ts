@@ -45,7 +45,7 @@ export const _parseWithdrawalCrates = (
   
   // Split each withdrawal between `receivable` and `transit`.
   Object.keys(withdrawals).forEach((season) => {
-    const amt = TokenValue.from(withdrawals[season].amount, token.decimals);
+    const amt = TokenValue.fromBlockchain(withdrawals[season].amount, token.decimals);
     const szn = BigNumber.from(season);
     if (szn.lte(currentSeason)) {
       claimableBalance = claimableBalance.add(amt);

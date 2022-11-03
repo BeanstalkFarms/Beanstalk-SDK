@@ -59,7 +59,7 @@ export class ERC20Token extends Token {
   public getBalance(account: string) {
     return this.getContract()
       .balanceOf(account)
-      .then((result) => TokenValue.from(result, this.decimals))
+      .then((result) => TokenValue.fromBlockchain(result, this.decimals))
       .catch((err: Error) => {
         console.error(`[ERC20Token] ${this.symbol} failed to call balanceOf(${account})`, err);
         throw err;
@@ -70,13 +70,13 @@ export class ERC20Token extends Token {
   public getAllowance(account: string, spender: string): Promise<TokenValue | undefined> {
     return this.getContract()
       .allowance(account, spender)
-      .then((result) => TokenValue.from(result, this.decimals));
+      .then((result) => TokenValue.fromBlockchain(result, this.decimals));
   }
 
   public getTotalSupply(): Promise<TokenValue> | undefined {
     return this.getContract()
       .totalSupply()
-      .then((result) => TokenValue.from(result, this.decimals));
+      .then((result) => TokenValue.fromBlockchain(result, this.decimals));
   }
 
   public approve(spender: PromiseOrValue<string>, value: PromiseOrValue<BigNumber>): Promise<ContractTransaction> {

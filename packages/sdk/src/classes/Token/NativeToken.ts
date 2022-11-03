@@ -11,7 +11,7 @@ export class NativeToken extends Token {
 
   public getBalance(account: string): Promise<TokenValue> {
     return Token.sdk.provider.getBalance(account)
-    .then(result => TokenValue.from(result, this.decimals))
+    .then(result => TokenValue.fromBlockchain(result, this.decimals))
   }
 
   // eslint-disable-next-line class-methods-use-this
