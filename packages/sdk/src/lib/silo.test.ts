@@ -53,26 +53,27 @@ describe("Utilities", function () {
     );
     expect(result.claimable.amount).to.be.instanceOf(TokenValue);
     expect(result.withdrawn.amount).to.be.instanceOf(TokenValue);
-    expect(result.claimable.amount.toString()).to.be.eq(BigNumber.from(1000).toString());
-    expect(result.withdrawn.amount.toString()).to.be.eq(BigNumber.from(2000 + 3000).toString());
+    expect(result.claimable.amount.toBlockchain()).to.be.eq(BigNumber.from(1000 * 1e6).toString());
+    expect(result.withdrawn.amount.toBlockchain()).to.be.eq(BigNumber.from((2000 + 3000) * 1e6).toString());
     expect(result.claimable.crates.length).to.be.eq(1);
     expect(result.withdrawn.crates.length).to.be.eq(2);
   });
 });
-
+//1000_000000
+//1000_000000
 ///
 describe("Function: getBalance", function () {
   it("returns an empty object", async () => {
     const balance = await sdk.silo.getBalance(sdk.tokens.BEAN, account2, { source: DataSource.SUBGRAPH });
-    expect(balance.deposited.amount.toNumber()).to.be.eq(0);
-    expect(balance.withdrawn.amount.toNumber()).to.be.eq(0);
-    expect(balance.claimable.amount.toNumber()).to.be.eq(0);
+    expect(balance.deposited.amount.eq(0)).to.be.true;
+    expect(balance.withdrawn.amount.eq(0)).to.be.true;
+    expect(balance.claimable.amount.eq(0)).to.be.true;
   });
   it("loads an account with deposits (fuzzy)", async () => {
     const balance = await sdk.silo.getBalance(sdk.tokens.BEAN, account3, { source: DataSource.SUBGRAPH });
-    expect(balance.deposited.amount.toNumber()).to.be.gt(10_000); // FIXME
-    expect(balance.withdrawn.amount.toNumber()).to.be.eq(0);
-    expect(balance.claimable.amount.toNumber()).to.be.eq(0);
+    expect(balance.deposited.amount.gt(10_000)).to.be.true; // FIXME
+    expect(balance.withdrawn.amount.eq(0)).to.be.true;
+    expect(balance.claimable.amount.eq(0)).to.be.true;
   });
   it("source: ledger === subgraph", async function () {
     const [ledger, subgraph] = await Promise.all([

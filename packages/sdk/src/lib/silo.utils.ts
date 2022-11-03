@@ -42,7 +42,7 @@ export const _parseWithdrawalCrates = (
   let claimableBalance = TokenValue.ZERO; // aka "receivable"
   const withdrawn: WithdrawalCrate[] = []; // aka "transit"
   const claimable: WithdrawalCrate[] = []; // aka "receivable"
-
+  
   // Split each withdrawal between `receivable` and `transit`.
   Object.keys(withdrawals).forEach((season) => {
     const amt = TokenValue.from(withdrawals[season].amount, token.decimals);
