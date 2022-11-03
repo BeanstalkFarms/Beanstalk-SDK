@@ -9,7 +9,7 @@ import {
   SowEvent,
   HarvestEvent,
 } from "../../constants/generated/Beanstalk/Beanstalk";
-import EventProcessor, { BN, EventProcessingParameters } from "./processor";
+import EventProcessor, { EventProcessingParameters } from "./processor";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import { getProvider } from "../../../test/provider";
 

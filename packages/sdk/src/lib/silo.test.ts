@@ -53,8 +53,12 @@ describe("Utilities", function () {
     );
     expect(result.claimable.amount).to.be.instanceOf(TokenValue);
     expect(result.withdrawn.amount).to.be.instanceOf(TokenValue);
-    expect(result.claimable.amount.toBlockchain()).to.be.eq(BigNumber.from(1000 * 1e6).toString());
-    expect(result.withdrawn.amount.toBlockchain()).to.be.eq(BigNumber.from((2000 + 3000) * 1e6).toString());
+
+    // expect(result.claimable.amount.toBlockchain()).to.be.eq(BigNumber.from(1000 * 1e6).toString());
+    // expect(result.withdrawn.amount.toBlockchain()).to.be.eq(BigNumber.from((2000 + 3000) * 1e6).toString());
+    expect(result.claimable.amount.eq(TokenValue.from(1000, 6))).to.be.true;
+    expect(result.withdrawn.amount.eq(TokenValue.from(5000, 6))).to.be.true;
+
     expect(result.claimable.crates.length).to.be.eq(1);
     expect(result.withdrawn.crates.length).to.be.eq(2);
   });

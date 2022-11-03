@@ -24,14 +24,14 @@ describe("TokenValues", function () {
     expect(TokenValue.NEGATIVE_ONE.toBigNumber()._hex).toBe("-0x01");
     expect(TokenValue.MAX_UINT256.toBigNumber()._hex).toBe("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     expect(TokenValue.MAX_UINT32.toBigNumber()._hex).toBe("0xffffffff");
-    expect(TokenValue.MAX_UINT32.toBlockchain()).toBe(4294967295);
+    expect(TokenValue.MAX_UINT32.toBlockchain()).toBe("4294967295");
   });
 
   it("add", () => {
     const res = n1.add(n2);
     expect(res.decimals).toEqual(6);
     expect(res.toHuman()).toEqual("105.3");
-    expect(res.toBlockchain()).toEqual(105300000);
+    expect(res.toBlockchain()).toEqual("105300000");
 
     expect(n1.add(1).toHuman()).toEqual("101");
     expect(n1.add(-100).toHuman()).toEqual("0");
@@ -43,7 +43,7 @@ describe("TokenValues", function () {
     const res = n1.sub(n2);
     expect(res.decimals).toEqual(6);
     expect(res.toHuman()).toEqual("94.7");
-    expect(res.toBlockchain()).toEqual(94700000);
+    expect(res.toBlockchain()).toEqual("94700000");
     expect(n1.sub(-1.33).toHuman()).toEqual("101.33");
     expect(n1.sub(n3).toHuman()).toEqual("98.5");
     expect(n1.sub(n4).toHuman()).toEqual("98.5");
@@ -53,16 +53,16 @@ describe("TokenValues", function () {
     const res = n1.mul(n3);
     expect(res.decimals).toEqual(8);
     expect(res.toHuman()).toEqual("150");
-    expect(res.toBlockchain()).toEqual(15000000000);
+    expect(res.toBlockchain()).toEqual("15000000000");
     expect(n1.mul(0.25).toHuman()).toEqual("25");
-    expect(n1.mul(0.25).toBlockchain()).toEqual(25000000000000);
+    expect(n1.mul(0.25).toBlockchain()).toEqual("25000000000000");
   });
 
   it("div", () => {
     const res = n3.div(2);
     expect(res.decimals).toEqual(4);
     expect(res.toHuman()).toEqual("0.75");
-    expect(res.toBlockchain()).toEqual(7500);
+    expect(res.toBlockchain()).toEqual("7500");
   });
 
   it("eq", () => {
@@ -118,12 +118,12 @@ describe("TokenValues", function () {
     const n2 = TokenValue.from("-123.45", 6);
 
     // sanity check
-    expect(n2.toBlockchain()).toEqual(-123450000);
+    expect(n2.toBlockchain()).toEqual("-123450000");
 
     expect(n1.abs().toHuman()).toEqual("123.45");
-    expect(n1.abs().toBlockchain()).toEqual(123450000);
+    expect(n1.abs().toBlockchain()).toEqual("123450000");
     expect(n2.abs().toHuman()).toEqual("123.45");
-    expect(n2.abs().toBlockchain()).toEqual(123450000);
+    expect(n2.abs().toBlockchain()).toEqual("123450000");
   });
 
   it("pow", () => {
