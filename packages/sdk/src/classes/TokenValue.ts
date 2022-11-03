@@ -3,6 +3,8 @@ import { Token } from "graphql";
 import { DecimalBigNumber } from "../DecimalBigNumber";
 import { constants } from "ethers";
 
+const blocker = {};
+
 export class TokenValue {
   static ZERO = TokenValue.fromHuman(0, 0);
   static NEGATIVE_ONE = TokenValue.fromHuman(-1, 0);
@@ -13,6 +15,20 @@ export class TokenValue {
   public decimals: number;
   public value: DecimalBigNumber;
 
+  /**
+   * Create a TokenValue from string, number, or BigNumber values that represent a **human** readable form.
+   * For example: "3" ETH, or "4.5" beans.
+   * If your value is a blockchain value, for ex 3e18 or 4500000, use `fromBlockchain()` method instead.
+   *
+   * Example: `fromHuman('3.14', 6)` means 3.14 BEAN tokens, and would be represented as 3140000 on the blockchain
+   *
+   * Warning: Even thought we support supplying the value as a BigNumber, make sure you really mean to use it here.
+   * If your input is a BigNumber, you most likely want to use `.fromBlockchain()`
+   *
+   * @param value The amount, as a human readable value, in string, number or BigNumber form.
+   * @param decimals The number of decimals this TokenValue should be stored with. For ex, 6 for BEAN or 18 for ETH
+   * @returns a TokenValue
+   */
   static fromHuman(value: string | number | BigNumber, decimals: number): TokenValue {
     if (typeof value === "string") return TokenValue.fromString(value, decimals);
     if (typeof value === "number") return TokenValue.fromString(value.toString(), decimals);
@@ -27,6 +43,16 @@ export class TokenValue {
     throw new Error("Invalid value parameter");
   }
 
+  /**
+   * Create a TokenValue from string, number, or BigNumber values that represent a **blockhain** value.
+   * For example: 3e18 ETH, or 4500000 beans.
+   * If your value is a human readable value, for ex 5 ETH  or 3.14 BEAN, use `fromHuman()` method instead.
+   *
+   * Example: `fromBlockchain('3140000', 6)` means 3.14 BEAN tokens, and would be represented as 3140000 on the blockchain
+   * @param value The amount, as a human readable value, in string, number or BigNumber form.
+   * @param decimals The number of decimals this TokenValue should be stored with. For ex, 6 for BEAN or 18 for ETH
+   * @returns a TokenValue
+   */
   static fromBlockchain(value: string | number | BigNumber, decimals: number): TokenValue {
     if (typeof value === "string" || typeof value === "number") {
       const units = utils.formatUnits(value, decimals);
@@ -38,14 +64,14 @@ export class TokenValue {
   }
 
   /**
+   * Create a TokenValue from another decimal-supporting object: DecimalBigNumber or TokenValue.
    *
-   * @param value
-   * @param decimals
-   * @returns
+   * @param value The amount
+   * @returns a TokenValue
    */
   static from(value: DecimalBigNumber | TokenValue): TokenValue {
     if (value instanceof DecimalBigNumber) {
-      return new TokenValue(value.toBigNumber(), value.getDecimals());
+      return new TokenValue(blocker, value.toBigNumber(), value.getDecimals());
     }
 
     if (value instanceof TokenValue) return value;
@@ -54,7 +80,7 @@ export class TokenValue {
   }
 
   private static fromBigNumber(value: BigNumber, decimals: number): TokenValue {
-    return new TokenValue(value, decimals);
+    return new TokenValue(blocker, value, decimals);
   }
 
   private static fromString(value: string, decimals: number): TokenValue {
@@ -76,7 +102,9 @@ export class TokenValue {
     return TokenValue.fromBigNumber(result, decimals);
   }
 
-  constructor(_bigNumber: BigNumber, decimals: number) {
+  constructor(_blocker: typeof blocker, _bigNumber: BigNumber, decimals: number) {
+    if (_blocker !== blocker) throw new Error("Do not create an instance via the constructor. Use the .from...() methods");
+
     this.decimals = decimals;
     this.value = new DecimalBigNumber(_bigNumber, decimals);
 

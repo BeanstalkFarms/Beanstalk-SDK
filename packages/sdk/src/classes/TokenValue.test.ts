@@ -63,6 +63,12 @@ describe("TokenValues", function () {
         expect(() => TokenValue.from(BigNumber.from("1"))).toThrow();
       });
     });
+
+    it("blocks constructor", () => {
+      expect(() => {
+        new TokenValue({}, BigNumber.from(1), 1);
+      }).toThrow("Do not create an instance via the constructor");
+    });
   });
 
   it("value are immutable", () => {
@@ -98,7 +104,7 @@ describe("TokenValues", function () {
 
     expect(n1.add(BigNumber.from(1000000)).toHuman()).toEqual("101");
     expect(n1.add(BigNumber.from(1000000)).toBlockchain()).toEqual("101000000");
-    
+
     expect(n1.add(TokenValue.fromHuman(1, 0)).toHuman()).toEqual("101");
     expect(n1.add(TokenValue.fromHuman(1, 0)).toBlockchain()).toEqual("101000000");
   });
@@ -126,11 +132,11 @@ describe("TokenValues", function () {
     expect(res.toBlockchain()).toEqual("15000000000");
     expect(n1.mul(0.25).toHuman()).toEqual("25");
     expect(n1.mul(0.25).toBlockchain()).toEqual("25000000000000");
-    
+
+    expect(n1.mul(3).toHuman()).toEqual("300");
     // TODO: This is unintuitive
-    expect(n1.mul(3).toHuman()).toEqual("300")
-    expect(n1.mul(BigNumber.from(3)).toHuman()).toEqual("0.0003")  // 100 * .000001
-    expect(n1.mul(BigNumber.from(3000000)).toHuman()).toEqual("300")  // 100 * 3
+    expect(n1.mul(BigNumber.from(3)).toHuman()).toEqual("0.0003"); // 100 * .000001
+    expect(n1.mul(BigNumber.from(3000000)).toHuman()).toEqual("300"); // 100 * 3
 
     expect(n1.mul(BigNumber.from(2)).toBlockchain()).toEqual("200000000");
     expect(n1.mul(BigNumber.from(2000000)).toHuman()).toEqual("200");
