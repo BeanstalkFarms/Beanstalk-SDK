@@ -835,10 +835,12 @@ __metadata:
     lodash-es: ^4.17.21
     rimraf: 3.0.2
     rollup: 3.2.5
+    rollup-plugin-alias: 2.2.0
     rollup-plugin-exclude-dependencies-from-bundle: 1.1.23
     rollup-plugin-typescript2: 0.34.1
     ts-jest: ^29.0.3
     ts-node: 10.9.1
+    tsc-alias: 1.7.0
     tslib: 2.4.1
     typechain: ^8.1.0
     typescript: 4.8.4
@@ -3670,7 +3672,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chokidar@npm:^3.5.2":
+"chokidar@npm:^3.5.2, chokidar@npm:^3.5.3":
   version: 3.5.3
   resolution: "chokidar@npm:3.5.3"
   dependencies:
@@ -3878,6 +3880,13 @@ __metadata:
     table-layout: ^1.0.2
     typical: ^5.2.0
   checksum: 8261d4e5536eb0bcddee0ec5e89c05bb2abd18e5760785c8078ede5020bc1c612cbe28eb6586f5ed4a3660689748e5aaad4a72f21566f4ef39393694e2fa1a0b
+  languageName: node
+  linkType: hard
+
+"commander@npm:^9.0.0":
+  version: 9.4.1
+  resolution: "commander@npm:9.4.1"
+  checksum: bfb18e325a5bdf772763c2213d5c7d9e77144d944124e988bcd8e5e65fb6d45d5d4e86b09155d0f2556c9a59c31e428720e57968bcd050b2306e910a0bf3cf13
   languageName: node
   linkType: hard
 
@@ -4904,7 +4913,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globby@npm:^11.0.3":
+"globby@npm:^11.0.3, globby@npm:^11.0.4":
   version: 11.1.0
   resolution: "globby@npm:11.1.0"
   dependencies:
@@ -6646,6 +6655,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mylas@npm:^2.1.9":
+  version: 2.1.13
+  resolution: "mylas@npm:2.1.13"
+  checksum: f861d092137a9ac268cba88042392a5dc2a290eed5c8543954eae849d85e5961332211161d2c08c3644ad893f20dbe9de89b07f5dc027f1f92f13f2d38f4b81f
+  languageName: node
+  linkType: hard
+
 "natural-compare@npm:^1.4.0":
   version: 1.4.0
   resolution: "natural-compare@npm:1.4.0"
@@ -7045,6 +7061,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"plimit-lit@npm:^1.2.6":
+  version: 1.4.1
+  resolution: "plimit-lit@npm:1.4.1"
+  dependencies:
+    queue-lit: ^1.4.0
+  checksum: 7c37ded998f48065093a2a86873934c370155df00287b37a0023aea6a62db95b77d289b84111157d863516d995a7423f000b177dbde7d5586689bb510e3593d4
+  languageName: node
+  linkType: hard
+
 "prelude-ls@npm:^1.2.1":
   version: 1.2.1
   resolution: "prelude-ls@npm:1.2.1"
@@ -7128,6 +7153,13 @@ __metadata:
   version: 1.1.3
   resolution: "pvutils@npm:1.1.3"
   checksum: 2ee26a9e5176c348977d6ec00d8ee80bff62f51743b1c5fe8abeeb4c5d29d9959cdfe0ce146707a9e6801bce88190fed3002d720b072dc87d031c692820b44c9
+  languageName: node
+  linkType: hard
+
+"queue-lit@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "queue-lit@npm:1.4.0"
+  checksum: 3cdae1722c11eeb97184314b08d408196e46bc6a72518700037d0a7e5a53da8733278a3cd69fc282846ee884ac8253dd286e60779eeea41ee607683b18bbf7c0
   languageName: node
   linkType: hard
 
@@ -7327,6 +7359,15 @@ __metadata:
   bin:
     rimraf: bin.js
   checksum: 87f4164e396f0171b0a3386cc1877a817f572148ee13a7e113b238e48e8a9f2f31d009a92ec38a591ff1567d9662c6b67fd8818a2dbbaed74bc26a87a2a4a9a0
+  languageName: node
+  linkType: hard
+
+"rollup-plugin-alias@npm:2.2.0":
+  version: 2.2.0
+  resolution: "rollup-plugin-alias@npm:2.2.0"
+  dependencies:
+    slash: ^3.0.0
+  checksum: e024943f53ceff5930dcddcc0e604daac031b1c6338cd2feb795cfefc06200216a904e119c6766d0a8525a94b43302f18558e61ea064395dd5bd087aeaf26dc5
   languageName: node
   linkType: hard
 
@@ -8006,6 +8047,22 @@ __metadata:
     ts-node-transpile-only: dist/bin-transpile.js
     ts-script: dist/bin-script-deprecated.js
   checksum: 090adff1302ab20bd3486e6b4799e90f97726ed39e02b39e566f8ab674fd5bd5f727f43615debbfc580d33c6d9d1c6b1b3ce7d8e3cca3e20530a145ffa232c35
+  languageName: node
+  linkType: hard
+
+"tsc-alias@npm:1.7.0":
+  version: 1.7.0
+  resolution: "tsc-alias@npm:1.7.0"
+  dependencies:
+    chokidar: ^3.5.3
+    commander: ^9.0.0
+    globby: ^11.0.4
+    mylas: ^2.1.9
+    normalize-path: ^3.0.0
+    plimit-lit: ^1.2.6
+  bin:
+    tsc-alias: dist/bin/index.js
+  checksum: 6fc2a396b7ec2ee279f38f7414f626f0674f1f02f7e947c3757017f4c73fd9a5fa16842935a5b4051fc37bb7a4b4e145886ddf844dcfaaac80d0a3d4c6af0452
   languageName: node
   linkType: hard
 

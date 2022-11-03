@@ -13,6 +13,12 @@
     "outDir": "dist/js",
     "declaration": true,
     "declarationDir": "dist/types",
-    "isolatedModules": true
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@sdk/*": [
+        "src/*"
+      ]
+    }
   }
 }
