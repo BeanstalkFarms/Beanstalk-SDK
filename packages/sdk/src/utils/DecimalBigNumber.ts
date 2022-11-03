@@ -105,10 +105,6 @@ export class DecimalBigNumber {
     return decimals === undefined ? this._value : new DecimalBigNumber(this.toString(), decimals)._value;
   }
 
-  public toNumber(): number {
-    return this._value.toNumber();
-  }
-
   /**
    * Converts this value to a string
    *
@@ -156,6 +152,8 @@ export class DecimalBigNumber {
    *
    * Used when performing approximate calculations with
    * the number where precision __is not__ important.
+   * 
+   * Ex: (new DecimalBigNumber("100", 6)).toApproxNumber() => 100
    */
   public toApproxNumber(): number {
     return parseFloat(this.toString());

@@ -1,9 +1,9 @@
-import { Contract } from 'ethers';
-import { setupConnection } from '../../test/provider';
-import { ERC20Token } from '../classes/Token';
+import { Contract } from "ethers";
+import { setupConnection } from "../../test/provider";
+import { ERC20Token } from "../classes/Token";
 
-import { BeanstalkSDK } from './BeanstalkSDK';
-import { _parseWithdrawalCrates } from './silo.utils';
+import { BeanstalkSDK } from "./BeanstalkSDK";
+import { _parseWithdrawalCrates } from "./silo.utils";
 
 /// Utilities
 const RUN_TIMER = false;
@@ -12,30 +12,29 @@ const timer = async (fn: Promise<any>, label: string) => {
   const r = await fn;
   if (RUN_TIMER) console.timeEnd(label);
   return r;
-}
+};
 
 /// Constants
-const account1 = '0x9a00beffa3fc064104b71f6b7ea93babdc44d9da'; // whale
-const account2 = '0x0'; // zero addy
-const account3 = '0x21DE18B6A8f78eDe6D16C50A167f6B222DC08DF7'; // BF Multisig
+const account1 = "0x9a00beffa3fc064104b71f6b7ea93babdc44d9da"; // whale
+const account2 = "0x0"; // zero addy
+const account3 = "0x21DE18B6A8f78eDe6D16C50A167f6B222DC08DF7"; // BF Multisig
 
 /// Setup
-let sdk : BeanstalkSDK;
-let account : string;
+let sdk: BeanstalkSDK;
+let account: string;
 
 beforeAll(async () => {
   const { signer, provider, account: _account } = await setupConnection();
   sdk = new BeanstalkSDK({
     provider,
     signer,
-    subgraphUrl: 'https://graph.node.bean.money/subgraphs/name/beanstalk-testing'
+    subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing",
   });
   account = _account;
 });
 
-
-describe('Instantiation', function () {
-  it('sets up .contract on ERC20Token instances', () => {
+describe("Instantiation", function () {
+  it("sets up .contract on ERC20Token instances", () => {
     // by default, no instance in memory
     const token = sdk.tokens.BEAN;
     expect(token.contract).toBeUndefined();
@@ -52,19 +51,19 @@ describe('Instantiation', function () {
   });
 });
 
-describe('Utilities', function () {
-  it('loads name', async () => {
+describe("Utilities", function () {
+  it("loads name", async () => {
     const [bean, dai, usdc] = await Promise.all([
-      'Bean',
+      "Bean",
       // sdk.tokens.getName(sdk.tokens.BEAN.address),
       ERC20Token.getName(sdk.tokens.DAI.address),
       ERC20Token.getName(sdk.tokens.USDC.address),
-    ])
-    expect(bean).toBe('Bean');
-    expect(dai).toBe('Dai Stablecoin');
-    expect(usdc).toBe('USD Coin');
+    ]);
+    expect(bean).toBe("Bean");
+    expect(dai).toBe("Dai Stablecoin");
+    expect(usdc).toBe("USD Coin");
   });
-  it('loads decimals', async () => {
+  it("loads decimals", async () => {
     const [bean, dai, usdc] = await Promise.all([
       ERC20Token.getDecimals(sdk.tokens.BEAN.address),
       ERC20Token.getDecimals(sdk.tokens.DAI.address),
@@ -76,65 +75,52 @@ describe('Utilities', function () {
   });
 });
 
-describe('Function: getBalance', function () {
-  it('returns a TokenBalance struct when the token is ETH', async () => {
-    const balance = await sdk.tokens.getBalance(sdk.tokens.ETH, sdk.tokens.WETH.address)
-    expect(balance.internal.toNumber()).toStrictEqual(0);
-    expect(balance.external.toNumber()).toBeGreaterThan(0);
-    expect(balance.external.toString()).toBe(balance.total.toString());
+describe("Function: getBalance", function () {
+  it("returns a TokenBalance struct when the token is ETH", async () => {
+    const balance = await sdk.tokens.getBalance(sdk.tokens.ETH, sdk.tokens.WETH.address);
+    expect(balance.internal.eq(0)).toBe(true);
+    expect(balance.external.gt(0)).toBe(true);
+    expect(balance.external.toBlockchain()).toBe(balance.total.toBlockchain());
   });
-})
+});
 
-describe('Function: getBalances', function () {
+describe("Function: getBalances", function () {
   // it('throws without account or signer', async () => {
   //   await expect(sdk.tokens.getBalances()).rejects.toThrow();
   // });
-  it('throws if a provided address is not a valid address', async () => {
-    await expect(sdk.tokens.getBalances(account1, ['foo'])).rejects.toThrow();
-  })
-  it('throws if a provided address is not a token', async () => {
+  it("throws if a provided address is not a valid address", async () => {
+    await expect(sdk.tokens.getBalances(account1, ["foo"])).rejects.toThrow();
+  });
+  it("throws if a provided address is not a token", async () => {
     // beanstalk.getAllBalances will revert if any of the requested tokens aren't actually tokens
-    await expect(sdk.tokens.getBalances(account1, [account1])).rejects.toThrow('call revert exception');
-  })
-  it('accepts string for _tokens', async () => {
+    await expect(sdk.tokens.getBalances(account1, [account1])).rejects.toThrow("call revert exception");
+  });
+  it("accepts string for _tokens", async () => {
     const BEAN = sdk.tokens.BEAN.address;
     const result = await sdk.tokens.getBalances(account1, [BEAN]);
     expect(result.has(sdk.tokens.BEAN)).toBe(true);
-  })
-  it('accepts Token instance for _tokens', async () => {
+  });
+  it("accepts Token instance for _tokens", async () => {
     const result = await sdk.tokens.getBalances(account1, [sdk.tokens.BEAN]);
     expect(result.has(sdk.tokens.BEAN)).toBe(true);
-  })
-  it('returns a balance struct for each provided token', async () => {
-    const result = await sdk.tokens.getBalances(
-      account1,
-      [sdk.tokens.BEAN, sdk.tokens.DAI]
-    );
+  });
+  it("returns a balance struct for each provided token", async () => {
+    const result = await sdk.tokens.getBalances(account1, [sdk.tokens.BEAN, sdk.tokens.DAI]);
     expect(result.has(sdk.tokens.BEAN)).toBe(true);
     expect(result.has(sdk.tokens.DAI)).toBe(true);
     expect(result.has(sdk.tokens.BEAN_CRV3_LP)).toBe(false);
   });
 });
 
-describe('Permits', function () {
-  it('submits an ERC-2636 permit for a token', async () => {
+describe("Permits", function () {
+  it("submits an ERC-2636 permit for a token", async () => {
     const token = sdk.tokens.BEAN;
     const owner = account;
     const spender = sdk.contracts.beanstalk.address;
-    const amount = token.stringify(1000);
-    const contract = token.getContract()
+    const amount = token.fromHumanToTokenValue("1000");
+    const contract = token.getContract();
 
-    const permitData = await sdk.permit.sign(
-      account,
-      await sdk.tokens.permitERC2612(
-        token,
-        owner,
-        spender,
-        amount,
-        undefined,
-        undefined,
-      )
-    );
+    const permitData = await sdk.permit.sign(account, await sdk.tokens.permitERC2612(token, owner, spender, amount.toBlockchain(), undefined, undefined));
 
     await contract.permit(
       account,
@@ -143,10 +129,10 @@ describe('Permits', function () {
       permitData.typedData.message.deadline,
       permitData.split.v,
       permitData.split.r,
-      permitData.split.s,
+      permitData.split.s
     );
 
     const newAllowance = (await contract.allowance(owner, spender)).toString();
-    expect(newAllowance).toBe(amount);
-  })
+    expect(newAllowance).toEqual(amount.toBlockchain());
+  });
 });

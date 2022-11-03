@@ -61,12 +61,21 @@ export class TokenValue {
   }
 
   ////// Utility Functions //////
-  toBigNumber() {
+  toBigNumber(): BigNumber {
     return this.value.toBigNumber();
   }
 
-  toBlockchain() {
-    return this.value.toNumber();
+  toBlockchain(): string {
+    return this.value.toBigNumber().toString();
+  }
+  /**
+   * @deprecated
+   * Ambiguous function. This exists only as a safety, otherwise the .toString() 
+   * call would go to Object.toString().
+   * @returns 
+   */
+  toString(): string {
+    return this.toBlockchain();
   }
 
   public toHuman(): string {

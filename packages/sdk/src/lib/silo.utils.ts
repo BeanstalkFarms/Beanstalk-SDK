@@ -91,6 +91,6 @@ export function sortCratesByBDVRatio<T extends DepositCrate<TokenValue>>(crates:
     // FIXME
     const _a = a.bdv.div(a.amount);
     const _b = b.bdv.div(b.amount);
-    return m * _b.sub(_a).toNumber();
+    return m * _b.sub(_a).toBigNumber().toNumber();
   });
 }
