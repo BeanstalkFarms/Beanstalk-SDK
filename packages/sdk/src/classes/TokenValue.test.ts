@@ -1,5 +1,6 @@
 import { expect } from "@jest/globals";
 import { BigNumber } from "ethers";
+import { Token } from "graphql";
 import { TokenValue } from "./TokenValue";
 
 describe("TokenValues", function () {
@@ -91,6 +92,15 @@ describe("TokenValues", function () {
     expect(n1.add(-100).toHuman()).toEqual("0");
     expect(n1.add(n3).toHuman()).toEqual("101.5");
     expect(n1.add(n4).toHuman()).toEqual("101.5");
+
+    expect(n1.add(BigNumber.from(1)).toHuman()).toEqual("100.000001");
+    expect(n1.add(BigNumber.from(1)).toBlockchain()).toEqual("100000001");
+
+    expect(n1.add(BigNumber.from(1000000)).toHuman()).toEqual("101");
+    expect(n1.add(BigNumber.from(1000000)).toBlockchain()).toEqual("101000000");
+    
+    expect(n1.add(TokenValue.fromHuman(1, 0)).toHuman()).toEqual("101");
+    expect(n1.add(TokenValue.fromHuman(1, 0)).toBlockchain()).toEqual("101000000");
   });
 
   it("sub", () => {
@@ -101,6 +111,12 @@ describe("TokenValues", function () {
     expect(n1.sub(-1.33).toHuman()).toEqual("101.33");
     expect(n1.sub(n3).toHuman()).toEqual("98.5");
     expect(n1.sub(n4).toHuman()).toEqual("98.5");
+
+    expect(n1.sub(BigNumber.from(1)).toHuman()).toEqual("99.999999");
+    expect(n1.sub(BigNumber.from(1)).toBlockchain()).toEqual("99999999");
+
+    expect(n1.sub(BigNumber.from(1000000)).toHuman()).toEqual("99");
+    expect(n1.sub(TokenValue.fromHuman(1, 0)).toHuman()).toEqual("99");
   });
 
   it("mul", () => {
@@ -110,6 +126,15 @@ describe("TokenValues", function () {
     expect(res.toBlockchain()).toEqual("15000000000");
     expect(n1.mul(0.25).toHuman()).toEqual("25");
     expect(n1.mul(0.25).toBlockchain()).toEqual("25000000000000");
+    
+    // TODO: This is unintuitive
+    expect(n1.mul(3).toHuman()).toEqual("300")
+    expect(n1.mul(BigNumber.from(3)).toHuman()).toEqual("0.0003")  // 100 * .000001
+    expect(n1.mul(BigNumber.from(3000000)).toHuman()).toEqual("300")  // 100 * 3
+
+    expect(n1.mul(BigNumber.from(2)).toBlockchain()).toEqual("200000000");
+    expect(n1.mul(BigNumber.from(2000000)).toHuman()).toEqual("200");
+    expect(n1.mul(TokenValue.fromHuman(2, 0)).toHuman()).toEqual("200");
   });
 
   it("div", () => {
