@@ -1,5 +1,5 @@
 import { BeanstalkSDK } from "@beanstalk/sdk";
-import { BeanNumber } from "@beanstalk/sdk/BeanNumber";
+import { DecimalBigNumber } from "@beanstalk/sdk/DecimalBigNumber";
 import { ethers } from "ethers";
 
 const account = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8";
@@ -10,7 +10,7 @@ const provider = new ethers.providers.WebSocketProvider(providerUrl);
 const signer = new ethers.Wallet(privateKey, provider);
 
 main()
-  .catch(e => {
+  .catch((e) => {
     console.log("FAILED:");
     console.log(e);
   })
@@ -20,10 +20,10 @@ async function main() {
   const sdk = new BeanstalkSDK({ signer, DEBUG: false });
 
   await run(sdk);
-
 }
 
 async function run(sdk: BeanstalkSDK) {
-  let n = BeanNumber.from(await sdk.tokens.ETH.getBalance(account))
-  console.log(`${n.toHuman(18)} ETH`);
+  // let n = BeanNumber.from(await sdk.tokens.ETH.getBalance(account));
+  // console.log(`${n.toHuman(18)} ETH`);
+  console.log(await sdk.tokens.ETH.getBalance(account));
 }
