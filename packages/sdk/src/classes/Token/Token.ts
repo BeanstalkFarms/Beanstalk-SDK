@@ -136,40 +136,40 @@ export abstract class Token {
   }
 
   /**
-   * Converts from a human amount to a block chain value stored in BigNumber
+   * Converts from a human amount to a TokenAmount with this token's decimals set
    *
-   * Ex: BEAN.fromHuman("3.14") => BigNumber holding value "3140000"
-   *
-   * @param amount human readable amout, ex: "3.14" ether
-   * @returns BigNumber
-   */
-  fromHuman(amount: string): BigNumber {
-    return TokenValue.fromHuman(amount, this.decimals).toBigNumber();
-  }
-
-  /**
-   * Converts from a BigNumber amount to a TokenValue
-   *
-   * Ex: BEAN.fromBigNumberToTokenValue(BigNumber.from("3140000")) => TokenValue holding value "3140000" and decimals "6"
+   * Ex: BEAN.fromHuman("3.14") => TokenValue holding value "3140000" and 6 decimals
    *
    * @param amount human readable amout, ex: "3.14" ether
    * @returns TokenValue
    */
-  fromBigNumberToTokenValue(amount: BigNumberish): TokenValue {
-    return TokenValue.fromBlockchain(BigNumber.from(amount), this.decimals);
-  }
-
-  /**
-   * Converts from a human amount to a TokenValue
-   *
-   * Ex: BEAN.fromHumanToTokenValue("3.14") => TokenValue holding value "3140000" and decimals "6"
-   *
-   * @param amount human readable amout, ex: "3.14" ether
-   * @returns TokenValue
-   */
-  fromHumanToTokenValue(amount: string): TokenValue {
+  amount(amount: string | number | BigNumber): TokenValue {
     return TokenValue.fromHuman(amount, this.decimals);
   }
+
+  // /**
+  //  * Converts from a BigNumber amount to a TokenValue
+  //  *
+  //  * Ex: BEAN.fromBigNumberToTokenValue(BigNumber.from("3140000")) => TokenValue holding value "3140000" and decimals "6"
+  //  *
+  //  * @param amount human readable amout, ex: "3.14" ether
+  //  * @returns TokenValue
+  //  */
+  // fromBigNumberToTokenValue(amount: BigNumberish): TokenValue {
+  //   return TokenValue.fromBlockchain(BigNumber.from(amount), this.decimals);
+  // }
+
+  // /**
+  //  * Converts from a human amount to a TokenValue
+  //  *
+  //  * Ex: BEAN.fromHumanToTokenValue("3.14") => TokenValue holding value "3140000" and decimals "6"
+  //  *
+  //  * @param amount human readable amout, ex: "3.14" ether
+  //  * @returns TokenValue
+  //  */
+  // fromHumanToTokenValue(amount: string): TokenValue {
+  //   return TokenValue.fromHuman(amount, this.decimals);
+  // }
 
   /**
    * Converts from a blockchain value to a human readable form

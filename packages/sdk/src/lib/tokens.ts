@@ -265,9 +265,9 @@ export class Tokens {
     }
   ): TokenBalance {
     return {
-      internal: token.fromBigNumberToTokenValue(result.internalBalance),
-      external: token.fromBigNumberToTokenValue(result.externalBalance),
-      total: token.fromBigNumberToTokenValue(result.totalBalance),
+      internal: token.amount(result.internalBalance),
+      external: token.amount(result.externalBalance),
+      total: token.amount(result.totalBalance),
     };
   }
 

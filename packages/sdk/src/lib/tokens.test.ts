@@ -1,5 +1,5 @@
 import { Contract } from "ethers";
-import { setupConnection } from "../../test/provider";
+import { setupConnection } from "../utils.tests/provider";
 import { ERC20Token } from "../classes/Token";
 
 import { BeanstalkSDK } from "./BeanstalkSDK";
@@ -116,7 +116,7 @@ describe("Permits", function () {
     const token = sdk.tokens.BEAN;
     const owner = account;
     const spender = sdk.contracts.beanstalk.address;
-    const amount = token.fromHumanToTokenValue("1000");
+    const amount = token.amount("1000");
     const contract = token.getContract();
 
     const permitData = await sdk.permit.sign(account, await sdk.tokens.permitERC2612(owner, spender, token, amount.toBlockchain(), undefined, undefined));

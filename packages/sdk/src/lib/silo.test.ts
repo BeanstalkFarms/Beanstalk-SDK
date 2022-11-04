@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { DataSource } from "../types";
-import { setupConnection } from "../../test/provider";
+import { setupConnection } from "../utils.tests/provider";
 
 import { BeanstalkSDK } from "./BeanstalkSDK";
 import { Token } from "../classes/Token";
@@ -124,7 +124,7 @@ describe("Silo Deposit Permits", function () {
     const owner = account;
     const spender = sdk.contracts.root.address;
     const token = sdk.tokens.BEAN.address;
-    const amount = sdk.tokens.BEAN.fromHuman("100").toString();
+    const amount = sdk.tokens.BEAN.amount("100").toString();
 
     // const startAllowance = await sdk.contracts.beanstalk.depositAllowance(owner, spender, token);
     // const depositPermitNonces = await sdk.contracts.beanstalk.depositPermitNonces(owner);

@@ -5,7 +5,6 @@
   ],
   "exclude": [
     "./src/generated/**/*",
-    "**/*.test.ts",
     "dist"
   ],
   "compilerOptions": {
@@ -16,7 +15,7 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "@sdk/*": [
+      "src/*": [
         "src/*"
       ]
     }

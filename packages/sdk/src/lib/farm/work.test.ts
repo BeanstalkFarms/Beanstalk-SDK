@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { setupConnection } from "../../../test/provider";
+import { setupConnection } from "../../utils.tests/provider";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 
 let sdk : BeanstalkSDK;
