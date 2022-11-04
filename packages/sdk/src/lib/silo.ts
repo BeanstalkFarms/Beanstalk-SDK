@@ -329,8 +329,8 @@ export class Silo {
     }
   ) {
     const season = BigNumber.from(rawCrate.season);
-    const amount = token.fromHumanToTokenValue(rawCrate.amount);
-    const bdv = Silo.sdk.tokens.BEAN.fromHumanToTokenValue(rawCrate.bdv);
+    const amount = token.amount(rawCrate.amount);
+    const bdv = Silo.sdk.tokens.BEAN.amount(rawCrate.bdv);
 
     const crate: DepositCrate<TokenValue> = {
       season: season,
@@ -362,7 +362,7 @@ export class Silo {
   ) {
     const season = BigNumber.from(rawCrate.season);
     // const amount = toTokenUnitsBN(rawCrate.amount, token.decimals);
-    const amount = token.fromHumanToTokenValue(rawCrate.amount);
+    const amount = token.amount(rawCrate.amount);
 
     const crate: Crate<TokenValue> = {
       season: season,

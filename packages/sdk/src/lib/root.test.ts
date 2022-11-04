@@ -1,4 +1,4 @@
-import { setupConnection } from '../../test/provider'
+import { setupConnection } from '../utils.tests/provider'
 import { BeanstalkSDK } from './BeanstalkSDK';
 
 /// Setup

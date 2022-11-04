@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { setupConnection } from "../../../test/provider";
+import { setupConnection } from "../../utils.tests/provider";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import { Farm } from "../farm";
 import { FarmFromMode } from "./types";
@@ -25,7 +25,7 @@ describe('Facet: Pipeline', () => {
   describe('loadPipeline', () => {
     it('loads without permit', async () => {
       // Setup
-      const amount = sdk.tokens.BEAN.fromHumanToTokenValue("1000").toBlockchain();
+      const amount = sdk.tokens.BEAN.amount("1000").toBlockchain();
       farm.add(
         sdk.farm.presets.loadPipeline(
           sdk.tokens.BEAN,
@@ -46,7 +46,7 @@ describe('Facet: Pipeline', () => {
 
     it('loads with permit, single token', async () => {
       // Setup
-      const amount = sdk.tokens.BEAN.fromHumanToTokenValue("1000").toBlockchain();
+      const amount = sdk.tokens.BEAN.amount("1000").toBlockchain();
       const permit = await sdk.permit.sign(
         account,
         sdk.tokens.permitERC2612(

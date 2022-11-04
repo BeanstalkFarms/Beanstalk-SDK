@@ -11,7 +11,7 @@ import {
 } from "../../constants/generated/Beanstalk/Beanstalk";
 import EventProcessor, { EventProcessingParameters } from "./processor";
 import { BeanstalkSDK } from "../BeanstalkSDK";
-import { getProvider } from "../../../test/provider";
+import { getProvider } from "../../utils.tests/provider";
 
 // ------------------------------------------
 

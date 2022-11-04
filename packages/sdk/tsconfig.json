@@ -5,7 +5,6 @@
   ],
   "exclude": [
     "./src/generated/**/*",
-    "**/*.test.ts",
     "dist"
   ],
   "compilerOptions": {
