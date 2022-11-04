@@ -2835,7 +2835,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/prettier@npm:^2.1.1, @types/prettier@npm:^2.1.5":
+"@types/prettier@npm:^2, @types/prettier@npm:^2.1.1, @types/prettier@npm:^2.1.5":
   version: 2.7.1
   resolution: "@types/prettier@npm:2.7.1"
   checksum: 5e3f58e229d6c73b5f5cae2e8f96c1c4a5b5805f83459e17a045ba8e96152b1d38e86b63e3172fb159dac923388699660862b75b2d37e54220805f0e691e26f1
@@ -5130,6 +5130,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"husky@npm:8.0.1":
+  version: 8.0.1
+  resolution: "husky@npm:8.0.1"
+  bin:
+    husky: lib/bin.js
+  checksum: 943a73a13d0201318fd30e83d299bb81d866bd245b69e6277804c3b462638dc1921694cb94c2b8c920a4a187060f7d6058d3365152865406352e934c5fff70dc
+  languageName: node
+  linkType: hard
+
 "iconv-lite@npm:^0.4.24":
   version: 0.4.24
   resolution: "iconv-lite@npm:0.4.24"
@@ -7077,7 +7086,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:^2.3.1":
+"prettier@npm:2.7.1, prettier@npm:^2.3.1":
   version: 2.7.1
   resolution: "prettier@npm:2.7.1"
   bin:
@@ -7414,7 +7423,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "root@workspace:."
   dependencies:
+    "@types/prettier": ^2
+    husky: 8.0.1
     jest: 29.2.2
+    prettier: 2.7.1
     ts-jest: 29.0.3
     ts-node: 10.9.1
     typescript: 4.8.4
