@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { DataSource } from "../types";
-import { getProvider, setupConnection } from "../../test/provider";
+import { setupConnection } from "../../test/provider";
 
 import { BeanstalkSDK } from "./BeanstalkSDK";
 import { Token } from "../classes/Token";

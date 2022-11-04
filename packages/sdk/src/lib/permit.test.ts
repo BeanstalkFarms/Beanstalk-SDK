@@ -1,9 +1,5 @@
-import { expect } from 'chai';
 import { BeanstalkSDK } from './BeanstalkSDK';
 import { setupConnection } from '../../test/provider';
-import { ERC20Permit__factory } from '../constants/generated/factories/ERC20Permit__factory';
-
-const spender = '0x0000000000000000000000000000000000000002';
 
 let sdk : BeanstalkSDK;
 let account : string;

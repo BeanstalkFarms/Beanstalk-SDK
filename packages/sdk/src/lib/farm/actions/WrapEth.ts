@@ -14,7 +14,7 @@ export class WrapEth extends BaseAction implements Action {
       name: this.name,
       amountOut: _amountInStep, // amountInStep should be an amount of ETH.
       value: _amountInStep, // need to use this amount in the txn.
-      encode: (_: ethers.BigNumber) =>
+      encode: () =>
         WrapEth.sdk.contracts.beanstalk.interface.encodeFunctionData('wrapEth', [
           _amountInStep, // ignore minAmountOut since there is no slippage
           this.toMode,

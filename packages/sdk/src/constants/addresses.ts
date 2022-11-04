@@ -8,7 +8,7 @@ export const addresses = {
   BEANSTALK_PRICE: Address.make('0xA57289161FF18D67A68841922264B317170b0b81'),
   BEANSTALK_FERTILIZER: Address.make('0x402c84De2Ce49aF88f5e2eF3710ff89bFED36cB6'),
   BARNRAISE_CUSTODIAN: Address.make('0xa9bA2C40b263843C04d344727b954A545c81D043'),
-  
+  PIPELINE: Address.make('0xc5a5C42992dECbae36851359345FE25997F5C42d'),
 
   // ----------------------------------------
   // BeaNFT Contracts
@@ -20,7 +20,6 @@ export const addresses = {
   // Bean & Unripe Bean Tokens
   // ----------------------------------------
   BEAN: Address.make('0xBEA0000029AD1c77D3d5D23Ba2D8893dB9d1Efab'),
-
   ROOT: Address.make('0x3d5965EB520E53CC1A6AEe3A44E5c1De406E028F'),
 
   // --------------------------------------------------

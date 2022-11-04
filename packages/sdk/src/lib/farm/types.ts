@@ -13,6 +13,12 @@ export enum FarmToMode {
   INTERNAL = '1',
 }
 
+export type Farmable = (
+  Action           // single action
+  | ActionFunction // single action function
+  | Farmable[]     // array of actions or action functions (mixed)
+)
+
 export class BaseAction {
   static sdk: BeanstalkSDK;
 
@@ -25,7 +31,9 @@ export class BaseAction {
   }
 }
 
-export type ActionFunction = (amountIn: BigNumber, forward?: boolean) => Promise<string | ActionResult>;
+export type ActionFunction = (amountIn: BigNumber, forward?: boolean) => 
+  (string | ActionResult)             // synchronous
+  | Promise<string | ActionResult>;   // asynchronous
 
 export interface Action extends BaseAction {
   name: string;
@@ -37,6 +45,6 @@ export type ActionResult = {
   amountOut: ethers.BigNumber;
   value?: ethers.BigNumber;
   data?: any;
-  encode: (minAmountOut: ethers.BigNumber) => string;
+  encode: (minAmountOut?: ethers.BigNumber) => string;
   decode: (data: string) => Record<string, any>;
 };

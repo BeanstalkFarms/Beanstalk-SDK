@@ -46,8 +46,9 @@ export class ExchangeUnderlying extends BaseAction implements Action {
     return {
       name: this.name,
       amountOut,
-      encode: (minAmountOut: ethers.BigNumber) =>
-        ExchangeUnderlying.sdk.contracts.beanstalk.interface.encodeFunctionData('exchangeUnderlying', [
+      encode: (minAmountOut?: ethers.BigNumber) => {
+        if (!minAmountOut) throw new Error('ExchangeUnderlying: Missing minAmountOut');
+        return ExchangeUnderlying.sdk.contracts.beanstalk.interface.encodeFunctionData('exchangeUnderlying', [
           this.pool,
           tokenIn.address,
           tokenOut.address,
@@ -55,7 +56,8 @@ export class ExchangeUnderlying extends BaseAction implements Action {
           minAmountOut,
           this.fromMode,
           this.toMode,
-        ]),
+        ]);
+      },
       decode: (data: string) => ExchangeUnderlying.sdk.contracts.beanstalk.interface.decodeFunctionData('exchangeUnderlying', data),
       data: {
         pool: this.pool,
