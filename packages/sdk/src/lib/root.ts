@@ -1,19 +1,10 @@
 import { Overrides } from "ethers";
-import { Token } from "../classes/Token";
-import { getSdk } from "../constants/generated-gql/graphql";
 import { DepositTransferStruct } from "../constants/generated/Beanstalk/Root";
-import { assert } from "../utils";
 import { BeanstalkSDK } from "./BeanstalkSDK";
 import { FarmToMode } from "./farm/types";
-import { EIP712Domain, EIP712TypedData, SignedPermit } from "./permit";
+import { SignedPermit } from "./permit";
 import { DepositTokenPermitMessage, DepositTokensPermitMessage } from "./silo.utils";
 
-type LengthOfArray<T extends readonly any[]> = number extends T["length"] ? never : T["length"]
-
-type PermitFromLength<Length extends number> = 
-  (Length extends 1
-    ? EIP712TypedData<DepositTokenPermitMessage, EIP712Domain>
-    : EIP712TypedData<DepositTokensPermitMessage, EIP712Domain>)
 export class Root {
   static sdk : BeanstalkSDK;
 
@@ -115,5 +106,4 @@ export class Root {
   //     amounts,
   //   );
   // }
-
 }

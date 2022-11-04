@@ -56,8 +56,9 @@ export class Exchange extends BaseAction implements Action {
     return {
       name: this.name,
       amountOut,
-      encode: (minAmountOut: ethers.BigNumber) =>
-        Exchange.sdk.contracts.beanstalk.interface.encodeFunctionData('exchange', [
+      encode: (minAmountOut?: ethers.BigNumber) => {
+        if (!minAmountOut) throw new Error('Exhange: missing minAmountOut');
+        return Exchange.sdk.contracts.beanstalk.interface.encodeFunctionData('exchange', [
           this.pool,
           this.registry,
           tokenIn.address,
@@ -66,7 +67,8 @@ export class Exchange extends BaseAction implements Action {
           minAmountOut,
           this.fromMode,
           this.toMode,
-        ]),
+        ]);
+      },
       decode: (data: string) => Exchange.sdk.contracts.beanstalk.interface.decodeFunctionData('exchange', data),
       data: {
         pool: this.pool,

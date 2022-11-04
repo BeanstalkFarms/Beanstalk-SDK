@@ -365,9 +365,9 @@ export class Tokens {
    * @param _deadline
    */
   public async permitERC2612(
-    token: ERC20Token,
     owner: string, //
     spender: string,
+    token: ERC20Token,
     value: string | number, // FIXME: included default on eth-permit, see @ref
     _nonce?: number, //
     _deadline?: number // FIXME: is MAX_UINT256 an appropriate default?

@@ -47,8 +47,9 @@ export class RemoveLiquidityOneToken extends BaseAction implements Action {
     return {
       name: this.name,
       amountOut,
-      encode: (minAmountOut: ethers.BigNumber) =>
-        RemoveLiquidityOneToken.sdk.contracts.beanstalk.interface.encodeFunctionData('removeLiquidityOneToken', [
+      encode: (minAmountOut?: ethers.BigNumber) => {
+        if (!minAmountOut) throw new Error('RemoveLiquidityOneToken: missing minAmountOut');
+        return RemoveLiquidityOneToken.sdk.contracts.beanstalk.interface.encodeFunctionData('removeLiquidityOneToken', [
           this._pool,
           this._registry,
           this._tokenOut,
@@ -56,7 +57,8 @@ export class RemoveLiquidityOneToken extends BaseAction implements Action {
           minAmountOut,
           this._fromMode,
           this._toMode,
-        ]),
+        ]);
+      },
       decode: (data: string) => RemoveLiquidityOneToken.sdk.contracts.beanstalk.interface.decodeFunctionData('removeLiquidityOneToken', data),
       data: {},
     };

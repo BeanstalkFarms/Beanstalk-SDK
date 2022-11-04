@@ -104,12 +104,15 @@ export class Permit {
     Message extends EIP712PermitMessage
   >(
     owner: string,
-    typedData: EIP712TypedData<Message>
+    _typedData: EIP712TypedData<Message> | Promise<EIP712TypedData<Message>>
   ) : Promise<
     SignedPermit<Message>
   > {
-    const signerAddress = await Permit.sdk.getAccount();
-
+    const [typedData, signerAddress] = await Promise.all([
+      _typedData,
+      Permit.sdk.getAccount()
+    ]);
+    
     if (signerAddress.toLowerCase() !== owner.toLowerCase()) {
       throw new Error("Signer address does not match requested signing address");
     }

@@ -23,7 +23,7 @@ export class TransferToken extends BaseAction implements Action {
     return {
       name: this.name,
       amountOut: _amountInStep, // transfer exact amount
-      encode: (_: ethers.BigNumber) =>
+      encode: () =>
         TransferToken.sdk.contracts.beanstalk.interface.encodeFunctionData('transferToken', [
           this._tokenIn, //
           this._recipient, //

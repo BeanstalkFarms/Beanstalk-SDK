@@ -1,7 +1,6 @@
 import { ethers } from "ethers";
 import { setupConnection } from "../../../test/provider";
 import { BeanstalkSDK } from "../BeanstalkSDK";
-import { Farm } from "../farm";
 
 let sdk : BeanstalkSDK;
 let account : string;
@@ -44,7 +43,5 @@ describe('Workflow', () => {
       const farm = sdk.farm.create();
       expect(() => farm.add({} as unknown as () => string)).toThrow('Unknown action type')
     })
-
-    // it('copies')
   });
 })

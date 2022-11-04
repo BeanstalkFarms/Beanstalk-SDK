@@ -25,16 +25,17 @@ describe('Facet: Pipeline', () => {
   describe('loadPipeline', () => {
     it('loads without permit', async () => {
       // Setup
+      const amount = sdk.tokens.BEAN.fromHumanToTokenValue("1000").toBlockchain();
       farm.add(
         sdk.farm.presets.loadPipeline(
           sdk.tokens.BEAN,
-          sdk.tokens.BEAN.stringify(1000),
+          amount,
           FarmFromMode.EXTERNAL,
         )
       );
 
       // Estimate
-      await farm.estimate();
+      await farm.estimate(ethers.BigNumber.from(0));
       const encoded = farm.stepResults[0].encode();
 
       expect(farm.stepResults.length).toBe(1);
@@ -45,27 +46,26 @@ describe('Facet: Pipeline', () => {
 
     it('loads with permit, single token', async () => {
       // Setup
+      const amount = sdk.tokens.BEAN.fromHumanToTokenValue("1000").toBlockchain();
       const permit = await sdk.permit.sign(
         account,
         sdk.tokens.permitERC2612(
           account, // owner
           sdk.contracts.pipeline.address, // spender
           sdk.tokens.BEAN, // token
-          sdk.tokens.BEAN.stringify(1000), // amount
+          amount, // amount
         )
       );
       farm.add(
         sdk.farm.presets.loadPipeline(
           sdk.tokens.BEAN,
-          sdk.tokens.BEAN.stringify(1000),
+          amount,
           FarmFromMode.EXTERNAL,
           permit
         )
       );
 
       // Estimate
-      
-
       // todo: finish expectations here
     });
     // todo: multiple tokens

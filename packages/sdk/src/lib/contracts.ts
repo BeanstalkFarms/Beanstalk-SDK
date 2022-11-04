@@ -22,6 +22,8 @@ import {
   CurvePlainPool__factory,
   Root,
   Root__factory,
+  Pipeline,
+  Pipeline__factory,
 
 } from '../constants/generated';
 import { BaseContract } from 'ethers';
@@ -47,6 +49,7 @@ export class Contracts {
 
   public readonly beanstalk: Beanstalk;
   public readonly root: Root;
+  public readonly pipeline: Pipeline;
   public readonly fertilizer: import("../constants/generated/index").BeanstalkFertilizer;
 
   public readonly curve: CurveContracts;
@@ -58,8 +61,10 @@ export class Contracts {
 
     // Addressses
     const beanstalkAddress = sdk.addresses.BEANSTALK.get(sdk.chainId);
+    const pipelineAddress = sdk.addresses.PIPELINE.get(sdk.chainId);
     const rootAddress = sdk.addresses.ROOT.get(sdk.chainId);
     const beanstalkFertilizerAddress = sdk.addresses.BEANSTALK_FERTILIZER.get(sdk.chainId);
+
     const pool3Address = sdk.addresses.POOL3.get(sdk.chainId);
     const tricrypto2Address = sdk.addresses.TRICRYPTO2.get(sdk.chainId);
     const beancrv3Address = sdk.addresses.BEAN_CRV3.get(sdk.chainId);
@@ -70,6 +75,7 @@ export class Contracts {
 
     // Instances
     this.beanstalk = Beanstalk__factory.connect(beanstalkAddress, sdk.providerOrSigner);
+    this.pipeline = Pipeline__factory.connect(pipelineAddress, sdk.providerOrSigner);
     this.root = Root__factory.connect(rootAddress, sdk.providerOrSigner);
     this.fertilizer = BeanstalkFertilizer__factory.connect(beanstalkFertilizerAddress, sdk.providerOrSigner);
 

@@ -81,15 +81,17 @@ export class AddLiquidity extends BaseAction implements Action {
     return {
       name: this.name,
       amountOut,
-      encode: (minAmountOut: ethers.BigNumber) =>
-        AddLiquidity.sdk.contracts.beanstalk.interface.encodeFunctionData('addLiquidity', [
+      encode: (minAmountOut?: ethers.BigNumber) => {
+        if (!minAmountOut) throw new Error('AddLiquidity: missing minAmountOut');
+        return AddLiquidity.sdk.contracts.beanstalk.interface.encodeFunctionData('addLiquidity', [
           this._pool,
           this._registry,
           amountInStep as any[], // could be 2 or 3 elems
           minAmountOut,
           this._fromMode,
           this._toMode,
-        ]),
+        ]);
+      },
       decode: (data: string) => AddLiquidity.sdk.contracts.beanstalk.interface.decodeFunctionData('addLiquidity', data),
       data: {
         pool: this._pool,

@@ -14,6 +14,7 @@ import { Sdk as Queries, getSdk as getQueries } from '../constants/generated-gql
 import { Farm } from './farm';
 import { Permit } from './permit';
 import { Root } from './root';
+import { Depot } from './depot/depot';
 
 export class BeanstalkSDK {
   public DEBUG: boolean;
@@ -40,6 +41,7 @@ export class BeanstalkSDK {
   public readonly sun: Sun;
   public readonly permit: Permit;
   public readonly root: Root;
+  public readonly depot: Depot;
 
   constructor(config?: BeanstalkConfig) {
     this.handleConfig(config);
@@ -56,16 +58,18 @@ export class BeanstalkSDK {
     this.graphql = new GraphQLClient(config?.subgraphUrl || 'https://graph.node.bean.money/subgraphs/name/beanstalk');
     this.queries = getQueries(this.graphql);
 
-    // Facets
-    // this.swap = new Swap(this);
-    this.silo = new Silo(this);
-    this.events = new EventManager(this);
-    this.sun = new Sun(this);
-    this.permit = new Permit(this);
-    this.root = new Root(this);
-
     // Internal
+    this.events = new EventManager(this);
+    this.permit = new Permit(this);
+
+    // Facets
+    this.silo = new Silo(this);
+    this.sun = new Sun(this);
+    this.depot = new Depot(this);
     this.farm = new Farm(this);
+    
+    // Ecosystem
+    this.root = new Root(this);
   }
 
   handleConfig(config: BeanstalkConfig = {}) {

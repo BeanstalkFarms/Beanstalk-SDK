@@ -1,12 +1,13 @@
 import { BigNumber, ContractTransaction, ethers } from 'ethers';
 import { BeanstalkSDK } from '../BeanstalkSDK';
-import { Action, ActionFunction, ActionResult, BaseAction } from './types';
+import { Action, ActionFunction, ActionResult, BaseAction, Farmable } from './types';
 
 export class Work {
   static SLIPPAGE_PRECISION = 10 ** 6;
   static sdk: BeanstalkSDK;
-  private steps: (Action | ActionFunction)[] = [];
-  private stepResults: ActionResult[] = [];
+
+  public steps: (Action | ActionFunction)[] = [];
+  public stepResults: ActionResult[] = [];
   private value: ethers.BigNumber = ethers.BigNumber.from(0);
 
   constructor(sdk: BeanstalkSDK) {
@@ -26,6 +27,30 @@ export class Work {
 
   //////////////////////// Steps ////////////////////////
 
+  /**
+   * Recursive implementation of `addStep` and `addSteps` that handles
+   * arbitrarily nested elements.
+   * 
+   * @fixme should all Actions just be functions that are bound to `this`?
+   */
+  add(input: Farmable) {
+    if (input instanceof BaseAction) {
+      input.setSDK(Work.sdk);
+      this.steps.push(input);
+    } else if (input instanceof Function) {
+      this.steps.push(input);
+    } else if (Array.isArray(input)) {
+      for (const elem of input) {
+        this.add(elem); // recurse
+      }
+    } else {
+      throw new Error('Unknown action type');
+    }
+  }
+
+  /**
+   * @fixme remove in favor of `.add()`?
+   */
   addStep(action: Action | ActionFunction) {
     if (action instanceof BaseAction) {
       console.log(`action`);
@@ -39,6 +64,9 @@ export class Work {
     }
   }
 
+  /**
+   * @fixme remove in favor of `.add()`?
+   */
   addSteps(actions: (Action | Action[] | ActionFunction)[]) {
     for (const action of actions) {
       Array.isArray(action) ? this.addSteps(action) : this.addStep(action);
@@ -59,17 +87,24 @@ export class Work {
   private async runAction(action: Action | ActionFunction, input: ethers.BigNumber, forward: boolean) {
     let result;
     try {
+      // Action Instance
       if (action instanceof BaseAction) {
         result = await action.run(input, forward);
         if (result.value) this.value = this.value.add(result.value);
         this.stepResults.push(result);
 
         return result.amountOut;
-      } else if (action instanceof Function) {
+      } 
+      
+      // Action Function
+      else if (action instanceof Function) {
         const result = await action.call(this, input, forward);
+
+        // If an action function returns a string, we assume it's
+        // the encoded calldata to include in the Farm function
         if (typeof result === 'string') {
           const actionResult: ActionResult = {
-            name: 'ActionFunction',
+            name: action.name || '<unknown>',
             amountOut: BigNumber.from('0'),
             encode: () => result,
             decode: data => ({}),
@@ -77,7 +112,10 @@ export class Work {
           this.stepResults.push(actionResult);
 
           return actionResult.amountOut;
-        } else {
+        }
+
+        // Otherwise, the function should be returning an ActionResult
+        else {
           if (result.value) this.value = this.value.add(result.value);
           this.stepResults.push(result);
 
@@ -109,7 +147,18 @@ export class Work {
     this.stepResults = [];
 
     for (let i = 0; i < this.steps.length; i += 1) {
-      nextAmount = await this.runAction(this.steps[i], nextAmount, true);
+      const action = this.steps[i];
+      try {
+        nextAmount = await this.runAction(action, nextAmount, true);
+      } catch(e) {
+        console.log(`[farm/estimate] Failed to estimate action ${i} "${action.name || 'unknown'}"`, {
+          type: typeof action,
+          input: nextAmount.toString(),
+          forward: true
+        });
+        console.error(e);
+        throw e;
+      }
     }
 
     return nextAmount;
@@ -184,6 +233,14 @@ export class Work {
     await this.estimate(amountIn);
     const data = this.encodeStepsWithSlippage(slippage / 100);
     const txn = await Work.sdk.contracts.beanstalk.callStatic.farm(data, { value: this.value });
+
+    return txn;
+  }
+
+  async estimateGas(amountIn: ethers.BigNumber, slippage: number): Promise<any> {
+    await this.estimate(amountIn);
+    const data = this.encodeStepsWithSlippage(slippage / 100);
+    const txn = Work.sdk.contracts.beanstalk.estimateGas.farm(data, { value: this.value });
 
     return txn;
   }

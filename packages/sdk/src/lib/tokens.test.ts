@@ -119,7 +119,7 @@ describe("Permits", function () {
     const amount = token.fromHumanToTokenValue("1000");
     const contract = token.getContract();
 
-    const permitData = await sdk.permit.sign(account, await sdk.tokens.permitERC2612(token, owner, spender, amount.toBlockchain(), undefined, undefined));
+    const permitData = await sdk.permit.sign(account, await sdk.tokens.permitERC2612(owner, spender, token, amount.toBlockchain(), undefined, undefined));
 
     await contract.permit(
       account,
