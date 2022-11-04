@@ -5,16 +5,15 @@ import { enumFromValue } from '../utils';
 import { addresses, ChainId } from '../constants';
 import { Tokens } from './tokens';
 import { Contracts } from './contracts';
-// import { Swap } from './swap';
 
 import { EventManager } from './events/EventManager';
 import { Silo } from './silo';
 import { Sun } from './sun';
-import { Sdk as Queries, getSdk as getQueries } from '../constants/generated-gql/graphql';
 import { Farm } from './farm';
 import { Permit } from './permit';
 import { Root } from './root';
 import { Depot } from './depot/depot';
+import { Sdk as Queries, getSdk as getQueries } from '../constants/generated-gql/graphql';
 
 export class BeanstalkSDK {
   public DEBUG: boolean;

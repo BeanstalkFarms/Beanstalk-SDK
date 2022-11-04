@@ -1,4 +1,4 @@
-import { Token } from '@sdk/classes/Token';
+import { ERC20Token } from '../../classes/Token';
 import { BeanstalkSDK } from '../BeanstalkSDK';
 import { Farmable, FarmFromMode, FarmToMode } from '../farm/types';
 import { EIP2612PermitMessage, SignedPermit } from '../permit';
@@ -22,7 +22,7 @@ export class LibraryPresets {
    * Load the Pipeline in preparation for a set Pipe actions.
    */
    public loadPipeline(
-    _token:   Token,
+    _token:   ERC20Token,
     _amount:  string, // ??
     _from:    FarmFromMode,
     _permit?: SignedPermit<EIP2612PermitMessage>,
