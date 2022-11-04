@@ -256,7 +256,13 @@ export class Tokens {
     return [value, value.address];
   }
 
-  private balanceStructToTokenBalance(
+  /**
+   * 
+   * @param token 
+   * @param result 
+   * @returns 
+   */
+  private makeTokenBalance(
     token:  Token,
     result: {
       internalBalance: BigNumber;
@@ -283,7 +289,7 @@ export class Tokens {
     // Here we use the native getBalance() method and cast to a TokenBalance.
     if (_token === this.ETH) {
       const balance = await this.sdk.provider.getBalance(account);
-      return this.balanceStructToTokenBalance(_token, {
+      return this.makeTokenBalance(_token, {
         internalBalance: ZERO_BN,
         externalBalance: balance,
         totalBalance:    balance,
@@ -295,7 +301,7 @@ export class Tokens {
 
     const balance = await this.sdk.contracts.beanstalk.getAllBalance(account, tokenAddress);
 
-    return this.balanceStructToTokenBalance(token, balance);
+    return this.makeTokenBalance(token, balance);
   }
 
   /**
@@ -321,7 +327,7 @@ export class Tokens {
       // FIXME: use the ERC20 token contract directly to load decimals for parsing?
       if (!token) throw new Error(`Unknown token: ${tokenAddresses}`);
 
-      balances.set(token, this.balanceStructToTokenBalance(token, result));
+      balances.set(token, this.makeTokenBalance(token, result));
     });
 
     return balances;

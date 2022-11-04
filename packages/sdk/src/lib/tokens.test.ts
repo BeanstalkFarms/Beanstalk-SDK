@@ -75,7 +75,7 @@ describe("Utilities", function () {
 
   it("creates a balance struct", () => {
     // @ts-ignore testing private method
-    const balance = sdk.tokens.balanceStructToTokenBalance(sdk.tokens.BEAN, {
+    const balance = sdk.tokens.makeTokenBalance(sdk.tokens.BEAN, {
       internalBalance:  ethers.BigNumber.from(1000_000000),
       externalBalance:  ethers.BigNumber.from(5000_000000),
       totalBalance:     ethers.BigNumber.from(6000_000000),
@@ -83,6 +83,9 @@ describe("Utilities", function () {
     expect(balance.internal.eq(sdk.tokens.BEAN.amount(1000))).toBe(true);
     expect(balance.external.eq(sdk.tokens.BEAN.amount(5000))).toBe(true);
     expect(balance.total.eq(sdk.tokens.BEAN.amount(6000))).toBe(true);
+    expect(balance.internal.toHuman()).toBe('1000');
+    expect(balance.external.toHuman()).toBe('5000');
+    expect(balance.total.toHuman()).toBe('6000');
   })
 });
 
