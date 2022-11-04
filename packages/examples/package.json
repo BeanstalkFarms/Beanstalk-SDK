@@ -1,5 +1,5 @@
 {
-  "name": "sdk-playground",
+  "name": "examples",
   "main": "src/sdk.ts",
   "dependencies": {
     "@beanstalk/sdk": "workspace:*"
