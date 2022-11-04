@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Exit if in CI
+[ -n "$CI" ] || [ -n "$NETLIFY" ] && exit 0
+
+
+
+
+
+if yarn test ; then
+    echo "Tests Passed!"
+    exit 0
+else
+    echo "\n\n----- SDK: Precommit ----\n"
+    echo "Tests Failed. Please fix and try again."
+    exit 1
+fi
