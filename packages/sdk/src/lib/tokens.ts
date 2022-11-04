@@ -264,11 +264,10 @@ export class Tokens {
       totalBalance: BigNumber;
     }
   ): TokenBalance {
-    console.log(token, result);
     return {
-      internal: TokenValue.fromBlockchain(result.internalBalance, token.decimals),
-      external: TokenValue.fromBlockchain(result.externalBalance, token.decimals),
-      total:    TokenValue.fromBlockchain(result.totalBalance,    token.decimals), //token.amount(result.totalBalance),
+      internal: token.fromBlockchain(result.internalBalance),
+      external: token.fromBlockchain(result.externalBalance),
+      total:    token.fromBlockchain(result.totalBalance)
     };
   }
 
