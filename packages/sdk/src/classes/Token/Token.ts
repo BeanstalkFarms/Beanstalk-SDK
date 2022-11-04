@@ -136,6 +136,18 @@ export abstract class Token {
   }
 
   /**
+   * Converts from a blockchain amount to a TokenAmount with this token's decimals set
+   *
+   * Ex: BEAN.fromHuman("3140000") => TokenValue holding value "3140000" and 6 decimals
+   *
+   * @param amount human readable amout, ex: "3.14" ether
+   * @returns TokenValue
+   */
+  fromBlockchain(amount: string | number | BigNumber): TokenValue {
+    return TokenValue.fromBlockchain(amount, this.decimals);
+  }
+
+  /**
    * Converts from a human amount to a TokenAmount with this token's decimals set
    *
    * Ex: BEAN.fromHuman("3.14") => TokenValue holding value "3140000" and 6 decimals
@@ -143,8 +155,22 @@ export abstract class Token {
    * @param amount human readable amout, ex: "3.14" ether
    * @returns TokenValue
    */
-  amount(amount: string | number | BigNumber): TokenValue {
+  fromHuman(amount: string | number): TokenValue {
     return TokenValue.fromHuman(amount, this.decimals);
+  }
+
+  /**
+   * Alias to `.fromHuman()`
+   *
+   * Converts from a human amount to a TokenAmount with this token's decimals set
+   *
+   * Ex: BEAN.fromHuman("3.14") => TokenValue holding value "3140000" and 6 decimals
+   *
+   * @param amount human readable amout, ex: "3.14" ether
+   * @returns TokenValue
+   */
+  amount(amount: string | number): TokenValue {
+    return this.fromHuman(amount);
   }
 
   // /**
