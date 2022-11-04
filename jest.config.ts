@@ -16,8 +16,8 @@ const jestConfig: JestConfigWithTsJest = {
     {
       // @ts-ignore
       preset: "ts-jest",
-      displayName: "sdk-client",
-      rootDir: "packages/sdk-client",
+      displayName: "examples",
+      rootDir: "packages/examples",
       testMatch: ["<rootDir>/**/?(*.)+(spec|test).[jt]s?(x)"],
     },
   ],
