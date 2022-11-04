@@ -1,4 +1,4 @@
-import { Contract } from "ethers";
+import { Contract, ethers } from "ethers";
 import { setupConnection } from "../utils.tests/provider";
 import { ERC20Token } from "../classes/Token";
 
@@ -72,6 +72,18 @@ describe("Utilities", function () {
     expect(dai).toBe(18);
     expect(usdc).toBe(6);
   });
+
+  it("creates a balance struct", () => {
+    // @ts-ignore testing private method
+    const balance = sdk.tokens.balanceStructToTokenBalance(sdk.tokens.BEAN, {
+      internalBalance:  ethers.BigNumber.from(1000_000000),
+      externalBalance:  ethers.BigNumber.from(5000_000000),
+      totalBalance:     ethers.BigNumber.from(6000_000000),
+    });
+    expect(balance.internal.eq(sdk.tokens.BEAN.amount(1000))).toBe(true);
+    expect(balance.external.eq(sdk.tokens.BEAN.amount(5000))).toBe(true);
+    expect(balance.total.eq(sdk.tokens.BEAN.amount(6000))).toBe(true);
+  })
 });
 
 describe("Function: getBalance", function () {

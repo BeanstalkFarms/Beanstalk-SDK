@@ -256,18 +256,19 @@ export class Tokens {
     return [value, value.address];
   }
 
-  _balanceStructToTokenBalance(
-    token: Token,
+  private balanceStructToTokenBalance(
+    token:  Token,
     result: {
       internalBalance: BigNumber;
       externalBalance: BigNumber;
       totalBalance: BigNumber;
     }
   ): TokenBalance {
+    console.log(token, result);
     return {
-      internal: token.amount(result.internalBalance),
-      external: token.amount(result.externalBalance),
-      total: token.amount(result.totalBalance),
+      internal: TokenValue.fromBlockchain(result.internalBalance, token.decimals),
+      external: TokenValue.fromBlockchain(result.externalBalance, token.decimals),
+      total:    TokenValue.fromBlockchain(result.totalBalance,    token.decimals), //token.amount(result.totalBalance),
     };
   }
 
@@ -283,10 +284,10 @@ export class Tokens {
     // Here we use the native getBalance() method and cast to a TokenBalance.
     if (_token === this.ETH) {
       const balance = await this.sdk.provider.getBalance(account);
-      return this._balanceStructToTokenBalance(_token, {
+      return this.balanceStructToTokenBalance(_token, {
         internalBalance: ZERO_BN,
         externalBalance: balance,
-        totalBalance: balance,
+        totalBalance:    balance,
       });
     }
 
@@ -295,7 +296,7 @@ export class Tokens {
 
     const balance = await this.sdk.contracts.beanstalk.getAllBalance(account, tokenAddress);
 
-    return this._balanceStructToTokenBalance(token, balance);
+    return this.balanceStructToTokenBalance(token, balance);
   }
 
   /**
@@ -321,7 +322,7 @@ export class Tokens {
       // FIXME: use the ERC20 token contract directly to load decimals for parsing?
       if (!token) throw new Error(`Unknown token: ${tokenAddresses}`);
 
-      balances.set(token, this._balanceStructToTokenBalance(token, result));
+      balances.set(token, this.balanceStructToTokenBalance(token, result));
     });
 
     return balances;
