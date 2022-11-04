@@ -50,7 +50,7 @@ function makeEntry(inputFile, name) {
       multi({ preserveModules: true }),
       alias({
         resolve: ['.js', '.d.ts'],
-        entries: [{ find: '@sdk', replacement: path.join(__dirname, './dist/js') }],
+        entries: [{ find: 'src', replacement: path.join(__dirname, './dist/js') }],
       }),
     ],
   };

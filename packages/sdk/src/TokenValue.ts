@@ -1,1 +1,1 @@
-export { TokenValue } from "@sdk/classes/TokenValue";
+export { TokenValue } from "src/classes/TokenValue";
