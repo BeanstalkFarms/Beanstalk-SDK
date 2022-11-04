@@ -9,10 +9,11 @@
 
 
 if yarn test ; then
-    echo "Tests Passed!"
+echo "\n\n----- SDK: Precommit ----\n"
+    echo "Tests Passed!\n"
     exit 0
 else
     echo "\n\n----- SDK: Precommit ----\n"
-    echo "Tests Failed. Please fix and try again."
+    echo "Tests Failed. Please fix and try again.\n"
     exit 1
 fi
