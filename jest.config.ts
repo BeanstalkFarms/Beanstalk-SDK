@@ -1,4 +1,3 @@
-import { pathsToModuleNameMapper } from "ts-jest";
 import type { JestConfigWithTsJest } from "ts-jest";
 
 const jestConfig: JestConfigWithTsJest = {
@@ -25,5 +24,3 @@ const jestConfig: JestConfigWithTsJest = {
 };
 
 export default jestConfig;
-// packages/sdk/src/lib/farm/LibraryPresets.ts
-// packages/sdk/src/classes/Token

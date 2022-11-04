@@ -1,4 +1,4 @@
-import { Token } from 'src/classes/Token';
+import { ERC20Token, Token } from 'src/classes/Token';
 import { BeanstalkSDK } from 'src/lib/BeanstalkSDK';
 import { Farmable, FarmFromMode, FarmToMode } from '../farm/types';
 import { EIP2612PermitMessage, SignedPermit } from '../permit';
