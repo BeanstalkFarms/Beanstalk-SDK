@@ -1,6 +1,8 @@
-import BigNumber from "bignumber.js";
-import { MAX_UINT256, NEW_BeanNumber, NEW_BN } from "../../constants";
-import { Token } from "./Token";
+import { ethers } from 'ethers';
+import { NEW_BN } from '../../constants';
+import { BigNumber } from "ethers";
+import { Token } from './Token';
+import { TokenValue } from '../TokenValue';
 
 export class BeanstalkToken extends Token {
   // eslint-disable-next-line class-methods-use-this
@@ -10,12 +12,12 @@ export class BeanstalkToken extends Token {
 
   // eslint-disable-next-line class-methods-use-this
   public getBalance() {
-    return Promise.resolve(NEW_BeanNumber);
+    return Promise.resolve(TokenValue.NEGATIVE_ONE);
   }
 
   // eslint-disable-next-line class-methods-use-this
   public getAllowance() {
-    return Promise.resolve(new BigNumber(parseInt(MAX_UINT256, 16)));
+    return Promise.resolve(TokenValue.MAX_UINT256);
   }
 
   // eslint-disable-next-line class-methods-use-this

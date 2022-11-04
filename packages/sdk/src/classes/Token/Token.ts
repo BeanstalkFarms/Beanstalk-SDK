@@ -1,13 +1,9 @@
-import BigNumber from 'bignumber.js';
-import { BaseContract } from 'ethers';
-import { ZERO_BN } from '../../constants';
-import type { BeanstalkSDK } from '../../lib/BeanstalkSDK';
-import { BeanNumber } from '../../utils/BeanNumber/BeanNumber';
-import { bigNumberResult } from '../../utils/Ledger';
-import { toStringBaseUnitBN, toTokenUnitsBN } from '../../utils/Tokens';
-
-// import { BeanstalkToken } from './BeanstalkToken';
-// import { NativeToken } from './NativeToken';
+import { BaseContract, BigNumberish } from "ethers";
+import { ZERO_BN } from "../../constants";
+import type { BeanstalkSDK } from "../../lib/BeanstalkSDK";
+import { BigNumber } from "ethers";
+import { TokenValue } from "../TokenValue";
+import { toHuman } from "../../utils/Tokens";
 
 /**
  * A currency is any fungible financial instrument, including Ether, all ERC20 tokens, and other chain-native currencies
@@ -58,7 +54,7 @@ export abstract class Token {
    * @param decimals decimals of the currency
    * @param metadata.symbol symbol of the currency
    * @param metadata.name name of the currency, matches `.name()`
-   * @param metadata.displayName 
+   * @param metadata.displayName
    */
   constructor(
     sdk: BeanstalkSDK,
@@ -82,7 +78,7 @@ export abstract class Token {
     Token.sdk = sdk;
 
     /// Basic
-    this.address = address ?? '';
+    this.address = address ?? "";
     this.decimals = decimals;
     this.chainId = sdk.chainId;
 
@@ -93,7 +89,7 @@ export abstract class Token {
     this.displayDecimals = metadata.displayDecimals || 2;
     this.logo = metadata.logo;
     this.color = metadata.color;
-    
+
     /// Beanstalk-specific
     this.isLP = metadata.isLP || false;
     this.isUnripe = metadata.isUnripe || false;
@@ -101,26 +97,26 @@ export abstract class Token {
   }
 
   /** Get the amount of Stalk rewarded per deposited BDV of this Token. */
-  public getStalk(bdv?: BigNumber): BigNumber {
-    if (!this.rewards?.stalk) return ZERO_BN;
-    if (!bdv) return new BigNumber(this.rewards.stalk);
-    return bdv.times(this.rewards.stalk);
+  public getStalk(bdv?: TokenValue): TokenValue {
+    if (!this.rewards?.stalk) return TokenValue.fromHuman(ZERO_BN, 0);
+    if (!bdv) return TokenValue.fromHuman(this.rewards.stalk, this.decimals);
+    return bdv.mul(this.rewards.stalk);
   }
 
   /** Get the amount of Seeds rewarded per deposited BDV of this Token. */
-  public getSeeds(bdv?: BigNumber): BigNumber {
-    if (!this.rewards?.seeds) return ZERO_BN;
-    if (!bdv) return new BigNumber(this.rewards.seeds);
-    return bdv.times(this.rewards.seeds);
+  public getSeeds(bdv?: TokenValue): TokenValue {
+    if (!this.rewards?.seeds) return TokenValue.fromHuman(ZERO_BN, 0);
+    if (!bdv) return TokenValue.fromHuman(this.rewards.seeds, this.decimals);
+    return bdv.mul(this.rewards.seeds);
   }
 
   abstract getContract(): BaseContract | null;
 
-  abstract getBalance(account: string): Promise<BeanNumber>;
+  abstract getBalance(account: string): Promise<TokenValue>;
 
-  abstract getAllowance(account: string, spender: string): Promise<BigNumber | undefined>;
+  abstract getAllowance(account: string, spender: string): Promise<TokenValue | undefined>;
 
-  abstract getTotalSupply(): Promise<BigNumber> | undefined;
+  abstract getTotalSupply(): Promise<TokenValue> | undefined;
 
   /**
    * Returns whether this currency is functionally equivalent to the other currency
@@ -134,34 +130,59 @@ export abstract class Token {
     return this.name;
   }
 
-  public setMetadata(metadata: {
-    logo?: string;
-    color?: string;
-  }) {
+  public setMetadata(metadata: { logo?: string; color?: string }) {
     if (metadata.logo) this.logo = metadata.logo;
     if (metadata.color) this.color = metadata.color;
   }
 
   /**
-   * Convert an `amount` of this Token into a string value
-   * based on the configured number of decimals.
+   * Converts from a human amount to a block chain value stored in BigNumber
    *
-   * FIXME: better name
-   * FIXME: provide other side (toTokenUnitsBN)
+   * Ex: BEAN.fromHuman("3.14") => BigNumber holding value "3140000"
    *
-   * @param amount amount to convert
+   * @param amount human readable amout, ex: "3.14" ether
+   * @returns BigNumber
+   */
+  fromHuman(amount: string): BigNumber {
+    return TokenValue.fromHuman(amount, this.decimals).toBigNumber();
+  }
+
+  /**
+   * Converts from a BigNumber amount to a TokenValue
+   *
+   * Ex: BEAN.fromBigNumberToTokenValue(BigNumber.from("3140000")) => TokenValue holding value "3140000" and decimals "6"
+   *
+   * @param amount human readable amout, ex: "3.14" ether
+   * @returns TokenValue
+   */
+  fromBigNumberToTokenValue(amount: BigNumberish): TokenValue {
+    return TokenValue.fromBlockchain(BigNumber.from(amount), this.decimals);
+  }
+
+  /**
+   * Converts from a human amount to a TokenValue
+   *
+   * Ex: BEAN.fromHumanToTokenValue("3.14") => TokenValue holding value "3140000" and decimals "6"
+   *
+   * @param amount human readable amout, ex: "3.14" ether
+   * @returns TokenValue
+   */
+  fromHumanToTokenValue(amount: string): TokenValue {
+    return TokenValue.fromHuman(amount, this.decimals);
+  }
+
+  /**
+   * Converts from a blockchain value to a human readable form
+   *
+   * Ex: BEAN.toHuman(BigNumber.from('3140000)) => "3.14"
+   * @param value A BigNumber with a value of this token, for ex: 1000000 would be 1 BEAN
    * @returns string
    */
-  public stringify(amount: BigNumber.Value) {
-    return toStringBaseUnitBN(amount, this.decimals);
+  toHuman(value: BigNumber): string {
+    return toHuman(value, this.decimals);
   }
 
-  public stringifyToDecimal(amount: BigNumber.Value) {
-    return toTokenUnitsBN(amount, this.decimals)
+  toTokenValue(value: BigNumber): TokenValue {
+    return TokenValue.fromBlockchain(value, this.decimals);
   }
-
-  public tokenResult (){
-    return (result: BigNumber) => toTokenUnitsBN(bigNumberResult(result), this.decimals);
-  };
 }
-

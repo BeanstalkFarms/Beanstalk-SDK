@@ -1,26 +1,25 @@
-import BigNumber from "bignumber.js";
 import { ContractTransaction } from "ethers";
 import { ERC20__factory } from "../../constants/generated";
 import { PromiseOrValue } from "../../constants/generated/common";
 import { ERC20Permit } from "../../constants/generated/ERC20Permit";
 import { ERC20Permit__factory } from "../../constants/generated/factories/ERC20Permit__factory";
-import { BeanNumber } from "../../utils/BeanNumber";
-import { bigNumberResult } from "../../utils/Ledger";
+import { BigNumber } from "ethers";
 import { Token } from "./Token";
+import { TokenValue } from "../TokenValue";
 
 export class ERC20Token extends Token {
-  public contract : ERC20Permit;
+  public contract: ERC20Permit;
 
   //////////////////////// Setup ////////////////////////
-  
+
   // @fixme this throws the following error:
   // src/lib/tokens.ts(57,32): semantic error TS2345: Argument of type 'BeanstalkSDK' is not assignable to parameter of type 'never'.
   //
   // constructor(...args: ConstructorParameters<typeof Token>) {
   //   super(...args);
   //   if (!this.address) throw new Error('Address is required for ERC20 token instancess');
-  // } 
-  
+  // }
+
   //////////////////////// Contract Instance ////////////////////////
 
   public getContract() {
@@ -58,29 +57,29 @@ export class ERC20Token extends Token {
   //////////////////////// Contract Method Extensions ////////////////////////
 
   public getBalance(account: string) {
-    return (
-      this.getContract()
-        .balanceOf(account)
-        .then(result => BeanNumber.fromBigNumber(result, this.decimals))
-        .catch((err: Error) => {
-          console.error(`[ERC20Token] ${this.symbol} failed to call balanceOf(${account})`, err);
-          throw err;
-        })
-    );
+    return this.getContract()
+      .balanceOf(account)
+      .then((result) => TokenValue.fromBlockchain(result, this.decimals))
+      .catch((err: Error) => {
+        console.error(`[ERC20Token] ${this.symbol} failed to call balanceOf(${account})`, err);
+        throw err;
+      });
   }
 
   // eslint-disable-next-line class-methods-use-this
-  public getAllowance(account: string, spender: string) {
-    return this.getContract().allowance(account, spender)
-    .then(bigNumberResult);
+  public getAllowance(account: string, spender: string): Promise<TokenValue | undefined> {
+    return this.getContract()
+      .allowance(account, spender)
+      .then((result) => TokenValue.fromBlockchain(result, this.decimals));
   }
 
-  public getTotalSupply() {
-    return this.getContract().totalSupply()
-    .then(bigNumberResult);
+  public getTotalSupply(): Promise<TokenValue> | undefined {
+    return this.getContract()
+      .totalSupply()
+      .then((result) => TokenValue.fromBlockchain(result, this.decimals));
   }
 
-  public approve(spender: PromiseOrValue<string>, value: PromiseOrValue<BigNumber>):Promise<ContractTransaction> {
-    return this.getContract().approve(spender, value.toString())
+  public approve(spender: PromiseOrValue<string>, value: PromiseOrValue<BigNumber>): Promise<ContractTransaction> {
+    return this.getContract().approve(spender, value.toString());
   }
 }

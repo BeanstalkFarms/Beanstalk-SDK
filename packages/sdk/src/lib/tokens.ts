@@ -1,16 +1,16 @@
-import { addresses } from '../constants';
-import { Token, BeanstalkToken, ERC20Token, NativeToken } from '../classes/Token';
-import { BeanstalkSDK } from './BeanstalkSDK';
-import BigNumber from 'bignumber.js';
-import { TokenFacet } from '../constants/generated/Beanstalk/Beanstalk';
-import { EIP2612PermitMessage, EIP712Domain, EIP712TypedData, Permit } from './permit';
-import { ERC20__factory } from '../constants/generated';
+import { addresses, ZERO_BN } from "../constants";
+import { Token, BeanstalkToken, ERC20Token, NativeToken } from "../classes/Token";
+import { BeanstalkSDK } from "./BeanstalkSDK";
+import { TokenFacet } from "../constants/generated/Beanstalk/Beanstalk";
+import { EIP2612PermitMessage, EIP712Domain, EIP712TypedData, Permit } from "./permit";
+import { TokenValue } from "../classes/TokenValue";
+import { BigNumber } from "ethers";
 
 export type TokenBalance = {
-  internal: BigNumber;
-  external: BigNumber;
-  total: BigNumber;
-}
+  internal: TokenValue;
+  external: TokenValue;
+  total: TokenValue;
+};
 
 export class Tokens {
   private sdk: BeanstalkSDK;
@@ -45,18 +45,18 @@ export class Tokens {
   constructor(sdk: BeanstalkSDK) {
     this.sdk = sdk;
     this.map = new Map();
-    
+
     /// Ethereum
 
     this.ETH = new NativeToken(this.sdk, null, 18, {
-      name: 'Ether',
-      symbol: 'ETH',
+      name: "Ether",
+      symbol: "ETH",
       displayDecimals: 4,
     });
 
     this.WETH = new ERC20Token(this.sdk, addresses.WETH.get(this.sdk.chainId), 18, {
-      name: 'Wrapped Ether',
-      symbol: 'WETH',
+      name: "Wrapped Ether",
+      symbol: "WETH",
     });
 
     /// Beanstalk
@@ -66,9 +66,9 @@ export class Tokens {
       addresses.BEAN.get(this.sdk.chainId),
       6,
       {
-        name: 'Bean',
-        displayName: 'Bean',
-        symbol: 'BEAN',
+        name: "Bean",
+        displayName: "Bean",
+        symbol: "BEAN",
       },
       {
         stalk: 1,
@@ -81,11 +81,11 @@ export class Tokens {
       addresses.BEAN_CRV3.get(this.sdk.chainId),
       18,
       {
-        name: 'Curve.fi Factory USD Metapool: Bean', // see .name()
-        displayName: 'BEAN:3CRV LP',
-        symbol: 'BEAN3CRV',
+        name: "Curve.fi Factory USD Metapool: Bean", // see .name()
+        displayName: "BEAN:3CRV LP",
+        symbol: "BEAN3CRV",
         isLP: true,
-        color: '#DFB385',
+        color: "#DFB385",
       },
       {
         stalk: 1,
@@ -98,9 +98,9 @@ export class Tokens {
       addresses.UNRIPE_BEAN.get(this.sdk.chainId),
       6,
       {
-        name: 'Unripe Bean', // see `.name()`
-        displayName: 'Unripe Bean',
-        symbol: 'urBEAN',
+        name: "Unripe Bean", // see `.name()`
+        displayName: "Unripe Bean",
+        symbol: "urBEAN",
         displayDecimals: 2,
         isUnripe: true,
       },
@@ -115,9 +115,9 @@ export class Tokens {
       addresses.UNRIPE_BEAN_CRV3.get(this.sdk.chainId),
       6,
       {
-        name: 'Unripe BEAN3CRV', // see `.name()`
-        displayName: 'Unripe BEAN:3CRV LP',
-        symbol: 'urBEAN3CRV',
+        name: "Unripe BEAN3CRV", // see `.name()`
+        displayName: "Unripe BEAN:3CRV LP",
+        symbol: "urBEAN3CRV",
         displayDecimals: 2,
         isUnripe: true,
       },
@@ -127,69 +127,64 @@ export class Tokens {
       }
     );
 
-    this.ROOT = new ERC20Token(
-      this.sdk,
-      addresses.ROOT.get(this.sdk.chainId),
-      6,
-      {
-        name: 'Root',
-        symbol: 'ROOT',
-      }
-    );
+    this.ROOT = new ERC20Token(this.sdk, addresses.ROOT.get(this.sdk.chainId), 6, {
+      name: "Root",
+      symbol: "ROOT",
+    });
 
     /// Beanstalk "Tokens" (non ERC-20)
 
     this.STALK = new BeanstalkToken(this.sdk, null, 10, {
-      name: 'Stalk',
-      symbol: 'STALK',
+      name: "Stalk",
+      symbol: "STALK",
     });
 
     this.SEEDS = new BeanstalkToken(this.sdk, null, 6, {
-      name: 'Seeds',
-      symbol: 'SEED',
+      name: "Seeds",
+      symbol: "SEED",
     });
 
     this.PODS = new BeanstalkToken(this.sdk, null, 6, {
-      name: 'Pods',
-      symbol: 'PODS',
+      name: "Pods",
+      symbol: "PODS",
     });
 
     this.SPROUTS = new BeanstalkToken(this.sdk, null, 6, {
-      name: 'Sprouts',
-      symbol: 'SPROUT',
+      name: "Sprouts",
+      symbol: "SPROUT",
     });
 
     this.RINSABLE_SPROUTS = new BeanstalkToken(this.sdk, null, 6, {
-      name: 'Rinsable Sprouts',
-      symbol: 'rSPROUT',
+      name: "Rinsable Sprouts",
+      symbol: "rSPROUT",
     });
 
     /// Common ERC-20 Tokens
 
     this.CRV3 = new ERC20Token(this.sdk, addresses.CRV3.get(this.sdk.chainId), 18, {
-      name: '3CRV',
-      symbol: '3CRV',
+      name: "3CRV",
+      symbol: "3CRV",
       isLP: true,
     });
 
     this.DAI = new ERC20Token(this.sdk, addresses.DAI.get(this.sdk.chainId), 18, {
-      name: 'Dai',
-      symbol: 'DAI',
+      name: "Dai",
+      symbol: "DAI",
     });
 
     this.USDC = new ERC20Token(this.sdk, addresses.USDC.get(this.sdk.chainId), 6, {
-      name: 'USD Coin',
-      symbol: 'USDC',
+      name: "USD Coin",
+      symbol: "USDC",
     });
 
     this.USDT = new ERC20Token(this.sdk, addresses.USDT.get(this.sdk.chainId), 6, {
-      name: 'Tether',
-      symbol: 'USDT',
+      name: "Tether",
+      symbol: "USDT",
     });
 
     this.LUSD = new ERC20Token(this.sdk, addresses.LUSD.get(this.sdk.chainId), 6, {
-      name: 'LUSD',
-      symbol: 'LUSD',
+      name: "LUSD",
+      symbol: "LUSD",
     });
 
     /// Legacy
@@ -200,8 +195,8 @@ export class Tokens {
       addresses.BEAN_ETH_UNIV2_LP.get(this.sdk.chainId),
       18,
       {
-        name: 'BEAN:ETH LP',
-        symbol: 'BEAN:ETH',
+        name: "BEAN:ETH LP",
+        symbol: "BEAN:ETH",
 
         displayDecimals: 9,
         isLP: true,
@@ -214,7 +209,7 @@ export class Tokens {
 
     // create a map of address -> Token
     // this will help in the UI migration to SDK use
-    this.map.set('eth', this.ETH);
+    this.map.set("eth", this.ETH);
     this.map.set(addresses.WETH.get(this.sdk.chainId), this.WETH);
     this.map.set(addresses.ROOT.get(this.sdk.chainId), this.ROOT);
     this.map.set(addresses.BEAN.get(this.sdk.chainId), this.BEAN);
@@ -226,11 +221,11 @@ export class Tokens {
     this.map.set(addresses.BEAN_CRV3.get(this.sdk.chainId), this.BEAN_CRV3_LP);
     this.map.set(addresses.UNRIPE_BEAN.get(this.sdk.chainId), this.UNRIPE_BEAN);
     this.map.set(addresses.UNRIPE_BEAN_CRV3.get(this.sdk.chainId), this.UNRIPE_BEAN_CRV3);
-    this.map.set('STALK', this.STALK);
-    this.map.set('SEED', this.SEEDS);
-    this.map.set('PODS', this.PODS);
-    this.map.set('SPROUT', this.SPROUTS);
-    this.map.set('rSPROUT', this.RINSABLE_SPROUTS);
+    this.map.set("STALK", this.STALK);
+    this.map.set("SEED", this.SEEDS);
+    this.map.set("PODS", this.PODS);
+    this.map.set("SPROUT", this.SPROUTS);
+    this.map.set("rSPROUT", this.RINSABLE_SPROUTS);
     this.map.set(addresses.BEAN_ETH_UNIV2_LP.get(this.sdk.chainId), this.BEAN_ETH_UNIV2_LP);
 
     this.unripeTokens = new Set([this.UNRIPE_BEAN, this.UNRIPE_BEAN_CRV3]);
@@ -249,11 +244,11 @@ export class Tokens {
   }
 
   _deriveAddress(value: string | Token) {
-    return typeof value === 'string' ? value : value.address;
+    return typeof value === "string" ? value : value.address;
   }
 
-  _deriveToken(value: string | Token) : [Token, string] {
-    if (typeof value === 'string') {
+  _deriveToken(value: string | Token): [Token, string] {
+    if (typeof value === "string") {
       const _token = this.findByAddress(value);
       if (!_token) throw new Error(`Unknown token: ${value}`);
       return [_token, value];
@@ -263,13 +258,17 @@ export class Tokens {
 
   _balanceStructToTokenBalance(
     token: Token,
-    result: TokenFacet.BalanceStruct
-  ) : TokenBalance {
-    return {
-      internal: token.stringifyToDecimal(result.internalBalance.toString()),
-      external: token.stringifyToDecimal(result.externalBalance.toString()),
-      total:    token.stringifyToDecimal(result.totalBalance.toString()),
+    result: {
+      internalBalance: BigNumber;
+      externalBalance: BigNumber;
+      totalBalance: BigNumber;
     }
+  ): TokenBalance {
+    return {
+      internal: token.fromBigNumberToTokenValue(result.internalBalance),
+      external: token.fromBigNumberToTokenValue(result.externalBalance),
+      total: token.fromBigNumberToTokenValue(result.totalBalance),
+    };
   }
 
   /**
@@ -277,10 +276,7 @@ export class Tokens {
    * Includes the Farmer's INTERNAL and EXTERNAL balance in one item.
    * This is the typical representation of balances within Beanstalk.
    */
-  public async getBalance(
-    _token: (string | Token),
-    _account?: string,
-  ) : Promise<TokenBalance> {
+  public async getBalance(_token: string | Token, _account?: string): Promise<TokenBalance> {
     const account = await this.sdk.getAccount(_account);
 
     // ETH cannot be stored in the INTERNAL balance.
@@ -288,7 +284,7 @@ export class Tokens {
     if (_token === this.ETH) {
       const balance = await this.sdk.provider.getBalance(account);
       return this._balanceStructToTokenBalance(_token, {
-        internalBalance: '0',
+        internalBalance: ZERO_BN,
         externalBalance: balance,
         totalBalance: balance,
       });
@@ -297,10 +293,7 @@ export class Tokens {
     // FIXME: use the ERC20 token contract directly to load decimals for parsing?
     const [token, tokenAddress] = this._deriveToken(_token);
 
-    const balance = await this.sdk.contracts.beanstalk.getAllBalance(
-      account,
-      tokenAddress,
-    );
+    const balance = await this.sdk.contracts.beanstalk.getAllBalance(account, tokenAddress);
 
     return this._balanceStructToTokenBalance(token, balance);
   }
@@ -309,13 +302,10 @@ export class Tokens {
    * Return a TokenBalance struct for each requested token.
    * Includes the Farmer's INTERNAL and EXTERNAL balance in one item.
    * This is the typical representation of balances within Beanstalk.
-   * 
+   *
    * @todo discuss parameter inversion between getBalance() and getBalances().
    */
-  public async getBalances(
-    _account?: string,
-    _tokens?: (string | Token)[],
-  ) : Promise<Map<Token, TokenBalance>> {
+  public async getBalances(_account?: string, _tokens?: (string | Token)[]): Promise<Map<Token, TokenBalance>> {
     const account = await this.sdk.getAccount(_account);
     const tokens = _tokens || Array.from(this.erc20Tokens);
     const tokenAddresses = tokens.map(this._deriveAddress);
@@ -323,19 +313,16 @@ export class Tokens {
     // FIXME: only allow ERC20 tokens with getBalance() method, or
     // override if token is NativeToken
     const balances = new Map<Token, TokenBalance>();
-    const results = await this.sdk.contracts.beanstalk.getAllBalances(
-      account,
-      tokenAddresses,
-    );
+    const results = await this.sdk.contracts.beanstalk.getAllBalances(account, tokenAddresses);
 
     results.forEach((result, index) => {
       const token = this.findByAddress(tokenAddresses[index]);
-      
+
       // FIXME: use the ERC20 token contract directly to load decimals for parsing?
       if (!token) throw new Error(`Unknown token: ${tokenAddresses}`);
 
       balances.set(token, this._balanceStructToTokenBalance(token, result));
-    })
+    });
 
     return balances;
   }
@@ -345,56 +332,54 @@ export class Tokens {
   /**
    * Create the domain for an particular ERC-2636 signature.
    * Look up the name of an ERC-20 token for signing.
-   * 
+   *
    * @ref https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L85
    */
-  private async _getEIP712DomainForToken(
-    token: ERC20Token
-  ): Promise<EIP712Domain> {
-    const [name, chainId] = await Promise.all([ 
-      token.getName(),
-      this.sdk.provider.getNetwork().then((network) => network.chainId),
-    ]);
-  
+  private async _getEIP712DomainForToken(token: ERC20Token): Promise<EIP712Domain> {
+    const [name, chainId] = await Promise.all([token.getName(), this.sdk.provider.getNetwork().then((network) => network.chainId)]);
+
     return {
       name,
-      version: '1',
+      version: "1",
       chainId,
       verifyingContract: token.address,
     };
-  };
+  }
 
   //////////////////////// PERMIT: ERC-2612 (for other ERC-20 tokens) ////////////////////////
 
   /**
    * Sign a permit for an arbitrary ERC-20 token. This allows `spender` to use `value`
    * of `owner`'s `token`.
-   * 
+   *
    * @fixme should this be in `tokens.ts`?
    * @fixme does the order of keys in `message` matter? if not we could make an abstraction here
    * @fixme `permitERC2612` -> `getERC20Permit`
-   * 
+   *
    * @ref https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L126
    * @param token a Token instance representing an ERC20 token to permit
-   * @param owner 
+   * @param owner
    * @param spender authorize this account to spend `token` on behalf of `owner`
    * @param value the amount of `token` to authorize
    * @param _nonce
    * @param _deadline
    */
   public async permitERC2612(
-    token: ERC20Token,      
-    owner: string,           // 
+    token: ERC20Token,
+    owner: string, //
     spender: string,
-    value: string | number,  // FIXME: included default on eth-permit, see @ref
-    _nonce?: number,         //
-    _deadline?: number,      // FIXME: is MAX_UINT256 an appropriate default?
-  ) : Promise<EIP712TypedData<EIP2612PermitMessage>> {
+    value: string | number, // FIXME: included default on eth-permit, see @ref
+    _nonce?: number, //
+    _deadline?: number // FIXME: is MAX_UINT256 an appropriate default?
+  ): Promise<EIP712TypedData<EIP2612PermitMessage>> {
     const deadline = _deadline || Permit.MAX_UINT256;
     const [domain, nonce] = await Promise.all([
       this._getEIP712DomainForToken(token),
       // @ts-ignore FIXME
-      token.getContract().nonces(owner).then(r => r.toString()),
+      token
+        .getContract()
+        .nonces(owner)
+        .then((r) => r.toString()),
     ]);
 
     return this._createTypedERC2612Data(domain, {

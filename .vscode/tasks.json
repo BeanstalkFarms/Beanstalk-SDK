@@ -7,17 +7,28 @@
 			"path": "packages/sdk",
 			"problemMatcher": {
 				"base": "$tsc-watch",
-				"fileLocation": ["relative", "${workspaceFolder}/packages/sdk"]
+				"fileLocation": [
+					"relative",
+					"${workspaceFolder}/packages/sdk"
+				]
 			},
 			"isBackground": true
-		}
+		},
 		{
 			"type": "npm",
 			"script": "build",
 			"path": "packages/sdk",
 			"problemMatcher": {
 				"base": "$tsc",
-				"fileLocation": ["relative", "${workspaceFolder}/packages/sdk"]
+				"fileLocation": [
+					"relative",
+					"${workspaceFolder}/packages/sdk"
+				]
+			},
+			"label": "yarn sdk:build - packages/sdk",
+			"group": {
+				"kind": "build",
+				"isDefault": true
 			}
 		}
 	]

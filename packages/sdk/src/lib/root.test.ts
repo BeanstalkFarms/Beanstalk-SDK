@@ -1,4 +1,3 @@
-import BigNumber from 'bignumber.js';
 import { setupConnection } from '../../test/provider'
 import { BeanstalkSDK } from './BeanstalkSDK';
 

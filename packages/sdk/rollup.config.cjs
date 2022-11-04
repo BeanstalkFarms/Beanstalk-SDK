@@ -1,9 +1,11 @@
 import fs from "fs";
+import path from "path";
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import multi from "@rollup/plugin-multi-entry";
 import excludeDeps from "rollup-plugin-exclude-dependencies-from-bundle";
+import alias from "rollup-plugin-alias";
 
 const pkg = require("./package.json");
 delete pkg.exports;
@@ -18,9 +20,9 @@ const config = [
 
   // This is just an example of how to create a new module entry.
   // This lets you do this on the client side:
-  // import {BeanNumber} from "@beanstalk/sdk/BeanNumber"
-  makeEntry("dist/js/BeanNumber.js", "BeanNumber"),
+  // import { Thing } from "@beanstalk/sdk/Thing"
   makeEntry("dist/js/DecimalBigNumber.js", "DecimalBigNumber"),
+  makeEntry("dist/js/TokenValue.js", "TokenValue"),
 ];
 
 export default config;
@@ -40,7 +42,17 @@ function makeEntry(inputFile, name) {
       { file: udmPath, format: "umd", sourcemap: true, name: "BeanstalkSDK" },
     ],
     external: Object.keys(pkg.dependencies),
-    plugins: [resolve(), commonjs(), json(), excludeDeps(), multi({ preserveModules: true })],
+    plugins: [
+      resolve(),
+      commonjs(),
+      json(),
+      excludeDeps(),
+      multi({ preserveModules: true }),
+      alias({
+        resolve: ['.js', '.d.ts'],
+        entries: [{ find: '@sdk', replacement: path.join(__dirname, './dist/js') }],
+      }),
+    ],
   };
 
   const pkgExport = {

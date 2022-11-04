@@ -28,7 +28,7 @@ let _warnedToStringRadix = false;
 export class BeanNumber implements Hexable {
   readonly _hex: string;
   readonly _isBigNumber: boolean;
-  private _decimals: number;
+  private _decimals?: number;
 
   constructor(constructorGuard: any, hex: string) {
     if (constructorGuard !== _constructorGuard) {
@@ -47,13 +47,13 @@ export class BeanNumber implements Hexable {
   }
 
   ////// Custom methods
-  get decimals() {
+  get decimals(): number | undefined {
     return this._decimals;
   }
 
-  set decimals(decimals: number) {
+  set decimals(decimals: number | undefined) {
     this._decimals = decimals;
-    Object.defineProperty(this, "_decimals", { configurable: false, writable: false });
+    Object.defineProperty(this, '_decimals', { configurable: false, writable: false });
   }
 
   //////

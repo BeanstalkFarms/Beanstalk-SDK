@@ -43,6 +43,7 @@ try {
 } catch (err) {
   if (err.code === "MODULE_NOT_FOUND") {
     console.log("File not found: ", path);
+    console.log(err);
     process.exit(-1);
   }
   console.log(err);
