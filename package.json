@@ -6,6 +6,7 @@
     "packages/*"
   ],
   "devDependencies": {
+    "husky": "8.0.1",
     "jest": "29.2.2",
     "ts-jest": "29.0.3",
     "ts-node": "10.9.1",
@@ -16,6 +17,7 @@
     "sdk:build": "yarn workspace @beanstalk/sdk build",
     "sdk:test": "jest --selectProjects sdk --silent --",
     "sdk:generate": "yarn workspace @beanstalk/sdk generate",
-    "test": "yarn sdk:test"
+    "test": "yarn sdk:test",
+    "postinstall": "husky install"
   }
 }
