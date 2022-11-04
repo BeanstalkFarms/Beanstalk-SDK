@@ -22,6 +22,6 @@
     "sdk:prettier": "yarn prettier packages/sdk -w",
     "format": "yarn sdk:prettier",
     "test": "jest",
-    "postinstall": "husky install"
+    "postinstall": "node -e \"try { require('husky').install() } catch (e) {if (e.code !== 'MODULE_NOT_FOUND') throw e}\""
   }
 }
