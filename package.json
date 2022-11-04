@@ -14,8 +14,8 @@
   "scripts": {
     "sdk:dev": "yarn workspace @beanstalk/sdk dev",
     "sdk:build": "yarn workspace @beanstalk/sdk build",
-    "sdk:test": "jest --selectProjects sdk --",
+    "sdk:test": "jest --selectProjects sdk --silent --",
     "sdk:generate": "yarn workspace @beanstalk/sdk generate",
-    "test": "jest"
+    "test": "yarn sdk:test"
   }
 }
