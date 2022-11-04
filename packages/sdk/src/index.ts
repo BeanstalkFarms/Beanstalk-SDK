@@ -1,6 +1,6 @@
 export * from "@sdk/lib/BeanstalkSDK";
 export { ChainId } from "@sdk/constants/chains";
-export { NativeToken, ERC20Token, BeanstalkToken } from "@sdk/classes/Token";
+export { NativeToken, ERC20Token, BeanstalkToken, Token } from "@sdk/classes/Token";
 export { TokenValue } from "@sdk/classes/TokenValue";
 
 export * from "@sdk/types";
