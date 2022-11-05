@@ -21,7 +21,7 @@ export class LibraryPresets {
   /**
    * Load the Pipeline in preparation for a set Pipe actions.
    */
-   public loadPipeline(
+  public loadPipeline(
     _token:   ERC20Token,
     _amount:  string, // ??
     _from:    FarmFromMode,

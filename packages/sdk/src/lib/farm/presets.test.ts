@@ -4,9 +4,9 @@ import { BeanstalkSDK } from "../BeanstalkSDK";
 import { FarmFromMode } from "./types";
 import { Work } from "./Work";
 
+let account : string;
 let sdk : BeanstalkSDK;
 let test : TestUtils;
-let account : string;
 
 beforeAll(async () => {
   const { provider, signer, account: _account } = await setupConnection();
@@ -22,8 +22,6 @@ beforeAll(async () => {
 describe('Facet: Pipeline', () => {
   let farm : Work;
   let snapshot : number;
-  beforeAll(async () => {
-  })
   beforeEach(async () => { 
     snapshot = await test.snapshot()
     farm = sdk.farm.create();
@@ -68,11 +66,12 @@ describe('Facet: Pipeline', () => {
         account,
         sdk.tokens.permitERC2612(
           account, // owner
-          sdk.contracts.pipeline.address, // spender
+          sdk.contracts.beanstalk.address, // spender
           sdk.tokens.BEAN, // token
           amount.toBlockchain(), // amount
         )
       );
+      
       farm.add(
         sdk.farm.presets.loadPipeline(
           sdk.tokens.BEAN,
@@ -93,6 +92,8 @@ describe('Facet: Pipeline', () => {
       expect(encoded1.slice(0, 10)).toBe(
         sdk.contracts.beanstalk.interface.getSighash('transferToken')
       )
+
+      console.log('Permit', permit, permit.typedData.types)
 
       // Execute
       await farm.execute(amount.toBigNumber(), 0.1).then(r => r.wait());

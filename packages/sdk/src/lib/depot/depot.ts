@@ -1,8 +1,7 @@
 import { ethers } from "ethers";
 import { AdvancedPipeStruct, PipeStruct } from "../../constants/generated/Beanstalk/Beanstalk";
 import { BeanstalkSDK } from "../BeanstalkSDK";
-import { encodeAdvancedData } from "./pipeline.utils";
-
+import { Pipeline } from './pipeline';
 export class Depot {
   static sdk : BeanstalkSDK
   constructor(sdk: BeanstalkSDK) {
@@ -75,7 +74,7 @@ export class Depot {
     contract: C,
     method: M,
     args: A,
-    advancedData: string = this.encodeAdvancedData([])
+    advancedData: string = Pipeline.encodeAdvancedData([])
   ) : AdvancedPipeStruct {
     return {
       target: contract.address,
@@ -87,5 +86,5 @@ export class Depot {
     };
   }
 
-  encodeAdvancedData = encodeAdvancedData;
+  encodeAdvancedData = Pipeline.encodeAdvancedData;
 }

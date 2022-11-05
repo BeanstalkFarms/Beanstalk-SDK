@@ -1,11 +1,9 @@
-import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance } from "@beanstalk/sdk";
+import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test } from "@beanstalk/sdk";
 import { ethers } from "ethers";
-import { sdk, send_bean } from "./setup";
+import { sdk, test, account } from "./setup";
 
 /**
  * 
- * @param token 
- * @param amount 
  */
 export async function roots_via_circulating(
   token:  ERC20Token,
@@ -37,7 +35,7 @@ export async function roots_via_circulating(
   const amountStr = amount.toBlockchain();
 
   // sign permit to send `token` to Pipeline
-  const erc20permit = await sdk.permit.sign(
+  const permit = await sdk.permit.sign(
     account,
     await sdk.tokens.permitERC2612(
       account, // owner
@@ -47,7 +45,7 @@ export async function roots_via_circulating(
     )
   );
 
-  console.log("Signed a permit: ", erc20permit);
+  console.log("Signed a permit: ", permit);
 
   // farm
   const farm = sdk.farm.create();
@@ -58,7 +56,7 @@ export async function roots_via_circulating(
       token,
       amountStr,
       FarmFromMode.EXTERNAL,
-      erc20permit
+      permit
     )
   );
 
@@ -151,18 +149,24 @@ export async function roots_via_circulating(
   console.log('Transaction submitted...', txn.hash);
   
   const receipt = await txn.wait();
-  console.log('Transaction executed.', receipt);
+  console.log('Transaction executed');
+
+  Test.Logger.printReceipt([
+    sdk.contracts.beanstalk,
+    sdk.tokens.BEAN.getContract(),
+    sdk.contracts.root,
+  ], receipt);
 
   const accountBalanceOfRoot  = await sdk.tokens.getBalance(sdk.tokens.ROOT);
   const pipelineBalanceOfRoot = await sdk.tokens.getBalance(sdk.tokens.ROOT, sdk.contracts.pipeline.address);
 
-  console.log(`ROOT balance for Account :`, accountBalanceOfRoot);
-  console.log(`ROOT balance for Pipeline:`, pipelineBalanceOfRoot);
+  console.log(`ROOT balance for Account :`, accountBalanceOfRoot.total.toHuman());
+  console.log(`ROOT balance for Pipeline:`, pipelineBalanceOfRoot.total.toHuman());
 
   return accountBalanceOfRoot;
 }
 
 (async () => {
-  await send_bean(100);
+  await test.sendBean(account, sdk.tokens.BEAN.amount(100));
   await roots_via_circulating(sdk.tokens.BEAN, sdk.tokens.BEAN.amount(100))
 })();
