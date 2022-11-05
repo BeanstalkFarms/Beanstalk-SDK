@@ -52,7 +52,7 @@ describe("Instantiation", function () {
 });
 
 describe("Utilities", function () {
-  it("loads name", async () => {
+  it("loads name from chain", async () => {
     const [bean, dai, usdc] = await Promise.all([
       ERC20Token.getName(sdk.tokens.BEAN.address),
       ERC20Token.getName(sdk.tokens.DAI.address),
@@ -62,7 +62,7 @@ describe("Utilities", function () {
     expect(dai).toBe("Dai Stablecoin");
     expect(usdc).toBe("USD Coin");
   });
-  it("loads decimals", async () => {
+  it("loads decimals from chain", async () => {
     const [bean, dai, usdc] = await Promise.all([
       ERC20Token.getDecimals(sdk.tokens.BEAN.address),
       ERC20Token.getDecimals(sdk.tokens.DAI.address),
@@ -73,7 +73,7 @@ describe("Utilities", function () {
     expect(usdc).toBe(6);
   });
 
-  it("creates a balance struct", () => {
+  it("creates a correct TokenBalance struct", () => {
     // @ts-ignore testing private method
     const balance = sdk.tokens.makeTokenBalance(sdk.tokens.BEAN, {
       internalBalance:  ethers.BigNumber.from(1000_000000),
@@ -127,15 +127,25 @@ describe("Function: getBalances", function () {
 });
 
 describe("Permits", function () {
-  it("submits an ERC-2636 permit for a token", async () => {
+  it("submits an ERC-2636 permit directly", async () => {
     const token = sdk.tokens.BEAN;
     const owner = account;
     const spender = sdk.contracts.beanstalk.address;
     const amount = token.amount("1000");
     const contract = token.getContract();
 
-    const permitData = await sdk.permit.sign(account, await sdk.tokens.permitERC2612(owner, spender, token, amount.toBlockchain(), undefined, undefined));
+    // Sign permit
+    const permitData = await sdk.permit.sign(
+      account,
+      sdk.tokens.permitERC2612(
+        owner,
+        spender,
+        token,
+        amount.toBlockchain(),
+      )
+    );
 
+    // Execute permit
     await contract.permit(
       account,
       permitData.typedData.message.spender,
@@ -144,8 +154,9 @@ describe("Permits", function () {
       permitData.split.v,
       permitData.split.r,
       permitData.split.s
-    );
+    ).then((r) => r.wait());
 
+    // Verify allowance is set correctly
     const newAllowance = (await contract.allowance(owner, spender)).toString();
     expect(newAllowance).toEqual(amount.toBlockchain());
   });

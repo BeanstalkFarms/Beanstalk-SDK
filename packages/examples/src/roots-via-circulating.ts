@@ -29,8 +29,7 @@ export async function roots_via_circulating(
 
   // get balance and validate amount
   const balance = await sdk.tokens.getBalance(token);
-  console.log(balance)
-  console.log(`Account ${account} has balance ${balance.total.toHuman()} ${balance.total.toBlockchain()} ${token.symbol}`);
+  console.log(`Account ${account} has balance ${balance.total.toHuman()} ${token.symbol}`);
   if (amount.gt(balance.total)) {
     throw new Error(`Not enough ${token.symbol}. Balance: ${balance.total.toHuman()} / Input: ${amount.toHuman()}`); // .toFixed?
   }
