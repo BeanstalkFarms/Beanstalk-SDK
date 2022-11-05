@@ -1,6 +1,7 @@
 import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test } from "@beanstalk/sdk";
 import { ethers } from "ethers";
-import { sdk, test, account } from "./setup";
+import { sdk, test, account } from "../setup";
+import paradox from "./contract";
 
 /**
  * Running this example (November 2022)
@@ -21,10 +22,10 @@ import { sdk, test, account } from "./setup";
  * 
  * 3. Make sure the SDK is built: `yarn sdk:build` from root of this monorepo.
  * 4. `cd ./packages/examples`
- * 5. `yarn ts ./src/roots-via-circulating.ts`
+ * 5. `yarn ts ./src/paradox-bet.ts`
  *    
  */
-export async function roots_via_circulating(
+export async function paradox_bet(
   token:  ERC20Token,
   amount: TokenValue
 ) : Promise<TokenBalance> {
@@ -56,7 +57,7 @@ export async function roots_via_circulating(
   // sign permit to send `token` to Pipeline
   const permit = await sdk.permit.sign(
     account,
-    await sdk.tokens.permitERC2612(
+    sdk.tokens.permitERC2612(
       account, // owner
       sdk.contracts.beanstalk.address, // spender
       token, // token
@@ -84,6 +85,7 @@ export async function roots_via_circulating(
   farm.add(
     async () => {
       const season = await sdk.sun.getSeason();
+      // const 
       return sdk.depot.advancedPipe([
         // 0: 
         // Approve BEANSTALK to use BEAN from PIPELINE
@@ -138,20 +140,35 @@ export async function roots_via_circulating(
           ]
         ),
 
-        // 5:
-        // Transfer token from PIPELINE to ACCOUNT
+        // 5.
+        // Place a bet on Paradox with ROOT.
         sdk.depot.advancedPacket(
-          sdk.contracts.beanstalk,
-          'transferToken',
+          paradox,
+          'placeBet',
           [
-            sdk.tokens.ROOT.address,
-            account,
-            '0', // Will be overwritten by advancedData
-            FarmFromMode.EXTERNAL, // use PIPELINE's external balance
-            FarmToMode.EXTERNAL // TOOD: make this a parameter
+            '', // poolId_
+            '', // teamId_
+            '0', // amount_
           ],
-          sdk.depot.encodeAdvancedData([4, 32, 100]) // packet 4, slot 32 -> packet 5, slot 100
-        ),
+          sdk.depot.encodeAdvancedData([
+            4,  // index 4 = root.mint()
+            32, // byte 32-63 = first return value
+            100 // byte 100-131 = third slot 
+          ])
+        )
+        // Transfer token from PIPELINE to ACCOUNT
+        // sdk.depot.advancedPacket(
+        //   sdk.contracts.beanstalk,
+        //   'transferToken',
+        //   [
+        //     sdk.tokens.ROOT.address,
+        //     account,
+        //     '0', // Will be overwritten by advancedData
+        //     FarmFromMode.EXTERNAL, // use PIPELINE's external balance
+        //     FarmToMode.EXTERNAL // TOOD: make this a parameter
+        //   ],
+        //   sdk.depot.encodeAdvancedData([4, 32, 100]) // packet 4, slot 32 -> packet 5, slot 100
+        // ),
       ])
     }
   );
@@ -187,5 +204,5 @@ export async function roots_via_circulating(
 
 (async () => {
   await test.sendBean(account, sdk.tokens.BEAN.amount(100));
-  await roots_via_circulating(sdk.tokens.BEAN, sdk.tokens.BEAN.amount(100))
+  await paradox_bet(sdk.tokens.BEAN, sdk.tokens.BEAN.amount(100))
 })();
