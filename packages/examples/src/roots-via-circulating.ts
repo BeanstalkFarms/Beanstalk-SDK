@@ -3,7 +3,26 @@ import { ethers } from "ethers";
 import { sdk, test, account } from "./setup";
 
 /**
+ * Running this example (November 2022)
  * 
+ * 1. Turn on a local Anvil node, ideally with --fork-block-number set to a recent block.
+ * 2. Deploy Beanstalk V2.1 (includes Pipeline, Roots, etc.):
+ *    
+ *    ```
+ *    const { deployV2_1 } = require("./utils/mocks")
+ *    task('beanstalkV2_1', async function () {
+ *      await deployV2_1()
+ *    }) 
+ *    ```
+ *    
+ *    then:
+ * 
+ *    `npx hardhat beanstalkV2_1 --network localhost`
+ * 
+ * 3. Make sure the SDK is built: `yarn sdk:build` from root of this monorepo.
+ * 4. `cd ./packages/examples`
+ * 5. `yarn ts ./src/roots-via-circulating.ts`
+ *    
  */
 export async function roots_via_circulating(
   token:  ERC20Token,

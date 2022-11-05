@@ -28,7 +28,7 @@ export class Logger {
     console.log(header);
     console.log(receipt.transactionHash);
     console.log('')
-    console.log('Block number: '.padEnd(12, ' '), receipt.blockNumber.toString())
+    console.log('Block: '.padEnd(12, ' '), receipt.blockNumber.toString())
     console.log('Gas used: '.padEnd(12, ' '), receipt.gasUsed.toString())
     console.log('Gas price: '.padEnd(12, ' '), receipt.effectiveGasPrice.toString())
     console.log(''.padEnd(len, '-'))
