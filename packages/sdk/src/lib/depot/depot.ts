@@ -2,6 +2,9 @@ import { ethers } from "ethers";
 import { AdvancedPipeStruct, PipeStruct } from "../../constants/generated/Beanstalk/Beanstalk";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import { Pipeline } from './pipeline';
+
+export type { AdvancedPipeStruct, PipeStruct };
+
 export class Depot {
   static sdk : BeanstalkSDK
   constructor(sdk: BeanstalkSDK) {

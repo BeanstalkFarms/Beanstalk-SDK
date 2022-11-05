@@ -1,17 +1,17 @@
 import { ethers } from "ethers";
 import { defaultAbiCoder } from "ethers/lib/utils";
 
-export enum AdvancedDataType {
+enum AdvancedDataType {
   EMPTY = 0,
   FLAT = 1,
   NESTED = 2,
 }
 
-export type AdvancedDataTuple = Readonly<
+type AdvancedDataTuple = Readonly<
   [returnDataIndex: number, copyIndex: number, pasteIndex: number]
 >;
 
-export type CopyData = {
+type CopyData = {
   [AdvancedDataType.EMPTY]: Readonly<[]>;
   [AdvancedDataType.FLAT]: Readonly<AdvancedDataTuple>;
   [AdvancedDataType.NESTED]: Readonly<AdvancedDataTuple[]>;
