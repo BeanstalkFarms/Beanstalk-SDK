@@ -137,9 +137,17 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
   const gas = await farm.estimateGas(amountIn, 0.1);
   console.log("Estimated gas:", gas.toString());
 
+  // TEST: Extract result from Pipeline calls
   const callStatic = await farm.callStatic(amountIn, 0.1);
   console.log("callStatic", callStatic);
+  const advancedPipeResult = sdk.contracts.beanstalk.interface.decodeFunctionResult("advancedPipe", callStatic[2]);
+  console.log("Pipe result:", advancedPipeResult);
+  const mintResult = sdk.contracts.root.interface.decodeFunctionResult("mint", advancedPipeResult.results[4]);
+  console.log("Mint result:", mintResult[0].toString());
+  const transferTokenResult = sdk.contracts.beanstalk.interface.decodeFunctionResult("transferToken", advancedPipeResult.results[5]);
+  console.log("Transfer result:", transferTokenResult);
 
+  //
   console.log("Executing...");
   const txn = await farm.execute(amountIn, 0.1);
   console.log("Transaction submitted...", txn.hash);
@@ -159,6 +167,6 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
 }
 
 (async () => {
-  await test.sendBean(account, sdk.tokens.BEAN.amount(100));
-  await roots_from_circulating(sdk.tokens.BEAN, sdk.tokens.BEAN.amount(100));
+  await test.sendBean(account, sdk.tokens.BEAN.amount(124));
+  await roots_from_circulating(sdk.tokens.BEAN, sdk.tokens.BEAN.amount(124));
 })();
