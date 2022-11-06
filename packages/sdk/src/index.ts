@@ -13,16 +13,10 @@ export { DecimalBigNumber } from "src/utils/DecimalBigNumber";
 
 // Modules
 export * from "src/lib/farm/types";
-export type {
-  TokenSiloBalance
-} from "src/lib/silo";
-export type {
-  TokenBalance
-} from "src/lib/tokens";
-export type { 
-  PipeStruct,
-  AdvancedPipeStruct,
-} from "src/lib/depot";
+export type { TokenSiloBalance } from "src/lib/silo";
+export type { TokenBalance } from "src/lib/tokens";
+export { Pipeline } from "src/lib/depot";
+export type { PipeStruct, AdvancedPipeStruct } from "src/lib/depot";
 
 // Utilities
-export * as Test from './utils.tests'; 
+export * as Test from "./utils.tests";

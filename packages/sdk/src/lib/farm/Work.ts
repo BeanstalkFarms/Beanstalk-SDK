@@ -1,6 +1,6 @@
-import { BigNumber, ContractTransaction, ethers } from 'ethers';
-import { BeanstalkSDK } from '../BeanstalkSDK';
-import { Action, ActionFunction, ActionResult, BaseAction, Farmable } from './types';
+import { BigNumber, ContractTransaction, ethers } from "ethers";
+import { BeanstalkSDK } from "../BeanstalkSDK";
+import { Action, ActionFunction, ActionResult, BaseAction, Farmable } from "./types";
 
 export class Work {
   static SLIPPAGE_PRECISION = 10 ** 6;
@@ -30,7 +30,7 @@ export class Work {
   /**
    * Recursive implementation of `addStep` and `addSteps` that handles
    * arbitrarily nested elements.
-   * 
+   *
    * @fixme should all Actions just be functions that are bound to `this`?
    */
   add(input: Farmable) {
@@ -44,7 +44,7 @@ export class Work {
         this.add(elem); // recurse
       }
     } else {
-      throw new Error('Unknown action type');
+      throw new Error("Unknown action type");
     }
   }
 
@@ -58,9 +58,9 @@ export class Work {
       this.steps.push(action);
     } else if (action instanceof Function) {
       this.steps.push(action);
-      console.log('A Function');
+      console.log("A Function");
     } else {
-      throw new Error('Received action that is of unknown type');
+      throw new Error("Received action that is of unknown type");
     }
   }
 
@@ -94,20 +94,20 @@ export class Work {
         this.stepResults.push(result);
 
         return result.amountOut;
-      } 
-      
+      }
+
       // Action Function
       else if (action instanceof Function) {
         const result = await action.call(this, input, forward);
 
         // If an action function returns a string, we assume it's
         // the encoded calldata to include in the Farm function
-        if (typeof result === 'string') {
+        if (typeof result === "string") {
           const actionResult: ActionResult = {
-            name: action.name || '<unknown>',
-            amountOut: BigNumber.from('0'),
+            name: action.name || "<unknown>",
+            amountOut: BigNumber.from("0"),
             encode: () => result,
-            decode: data => ({}),
+            decode: (data) => ({}),
           };
           this.stepResults.push(actionResult);
 
@@ -122,7 +122,7 @@ export class Work {
           return result.amountOut;
         }
       } else {
-        throw new Error('Received action that is of unknown type');
+        throw new Error("Received action that is of unknown type");
       }
     } catch (e) {
       console.log(`[farm/estimate] Failed to estimate step ${action.name}`, input.toString(), forward);
@@ -150,11 +150,11 @@ export class Work {
       const action = this.steps[i];
       try {
         nextAmount = await this.runAction(action, nextAmount, true);
-      } catch(e) {
-        console.log(`[farm/estimate] Failed to estimate action ${i} "${action.name || 'unknown'}"`, {
+      } catch (e) {
+        console.log(`[farm/estimate] Failed to estimate action ${i} "${action.name || "unknown"}"`, {
           type: typeof action,
           input: nextAmount.toString(),
-          forward: true
+          forward: true,
         });
         console.error(e);
         throw e;
@@ -232,11 +232,24 @@ export class Work {
   async callStatic(amountIn: ethers.BigNumber, slippage: number): Promise<string[]> {
     await this.estimate(amountIn);
     const data = this.encodeStepsWithSlippage(slippage / 100);
-    const txn = await Work.sdk.contracts.beanstalk.callStatic.farm(data, { value: this.value });
+    const result = await Work.sdk.contracts.beanstalk.callStatic.farm(data, { value: this.value });
 
-    return txn;
+    return result;
   }
 
+  // async decodeStatic(amountIn: ethers.BigNumber, slippage: number): Promise<any[]> {
+  //   const results = await this.callStatic(amountIn, slippage);
+  //   return results.map((result, index) => {
+  //     return this.steps[index].decode()
+  //   });
+  // }
+
+  /**
+   *
+   * @param amountIn
+   * @param slippage
+   * @returns
+   */
   async estimateGas(amountIn: ethers.BigNumber, slippage: number): Promise<any> {
     await this.estimate(amountIn);
     const data = this.encodeStepsWithSlippage(slippage / 100);
