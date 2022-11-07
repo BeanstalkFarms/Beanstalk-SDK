@@ -22,49 +22,45 @@ beforeAll(async () => {
 describe("Facet: Pipeline", () => {
   let farm: Work;
   let snapshot: number;
+
   beforeEach(async () => {
     snapshot = await test.snapshot();
     farm = sdk.farm.create();
     await test.sendBean(account, sdk.tokens.BEAN.amount(100));
   });
+
   afterEach(async () => {
     await test.revert(snapshot);
   });
 
-  // describe('loading without approval', () => {
-  //   it('throws', async () => {
-  //     // Setup
-  //     const amount = sdk.tokens.BEAN.amount(100);
-  //     farm.add(
-  //       sdk.farm.presets.loadPipeline(
-  //         sdk.tokens.BEAN,
-  //         amount.toBlockchain(),
-  //         FarmFromMode.EXTERNAL,
-  //       )
-  //     );
+  describe("loading without approval", () => {
+    it.skip("throws", async () => {
+      // Setup
+      const amount = sdk.tokens.BEAN.amount(100);
+      farm.add(sdk.farm.presets.loadPipeline(sdk.tokens.BEAN, amount.toBlockchain(), FarmFromMode.EXTERNAL));
 
-  //     // Execute
-  //     expect(async () => {
-  //       await farm.execute(amount.toBigNumber(), 0.1).then(r => r.wait())
-  //     }).toThrow();
+      // Execute
+      expect(async () => {
+        await farm.execute(amount.toBigNumber(), 0.1).then((r) => r.wait());
+      }).toThrow();
 
-  //     // Estimate
-  //     // await farm.estimate(amount.toBigNumber());
-  //     // const encoded = farm.stepResults[0].encode();
-  //     // expect(farm.stepResults.length).toBe(1);
-  //     // expect(encoded.slice(0, 10)).toBe(
-  //     //   sdk.contracts.beanstalk.interface.getSighash('transferToken')
-  //     // );
+      // Estimate
+      // await farm.estimate(amount.toBigNumber());
+      // const encoded = farm.stepResults[0].encode();
+      // expect(farm.stepResults.length).toBe(1);
+      // expect(encoded.slice(0, 10)).toBe(
+      //   sdk.contracts.beanstalk.interface.getSighash('transferToken')
+      // );
 
-  //     // await farm.execute(amount.toBigNumber(), 0.1).then(r => r.wait());
-  //     // const pipelineBalance = await sdk.tokens.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address);
-  //     // expect(pipelineBalance.total.eq(amount)).toBe(true);
-  //     // expect(pipelineBalance.total.toHuman()).toBe('100');
-  //   });
-  // });
+      // await farm.execute(amount.toBigNumber(), 0.1).then(r => r.wait());
+      // const pipelineBalance = await sdk.tokens.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address);
+      // expect(pipelineBalance.total.eq(amount)).toBe(true);
+      // expect(pipelineBalance.total.toHuman()).toBe('100');
+    });
+  });
 
   describe("loading with permits", () => {
-    it("loads with permit, single token", async () => {
+    it.skip("loads with permit, single token", async () => {
       // Setup
       const amount = sdk.tokens.BEAN.amount("100");
       const permit = await sdk.permit.sign(
