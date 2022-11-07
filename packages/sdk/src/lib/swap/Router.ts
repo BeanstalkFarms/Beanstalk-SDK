@@ -5,7 +5,7 @@ import { Action, FarmFromMode, FarmToMode } from "src/lib/farm/types";
 import { ActionBuilder } from "src/lib/farm/LibraryPresets";
 
 type RouterResult = {
-  step: (fromMode?: FarmFromMode, toMode?: FarmToMode) => Action;
+  step: (fromMode?: FarmFromMode, toMode?: FarmToMode) => Action | Promise<Action>;
   from: string;
   to: string;
 };
@@ -35,8 +35,8 @@ export class Router {
       return [];
     }
     if (path.length === 1) {
-      Router.sdk.debug(`Router.findPath: No Path, end === start ${path[0]}`);
-      return [];
+      Router.sdk.debug(`Router.findPath: Self transfer ${path[0]}`);
+      return [this.buildSelfTransfer(tokenIn)];
     }
 
     // Get the edges
@@ -51,7 +51,8 @@ export class Router {
   private searchGraph(start: string, end: string): string[] {
     const path: string[] = [];
     let res = alg.dijkstra(this.graph, start);
-    console.log(`Search Results [${start}->${end}]: `, res);
+    // console.log(`Search Results [${start}->${end}]: `, res);
+    Router.sdk.debug(`[Router.searchGraph()]`, { start, end, results: res });
 
     // target not found
     if (!res[end]) return [];
@@ -204,5 +205,28 @@ export class Router {
       from: "BEAN",
       to: "3CRV",
     });
+  }
+
+  private buildSelfTransfer(token: Token): RouterResult {
+    return {
+      step: async (from?: FarmFromMode, to?: FarmToMode): Promise<Action> => {
+        const account = await Router.sdk.getAccount();
+        if (!account) throw new Error("Failed to get account in Router.buildSelfTransfer()");
+
+        return new Router.sdk.farm.actions.TransferToken(token.address, account, from, to);
+      },
+      from: token.symbol,
+      to: token.symbol,
+    };
+  }
+
+  getGraphCode() {
+    let code = "// http://www.webgraphviz.com\ndigraph G {\n";
+    this.graph.edges().forEach((e) => {
+      code += `\t"${e.v}" -> "${e.w}"\n`;
+    });
+    code += "}";
+
+    return code;
   }
 }
