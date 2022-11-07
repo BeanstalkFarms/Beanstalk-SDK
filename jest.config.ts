@@ -7,7 +7,7 @@ const jestConfig: JestConfigWithTsJest = {
       preset: "ts-jest",
       displayName: "sdk",
       rootDir: "packages/sdk",
-      testMatch: ["<rootDir>/**/?(*.)+(spec|test).[jt]s?(x)"],
+      testMatch: ["<rootDir>/src/**/?(*.)+(spec|test).[jt]s?(x)"],
       moduleNameMapper: {
         "@sdk/(.*)$": "<rootDir>/src/$1",
         "src/(.*)$": "<rootDir>/src/$1",
@@ -16,9 +16,9 @@ const jestConfig: JestConfigWithTsJest = {
     {
       // @ts-ignore
       preset: "ts-jest",
-      displayName: "sdk-client",
-      rootDir: "packages/sdk-client",
-      testMatch: ["<rootDir>/**/?(*.)+(spec|test).[jt]s?(x)"],
+      displayName: "examples",
+      rootDir: "packages/examples",
+      testMatch: ["<rootDir>/src/**/?(*.)+(spec|test).[jt]s?(x)"],
     },
   ],
 };

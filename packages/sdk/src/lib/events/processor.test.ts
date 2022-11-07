@@ -2,12 +2,9 @@ import { BigNumber as EBN } from "ethers";
 import {
   AddDepositEvent,
   AddWithdrawalEvent,
-  PlotTransferEvent,
   RemoveDepositEvent,
   RemoveWithdrawalEvent,
   RemoveWithdrawalsEvent,
-  SowEvent,
-  HarvestEvent,
 } from "../../constants/generated/Beanstalk/Beanstalk";
 import EventProcessor, { EventProcessingParameters } from "./processor";
 import { BeanstalkSDK } from "../BeanstalkSDK";

@@ -1,6 +1,6 @@
 {
-  "name": "sdk-playground",
-  "main": "src/sdk.ts",
+  "name": "@beanstalk/examples",
+  "main": "src/index.ts",
   "dependencies": {
     "@beanstalk/sdk": "workspace:*"
   },

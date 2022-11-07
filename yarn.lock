@@ -798,6 +798,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@beanstalk/examples@workspace:packages/examples":
+  version: 0.0.0-use.local
+  resolution: "@beanstalk/examples@workspace:packages/examples"
+  dependencies:
+    "@beanstalk/sdk": "workspace:*"
+    "@swc/core": 1.3.11
+    "@swc/register": 0.1.10
+    bignumber.js: 9.1.0
+    ethers: 5.7.2
+  languageName: unknown
+  linkType: soft
+
 "@beanstalk/sdk@workspace:*, @beanstalk/sdk@workspace:packages/sdk":
   version: 0.0.0-use.local
   resolution: "@beanstalk/sdk@workspace:packages/sdk"
@@ -7485,18 +7497,6 @@ __metadata:
   checksum: cd094ac3718b0070a222f9a499b280c698fdea10268cc163fa244421099544c1766dd893fdee0e2a8eba5d53ab9d0bcb11067bedff166665030fa6fda25a096b
   languageName: node
   linkType: hard
-
-"sdk-playground@workspace:packages/sdk-client":
-  version: 0.0.0-use.local
-  resolution: "sdk-playground@workspace:packages/sdk-client"
-  dependencies:
-    "@beanstalk/sdk": "workspace:*"
-    "@swc/core": 1.3.11
-    "@swc/register": 0.1.10
-    bignumber.js: 9.1.0
-    ethers: 5.7.2
-  languageName: unknown
-  linkType: soft
 
 "semver@npm:7.x, semver@npm:^7.3.5, semver@npm:^7.3.7":
   version: 7.3.8

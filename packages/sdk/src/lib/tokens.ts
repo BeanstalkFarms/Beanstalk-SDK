@@ -243,11 +243,18 @@ export class Tokens {
     return this.map.get(address.toLowerCase());
   }
 
-  _deriveAddress(value: string | Token) {
+  /**
+   * Destruct a string (address) | Token => address
+   */
+  private deriveAddress(value: string | Token) {
     return typeof value === "string" ? value : value.address;
   }
 
-  _deriveToken(value: string | Token): [Token, string] {
+  /**
+   * Destruct a string (address) | Token => [Token, address]
+   * Fails if `this.map` doesn't contain the Token.
+   */
+  private deriveToken(value: string | Token): [Token, string] {
     if (typeof value === "string") {
       const _token = this.findByAddress(value);
       if (!_token) throw new Error(`Unknown token: ${value}`);
@@ -256,7 +263,10 @@ export class Tokens {
     return [value, value.address];
   }
 
-  _balanceStructToTokenBalance(
+  /**
+   * Convert TokenFacet.BalanceStructOutput to a TokenBalance.
+   */
+  private makeTokenBalance(
     token: Token,
     result: {
       internalBalance: BigNumber;
@@ -272,7 +282,7 @@ export class Tokens {
   }
 
   /**
-   * Return a TokenBalance struct for a requested token.
+   * Return a TokenBalance for a requested token.
    * Includes the Farmer's INTERNAL and EXTERNAL balance in one item.
    * This is the typical representation of balances within Beanstalk.
    */
@@ -283,19 +293,19 @@ export class Tokens {
     // Here we use the native getBalance() method and cast to a TokenBalance.
     if (_token === this.ETH) {
       const balance = await this.sdk.provider.getBalance(account);
-      return this._balanceStructToTokenBalance(_token, {
+      return this.makeTokenBalance(_token, {
         internalBalance: ZERO_BN,
         externalBalance: balance,
-        totalBalance: balance,
+        totalBalance:    balance,
       });
     }
 
     // FIXME: use the ERC20 token contract directly to load decimals for parsing?
-    const [token, tokenAddress] = this._deriveToken(_token);
+    const [token, tokenAddress] = this.deriveToken(_token);
 
     const balance = await this.sdk.contracts.beanstalk.getAllBalance(account, tokenAddress);
 
-    return this._balanceStructToTokenBalance(token, balance);
+    return this.makeTokenBalance(token, balance);
   }
 
   /**
@@ -307,8 +317,8 @@ export class Tokens {
    */
   public async getBalances(_account?: string, _tokens?: (string | Token)[]): Promise<Map<Token, TokenBalance>> {
     const account = await this.sdk.getAccount(_account);
-    const tokens = _tokens || Array.from(this.erc20Tokens);
-    const tokenAddresses = tokens.map(this._deriveAddress);
+    const tokens = _tokens || Array.from(this.erc20Tokens); // is this a good default?
+    const tokenAddresses = tokens.map(this.deriveAddress);
 
     // FIXME: only allow ERC20 tokens with getBalance() method, or
     // override if token is NativeToken
@@ -321,7 +331,7 @@ export class Tokens {
       // FIXME: use the ERC20 token contract directly to load decimals for parsing?
       if (!token) throw new Error(`Unknown token: ${tokenAddresses}`);
 
-      balances.set(token, this._balanceStructToTokenBalance(token, result));
+      balances.set(token, this.makeTokenBalance(token, result));
     });
 
     return balances;
@@ -335,9 +345,11 @@ export class Tokens {
    *
    * @ref https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L85
    */
-  private async _getEIP712DomainForToken(token: ERC20Token): Promise<EIP712Domain> {
-    const [name, chainId] = await Promise.all([token.getName(), this.sdk.provider.getNetwork().then((network) => network.chainId)]);
-
+  private async getEIP712DomainForToken(token: ERC20Token): Promise<EIP712Domain> {
+    const [name, chainId] = await Promise.all([
+      token.getName(), 
+      this.sdk.provider.getNetwork().then((network) => network.chainId)
+    ]);
     return {
       name,
       version: "1",
@@ -354,7 +366,7 @@ export class Tokens {
    *
    * @fixme should this be in `tokens.ts`?
    * @fixme does the order of keys in `message` matter? if not we could make an abstraction here
-   * @fixme `permitERC2612` -> `getERC20Permit`
+   * @fixme `permitERC2612` -> `getERC20Permit`?
    *
    * @ref https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L126
    * @param token a Token instance representing an ERC20 token to permit
@@ -374,7 +386,7 @@ export class Tokens {
   ): Promise<EIP712TypedData<EIP2612PermitMessage>> {
     const deadline = _deadline || Permit.MAX_UINT256;
     const [domain, nonce] = await Promise.all([
-      this._getEIP712DomainForToken(token),
+      this.getEIP712DomainForToken(token),
       // @ts-ignore FIXME
       token
         .getContract()
@@ -382,7 +394,7 @@ export class Tokens {
         .then((r) => r.toString()),
     ]);
 
-    return this._createTypedERC2612Data(domain, {
+    return this.createTypedERC2612Data(domain, {
       owner,
       spender,
       value,
@@ -391,7 +403,7 @@ export class Tokens {
     });
   }
 
-  private _createTypedERC2612Data = (domain: EIP712Domain, message: EIP2612PermitMessage) => ({
+  private createTypedERC2612Data = (domain: EIP712Domain, message: EIP2612PermitMessage) => ({
     types: {
       EIP712Domain: Permit.EIP712_DOMAIN,
       Permit: [
@@ -406,17 +418,4 @@ export class Tokens {
     domain,
     message,
   });
-
-  //////////////////////// PERMIT: Beanstalk "Token" (for internal balances) ////////////////////////
-
-  // TODO
-
-  //////////////////////// Create new Token instance ////////////////////////
-  // public async createERC20<
-  //   T1 extends ConstructorParameters<typeof ERC20Token>,
-  //   T2 = [any]
-  // >(
-  //   ...args: T[]
-  // ) {
-  // }
 }

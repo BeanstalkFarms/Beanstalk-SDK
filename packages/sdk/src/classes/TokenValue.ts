@@ -121,6 +121,7 @@ export class TokenValue {
   toBlockchain(): string {
     return this.value.toBigNumber().toString();
   }
+  
   /**
    * @deprecated
    * Ambiguous function. This exists only as a safety, otherwise the .toString()

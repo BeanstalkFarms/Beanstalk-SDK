@@ -1,4 +1,4 @@
-### SDK Client
+### examples
 
 This project is here to make it easier to develop, test, and play with the SDK. It serves as a place to write code that consumes the SDK.
 
