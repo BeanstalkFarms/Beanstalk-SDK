@@ -1,11 +1,11 @@
-import { ethers } from 'ethers';
-import { CurveMetaPool__factory, CurvePlainPool__factory } from '../../../constants/generated';
-import { assert } from '../../../utils';
-import { FarmFromMode, FarmToMode } from '../types';
-import { Action, ActionResult, BaseAction } from '../types';
+import { ethers } from "ethers";
+import { CurveMetaPool__factory, CurvePlainPool__factory } from "../../../constants/generated";
+import { assert } from "../../../utils";
+import { FarmFromMode, FarmToMode } from "../types";
+import { Action, ActionResult, BaseAction } from "../types";
 
 export class AddLiquidity extends BaseAction implements Action {
-  public name: string = 'addLiquidity';
+  public name: string = "addLiquidity";
 
   constructor(
     private _pool: string,
@@ -18,17 +18,17 @@ export class AddLiquidity extends BaseAction implements Action {
   }
 
   async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
-    AddLiquidity.sdk.debug('[step@addLiquidity] run: ', {
-      _pool: this._pool,
-      _registry: this._registry,
-      _amounts: this._amounts,
-      _fromMode: this._fromMode,
-      _toMode: this._toMode,
-      _amountInStep,
+    AddLiquidity.sdk.debug(`[${this.name}.run()]`, {
+      pool: this._pool,
+      registry: this._registry,
+      amounts: this._amounts,
+      amountInStep: _amountInStep,
+      fromMode: this._fromMode,
+      toMode: this._toMode,
     });
 
     /// [0, 0, 1] => [0, 0, amountIn]
-    const amountInStep = this._amounts.map(k => (k === 1 ? _amountInStep : ethers.BigNumber.from(0)));
+    const amountInStep = this._amounts.map((k) => (k === 1 ? _amountInStep : ethers.BigNumber.from(0)));
 
     /// Get amount out based on the selected pool
     const poolAddr = this._pool.toLowerCase();
@@ -43,8 +43,8 @@ export class AddLiquidity extends BaseAction implements Action {
         true, // _is_deposit
         { gasLimit: 10000000 }
       );
-    } 
-    
+    }
+
     /// Case: 3Pool
     else if (poolAddr === pools.pool3.address.toLowerCase()) {
       assert(amountInStep.length === 3);
@@ -53,12 +53,14 @@ export class AddLiquidity extends BaseAction implements Action {
         true, // _is_deposit
         { gasLimit: 10000000 }
       );
-    } 
-    
+    }
+
     /// Case: Metapools
     else if (this._registry === AddLiquidity.sdk.contracts.curve.registries.metaFactory.address) {
       assert(amountInStep.length === 2);
-      amountOut = await CurveMetaPool__factory.connect(this._pool, AddLiquidity.sdk.provider).callStatic['calc_token_amount(uint256[2],bool)'](
+      amountOut = await CurveMetaPool__factory.connect(this._pool, AddLiquidity.sdk.provider).callStatic[
+        "calc_token_amount(uint256[2],bool)"
+      ](
         amountInStep as [any, any],
         true, // _is_deposit
         { gasLimit: 10000000 }
@@ -72,8 +74,8 @@ export class AddLiquidity extends BaseAction implements Action {
       );
     }
 
-    if (!amountOut) throw new Error('No supported pool found');
-    AddLiquidity.sdk.debug('[step@addLiquidity] finish: ', {
+    if (!amountOut) throw new Error("No supported pool found");
+    AddLiquidity.sdk.debug("[step@addLiquidity] finish: ", {
       amountInStep: amountInStep.toString(),
       amountOut: amountOut.toString(),
     });
@@ -82,8 +84,16 @@ export class AddLiquidity extends BaseAction implements Action {
       name: this.name,
       amountOut,
       encode: (minAmountOut?: ethers.BigNumber) => {
-        if (!minAmountOut) throw new Error('AddLiquidity: missing minAmountOut');
-        return AddLiquidity.sdk.contracts.beanstalk.interface.encodeFunctionData('addLiquidity', [
+        AddLiquidity.sdk.debug(`[${this.name}.encode()]`, {
+          pool: this._pool,
+          registry: this._registry,
+          amountInStep: _amountInStep,
+          minAmountOut,
+          fromMode: this._fromMode,
+          toMode: this._toMode,
+        });
+        if (!minAmountOut) throw new Error("AddLiquidity: missing minAmountOut");
+        return AddLiquidity.sdk.contracts.beanstalk.interface.encodeFunctionData("addLiquidity", [
           this._pool,
           this._registry,
           amountInStep as any[], // could be 2 or 3 elems
@@ -92,7 +102,7 @@ export class AddLiquidity extends BaseAction implements Action {
           this._toMode,
         ]);
       },
-      decode: (data: string) => AddLiquidity.sdk.contracts.beanstalk.interface.decodeFunctionData('addLiquidity', data),
+      decode: (data: string) => AddLiquidity.sdk.contracts.beanstalk.interface.decodeFunctionData("addLiquidity", data),
       data: {
         pool: this._pool,
         registry: this._registry,
