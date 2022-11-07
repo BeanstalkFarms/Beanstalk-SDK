@@ -13,7 +13,7 @@ export class Swap {
     this.router = new Router(sdk);
   }
 
-  public async buildSwap(tokenIn: Token, tokenOut: Token, from?: FarmFromMode, to?: FarmToMode) {
+  public buildSwap(tokenIn: Token, tokenOut: Token, account: string, _from?: FarmFromMode, _to?: FarmToMode) {
     const route = this.router.findPath(tokenIn, tokenOut);
 
     const workflow = Swap.sdk.farm.create();
@@ -21,25 +21,30 @@ export class Swap {
     // Handle Farm Modes
     // For a single step swap (ex, ETH > WETH, or BEAN > BEAN), use the passed modes, if available
     if (route.length === 1) {
-      workflow.addStep(await route[0].step(from || FarmFromMode.EXTERNAL, to || FarmToMode.EXTERNAL));
+      workflow.addStep(route[0].step(account, _from || FarmFromMode.EXTERNAL, _to || FarmToMode.EXTERNAL));
     }
     // for a multi step swap (ex, ETH -> WETH -> USDT -> BEAN), we want the user's choices for
     // FarmFromMode and FarmToMode, if supplied, to only apply to the first and last legs
     // of the swap, keeping the intermediate trades as INTERNAL.
     else {
       for (let i = 0; i < route.length; i++) {
+        let from, to;
         // First leg, use (USER-DEFINED, INTERNAL)
         if (i == 0) {
-          workflow.addStep(await route[i].step(from || FarmFromMode.EXTERNAL, FarmToMode.INTERNAL));
+          from = _from || FarmFromMode.EXTERNAL;
+          to = FarmToMode.INTERNAL;
         }
         // Last leg, use (INTERNAL_TOLERANT, USER-DEFINED)
         else if (i == route.length - 1) {
-          workflow.addStep(await route[i].step(FarmFromMode.INTERNAL_TOLERANT, to || FarmToMode.EXTERNAL));
+          from = FarmFromMode.INTERNAL_TOLERANT;
+          to = _to || FarmToMode.EXTERNAL;
         }
         // In-between legs, use (INTERNAL_TOLERANT, INTERNAL)
         else {
-          workflow.addStep(await route[i].step(FarmFromMode.INTERNAL_TOLERANT, FarmToMode.INTERNAL));
+          from = FarmFromMode.INTERNAL_TOLERANT;
+          to = FarmToMode.INTERNAL;
         }
+        workflow.addStep(route[i].step(account, from, to));
       }
     }
 

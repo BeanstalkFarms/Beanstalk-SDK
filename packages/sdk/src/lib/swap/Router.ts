@@ -5,7 +5,7 @@ import { Action, FarmFromMode, FarmToMode } from "src/lib/farm/types";
 import { ActionBuilder } from "src/lib/farm/LibraryPresets";
 
 type RouterResult = {
-  step: (fromMode?: FarmFromMode, toMode?: FarmToMode) => Action | Promise<Action>;
+  step: (account: string, fromMode?: FarmFromMode, toMode?: FarmToMode) => Action;
   from: string;
   to: string;
 };
@@ -92,43 +92,43 @@ export class Router {
 
     // ETH<>WETH
     this.graph.setEdge("ETH", "WETH", {
-      step: (_: FarmFromMode, to: FarmToMode) => new Router.sdk.farm.actions.WrapEth(to),
+      step: (_: string, _2: FarmFromMode, to: FarmToMode) => new Router.sdk.farm.actions.WrapEth(to),
       from: "ETH",
       to: "WETH",
     });
     this.graph.setEdge("WETH", "ETH", {
-      step: (_: FarmFromMode, to: FarmToMode) => new Router.sdk.farm.actions.UnwrapEth(to),
+      step: (_: string, _2: FarmFromMode, to: FarmToMode) => new Router.sdk.farm.actions.UnwrapEth(to),
       from: "WETH",
       to: "ETH",
     });
 
     // WETH<>USDT
     this.graph.setEdge("WETH", "USDT", {
-      step: Router.sdk.farm.presets.weth2usdt,
+      step: (_: string, from: FarmFromMode, to: FarmToMode) => Router.sdk.farm.presets.weth2usdt(from, to),
       from: "WETH",
       to: "USDT",
     });
     this.graph.setEdge("USDT", "WETH", {
-      step: Router.sdk.farm.presets.usdt2weth,
+      step: (_: string, from: FarmFromMode, to: FarmToMode) => Router.sdk.farm.presets.usdt2weth(from, to),
       from: "USDT",
       to: "WETH",
     });
 
     // USDT<>BEAN
     this.graph.setEdge("USDT", "BEAN", {
-      step: Router.sdk.farm.presets.usdt2bean,
+      step: (_: string, from: FarmFromMode, to: FarmToMode) => Router.sdk.farm.presets.usdt2bean(from, to),
       from: "USDT",
       to: "BEAN",
     });
     this.graph.setEdge("BEAN", "USDT", {
-      step: Router.sdk.farm.presets.bean2usdt,
+      step: (_: string, from: FarmFromMode, to: FarmToMode) => Router.sdk.farm.presets.bean2usdt(from, to),
       from: "BEAN",
       to: "USDT",
     });
 
     // USDC<>BEAN
     this.graph.setEdge("USDC", "BEAN", {
-      step: (from: FarmFromMode, to: FarmToMode) =>
+      step: (_: string, from: FarmFromMode, to: FarmToMode) =>
         new Router.sdk.farm.actions.ExchangeUnderlying(
           Router.sdk.contracts.curve.pools.beanCrv3.address,
           Router.sdk.tokens.USDC,
@@ -140,7 +140,7 @@ export class Router {
       to: "BEAN",
     });
     this.graph.setEdge("BEAN", "USDC", {
-      step: (from: FarmFromMode, to: FarmToMode) =>
+      step: (_: string, from: FarmFromMode, to: FarmToMode) =>
         new Router.sdk.farm.actions.ExchangeUnderlying(
           Router.sdk.contracts.curve.pools.beanCrv3.address,
           Router.sdk.tokens.BEAN,
@@ -154,7 +154,7 @@ export class Router {
 
     // DAI<>BEAN
     this.graph.setEdge("DAI", "BEAN", {
-      step: (from: FarmFromMode, to: FarmToMode) =>
+      step: (_: string, from: FarmFromMode, to: FarmToMode) =>
         new Router.sdk.farm.actions.ExchangeUnderlying(
           Router.sdk.contracts.curve.pools.beanCrv3.address,
           Router.sdk.tokens.DAI,
@@ -166,7 +166,7 @@ export class Router {
       to: "BEAN",
     });
     this.graph.setEdge("BEAN", "DAI", {
-      step: (from: FarmFromMode, to: FarmToMode) =>
+      step: (_: string, from: FarmFromMode, to: FarmToMode) =>
         new Router.sdk.farm.actions.ExchangeUnderlying(
           Router.sdk.contracts.curve.pools.beanCrv3.address,
           Router.sdk.tokens.BEAN,
@@ -180,7 +180,7 @@ export class Router {
 
     // CRV3<>BEAN
     this.graph.setEdge("3CRV", "BEAN", {
-      step: (from: FarmFromMode, to: FarmToMode) =>
+      step: (_: string, from: FarmFromMode, to: FarmToMode) =>
         new Router.sdk.farm.actions.Exchange(
           Router.sdk.contracts.curve.pools.beanCrv3.address,
           Router.sdk.contracts.curve.registries.metaFactory.address,
@@ -193,7 +193,7 @@ export class Router {
       to: "BEAN",
     });
     this.graph.setEdge("BEAN", "3CRV", {
-      step: (from: FarmFromMode, to: FarmToMode) =>
+      step: (_: string, from: FarmFromMode, to: FarmToMode) =>
         new Router.sdk.farm.actions.Exchange(
           Router.sdk.contracts.curve.pools.beanCrv3.address,
           Router.sdk.contracts.curve.registries.metaFactory.address,
@@ -209,10 +209,7 @@ export class Router {
 
   private buildSelfTransfer(token: Token): RouterResult {
     return {
-      step: async (from?: FarmFromMode, to?: FarmToMode): Promise<Action> => {
-        const account = await Router.sdk.getAccount();
-        if (!account) throw new Error("Failed to get account in Router.buildSelfTransfer()");
-
+      step: (account: string, from?: FarmFromMode, to?: FarmToMode): Action => {
         return new Router.sdk.farm.actions.TransferToken(token.address, account, from, to);
       },
       from: token.symbol,
