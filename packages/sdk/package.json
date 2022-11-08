@@ -18,8 +18,7 @@
     "generate:graphql": "graphql-codegen --config codegen.ts",
     "dev": "tsc --noEmit --watch",
     "ts": "rimraf dist && tsc && tsc-alias -p tsconfig.json",
-    "build": "yarn ts && rollup -c --bundleConfigAsCjs --silent && rimraf dist/js",
-    "test": "jest -i"
+    "build": "yarn ts && rollup -c --bundleConfigAsCjs --silent && rimraf dist/js"
   },
   "peerDependencies": {
     "ethers": "5.6.8"
@@ -28,6 +27,7 @@
     "@ethersproject/bytes": "5.7.0",
     "@ethersproject/logger": "5.7.0",
     "bn.js": "5.2.1",
+    "graphlib": "2.1.8",
     "graphql": "16.6.0",
     "graphql-request": "^4",
     "graphql-tag": "2.12.6",
@@ -50,6 +50,7 @@
     "@types/bn.js": "^5",
     "@types/chai": "^4",
     "@types/eslint": "^8",
+    "@types/graphlib": "2.1.8",
     "@types/jest": "^29.1.2",
     "@types/lodash": "^4.14.186",
     "@types/lodash-es": "^4",

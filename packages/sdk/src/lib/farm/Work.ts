@@ -1,4 +1,5 @@
 import { BigNumber, ContractTransaction, ethers } from "ethers";
+import { TokenValue } from "src/TokenValue";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import { Action, ActionFunction, ActionResult, BaseAction, Farmable } from "./types";
 
@@ -53,12 +54,12 @@ export class Work {
    */
   addStep(action: Action | ActionFunction) {
     if (action instanceof BaseAction) {
-      console.log(`action`);
       action.setSDK(Work.sdk);
       this.steps.push(action);
+      Work.sdk.debug(`Work.addStep(): ${action.name}`);
     } else if (action instanceof Function) {
       this.steps.push(action);
-      console.log("A Function");
+      Work.sdk.debug(`Work.addStep(): function ${action.prototype.name}()`);
     } else {
       throw new Error("Received action that is of unknown type");
     }
@@ -140,8 +141,9 @@ export class Work {
    * @param amountIn Amount to send to workflow as input for estimation
    * @returns Promise of BigNumber
    */
-  async estimate(amountIn: ethers.BigNumber): Promise<ethers.BigNumber> {
-    let nextAmount = amountIn;
+  async estimate(amountIn: ethers.BigNumber | TokenValue): Promise<ethers.BigNumber> {
+    let nextAmount = amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn;
+    Work.sdk.debug(`[Work.estimate()]`, { nextAmount });
 
     // clear any previous results
     this.stepResults = [];
@@ -160,7 +162,7 @@ export class Work {
         throw e;
       }
     }
-
+    Work.sdk.debug(`[Work.estimate(END)]`);
     return nextAmount;
   }
 
@@ -171,8 +173,9 @@ export class Work {
    * @param desiredAmountOut The end amount you want the workflow to output
    * @returns Promise of BigNumber
    */
-  async estimateReversed(desiredAmountOut: ethers.BigNumber): Promise<ethers.BigNumber> {
-    let nextAmount = desiredAmountOut;
+  async estimateReversed(desiredAmountOut: ethers.BigNumber | TokenValue): Promise<ethers.BigNumber> {
+    let nextAmount = desiredAmountOut instanceof TokenValue ? desiredAmountOut.toBigNumber() : desiredAmountOut;
+    Work.sdk.debug(`[Work.estimateReversed()]`, { desiredAmountOut: nextAmount });
 
     // clear any previous results
     this.stepResults = [];
@@ -180,7 +183,7 @@ export class Work {
     for (let i = this.steps.length - 1; i >= 0; i -= 1) {
       nextAmount = await this.runAction(this.steps[i], nextAmount, false);
     }
-
+    Work.sdk.debug(`[Work.estimateReversed(END)]`);
     return nextAmount;
   }
 
@@ -215,10 +218,13 @@ export class Work {
    * @param slippage A human readable percent value. Ex: 0.1 would mean 0.1% slippage
    * @returns Promise of a Transaction
    */
-  async execute(amountIn: ethers.BigNumber, slippage: number): Promise<ContractTransaction> {
+  async execute(_amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<ContractTransaction> {
+    Work.sdk.debug(`[Work.execute()]`, { amountIn: _amountIn, slippage });
+    const amountIn = _amountIn instanceof TokenValue ? _amountIn.toBigNumber() : _amountIn;
     await this.estimate(amountIn);
     const data = this.encodeStepsWithSlippage(slippage / 100);
     const txn = await Work.sdk.contracts.beanstalk.farm(data, { value: this.value });
+    Work.sdk.debug(`[Work.execute(END)]`);
 
     return txn;
   }
@@ -229,7 +235,7 @@ export class Work {
    * @param slippage A human readable percent value. Ex: 0.1 would mean 0.1% slippage
    * @returns Promise of a Transaction
    */
-  async callStatic(amountIn: ethers.BigNumber, slippage: number): Promise<string[]> {
+  async callStatic(amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<string[]> {
     await this.estimate(amountIn);
     const data = this.encodeStepsWithSlippage(slippage / 100);
     const result = await Work.sdk.contracts.beanstalk.callStatic.farm(data, { value: this.value });
@@ -250,7 +256,7 @@ export class Work {
    * @param slippage
    * @returns
    */
-  async estimateGas(amountIn: ethers.BigNumber, slippage: number): Promise<any> {
+  async estimateGas(amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<any> {
     await this.estimate(amountIn);
     const data = this.encodeStepsWithSlippage(slippage / 100);
     const txn = Work.sdk.contracts.beanstalk.estimateGas.farm(data, { value: this.value });

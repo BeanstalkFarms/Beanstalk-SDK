@@ -1,11 +1,11 @@
-import { ethers } from 'ethers';
-import { Token } from '../../../classes/Token';
-import { CurveMetaPool__factory, CurvePlainPool__factory } from '../../../constants/generated';
-import { FarmFromMode, FarmToMode } from '../types';
-import { Action, ActionResult, BaseAction } from '../types';
+import { ethers } from "ethers";
+import { Token } from "../../../classes/Token";
+import { CurveMetaPool__factory, CurvePlainPool__factory } from "../../../constants/generated";
+import { FarmFromMode, FarmToMode } from "../types";
+import { Action, ActionResult, BaseAction } from "../types";
 
 export class Exchange extends BaseAction implements Action {
-  public name: string = 'exchange';
+  public name: string = "exchange";
 
   constructor(
     private pool: string,
@@ -19,7 +19,16 @@ export class Exchange extends BaseAction implements Action {
   }
 
   async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
-    Exchange.sdk.debug(`[workflow:exchange] ${_amountInStep.toString()} ${this.tokenIn.symbol} -> ${this.tokenOut.symbol} ${_forward}`);
+    Exchange.sdk.debug(`[${this.name}.run()]`, {
+      pool: this.pool,
+      registry: this.registry,
+      tokenIn: this.tokenIn.symbol,
+      tokenOut: this.tokenOut.symbol,
+      amountInStep: _amountInStep,
+      forward: _forward,
+      fromMode: this.fromMode,
+      toMode: this.toMode,
+    });
     const [tokenIn, tokenOut] = this.direction(this.tokenIn, this.tokenOut, _forward);
 
     const registry = Exchange.sdk.contracts.curve.registries[this.registry];
@@ -39,7 +48,7 @@ export class Exchange extends BaseAction implements Action {
     } else if (poolAddr === pools.pool3.address.toLowerCase()) {
       amountOut = await pools.pool3.callStatic.get_dy(i, j, _amountInStep, { gasLimit: 10000000 });
     } else if (this.registry === Exchange.sdk.contracts.curve.registries.metaFactory.address) {
-      amountOut = await CurveMetaPool__factory.connect(this.pool, Exchange.sdk.provider).callStatic['get_dy(int128,int128,uint256)'](
+      amountOut = await CurveMetaPool__factory.connect(this.pool, Exchange.sdk.provider).callStatic["get_dy(int128,int128,uint256)"](
         i,
         j,
         _amountInStep,
@@ -51,14 +60,25 @@ export class Exchange extends BaseAction implements Action {
       });
     }
 
-    if (!amountOut) throw new Error('No supported pool found');
+    if (!amountOut) throw new Error("No supported pool found");
+    Exchange.sdk.debug(`[${this.name}.run()]: amountout: ${amountOut.toString()}`);
 
     return {
       name: this.name,
       amountOut,
       encode: (minAmountOut?: ethers.BigNumber) => {
-        if (!minAmountOut) throw new Error('Exhange: missing minAmountOut');
-        return Exchange.sdk.contracts.beanstalk.interface.encodeFunctionData('exchange', [
+        Exchange.sdk.debug(`[${this.name}.encode()]`, {
+          pool: this.pool,
+          registry: this.registry,
+          tokenIn: this.tokenIn.symbol,
+          tokenOut: this.tokenOut.symbol,
+          amountInStep: _amountInStep,
+          minAmountOut,
+          fromMode: this.fromMode,
+          toMode: this.toMode,
+        });
+        if (!minAmountOut) throw new Error("Exhange: missing minAmountOut");
+        return Exchange.sdk.contracts.beanstalk.interface.encodeFunctionData("exchange", [
           this.pool,
           this.registry,
           tokenIn.address,
@@ -69,7 +89,7 @@ export class Exchange extends BaseAction implements Action {
           this.toMode,
         ]);
       },
-      decode: (data: string) => Exchange.sdk.contracts.beanstalk.interface.decodeFunctionData('exchange', data),
+      decode: (data: string) => Exchange.sdk.contracts.beanstalk.interface.decodeFunctionData("exchange", data),
       data: {
         pool: this.pool,
         registry: this.registry,
