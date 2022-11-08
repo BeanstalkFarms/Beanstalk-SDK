@@ -48,29 +48,12 @@ export class Work {
     }
   }
 
-  /**
-   * @fixme remove in favor of `.add()`?
-   */
   addStep(action: Action | ActionFunction) {
-    if (action instanceof BaseAction) {
-      console.log(`action`);
-      action.setSDK(Work.sdk);
-      this.steps.push(action);
-    } else if (action instanceof Function) {
-      this.steps.push(action);
-      console.log("A Function");
-    } else {
-      throw new Error("Received action that is of unknown type");
-    }
+    this.add(action);
   }
 
-  /**
-   * @fixme remove in favor of `.add()`?
-   */
   addSteps(actions: (Action | Action[] | ActionFunction)[]) {
-    for (const action of actions) {
-      Array.isArray(action) ? this.addSteps(action) : this.addStep(action);
-    }
+    this.add(actions);
   }
 
   copy() {
