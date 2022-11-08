@@ -7,14 +7,16 @@ require("@swc/register")({
   jsc: {
     parser: {
       syntax: "typescript",
-      tsx: true,
-      decorators: true,
     },
-    transform: {
-      react: {
-        runtime: "automatic",
-      },
+    paths: {
+      "@sdk/*": ["../sdk/src/*"],
     },
+    baseUrl: ".",
+    // transform: {
+    //   react: {
+    //     runtime: "automatic",
+    //   },
+    // },
   },
   module: {
     type: "commonjs",

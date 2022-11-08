@@ -1,12 +1,12 @@
-import { ERC20Token, Token } from 'src/classes/Token';
-import { BeanstalkSDK } from 'src/lib/BeanstalkSDK';
-import { Farmable, FarmFromMode, FarmToMode } from '../farm/types';
-import { EIP2612PermitMessage, SignedPermit } from '../permit';
-import { Exchange, ExchangeUnderlying } from './actions/index';
+import { ERC20Token, Token } from "src/classes/Token";
+import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
+import { Farmable, FarmFromMode, FarmToMode } from "../farm/types";
+import { EIP2612PermitMessage, SignedPermit } from "../permit";
+import { Exchange, ExchangeUnderlying } from "./actions/index";
 
-import { Action } from './types';
+import { Action } from "./types";
 
-type ActionBuilder = (fromMode?: FarmFromMode, toMode?: FarmToMode) => Action | Action[];
+export type ActionBuilder = (fromMode?: FarmFromMode, toMode?: FarmToMode) => Action | Action[];
 
 export class LibraryPresets {
   static sdk: BeanstalkSDK;
@@ -17,57 +17,46 @@ export class LibraryPresets {
   public readonly weth2bean: ActionBuilder;
   public readonly bean2weth: ActionBuilder;
 
-
   /**
    * Load the Pipeline in preparation for a set Pipe actions.
    */
   public loadPipeline(
-    _token:   ERC20Token,
-    _amount:  string, // ??
-    _from:    FarmFromMode,
-    _permit?: SignedPermit<EIP2612PermitMessage>,
+    _token: ERC20Token,
+    _amount: string, // ??
+    _from: FarmFromMode,
+    _permit?: SignedPermit<EIP2612PermitMessage>
   ) {
-    let actions : Farmable[] = [];
+    let actions: Farmable[] = [];
 
     // FIXME
-    if (_from !== FarmFromMode.EXTERNAL) throw new Error('Not implemented');
+    if (_from !== FarmFromMode.EXTERNAL) throw new Error("Not implemented");
 
     // give beanstalk permission to send this ERC-20 token from my balance -> pipeline
     if (_permit) {
-      actions.push(
-        async function permitERC20() {
-          return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData(
-            "permitERC20",
-            [
-              _token.address, // token address
-              await LibraryPresets.sdk.getAccount(), // owner
-              LibraryPresets.sdk.contracts.beanstalk.address, // spender
-              _amount, // value
-              _permit.typedData.message.deadline, // deadline
-              _permit.split.v,
-              _permit.split.r,
-              _permit.split.s
-            ]
-          )
-        }
-      )
-    } 
+      actions.push(async function permitERC20() {
+        return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [
+          _token.address, // token address
+          await LibraryPresets.sdk.getAccount(), // owner
+          LibraryPresets.sdk.contracts.beanstalk.address, // spender
+          _amount, // value
+          _permit.typedData.message.deadline, // deadline
+          _permit.split.v,
+          _permit.split.r,
+          _permit.split.s,
+        ]);
+      });
+    }
 
     // transfer erc20 token from beanstalk -> pipeline
-    actions.push(
-      async function transferToken() {
-        return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData(
-          "transferToken",
-          [
-            _token.address, // token
-            LibraryPresets.sdk.contracts.pipeline.address, // recipient
-            _amount, // amount
-            _from, // from
-            FarmToMode.EXTERNAL // to
-          ]
-        )
-      }
-    );
+    actions.push(async function transferToken() {
+      return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("transferToken", [
+        _token.address, // token
+        LibraryPresets.sdk.contracts.pipeline.address, // recipient
+        _amount, // amount
+        _from, // from
+        FarmToMode.EXTERNAL, // to
+      ]);
+    });
 
     return actions;
   }

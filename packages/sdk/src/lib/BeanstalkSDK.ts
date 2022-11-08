@@ -1,19 +1,22 @@
-import { GraphQLClient } from 'graphql-request';
-import { ethers } from 'ethers';
-import { BeanstalkConfig, DataSource, Provider, Reconfigurable, Signer } from '../types';
-import { enumFromValue } from '../utils';
-import { addresses, ChainId } from '../constants';
-import { Tokens } from './tokens';
-import { Contracts } from './contracts';
+import { GraphQLClient } from "graphql-request";
+import { ethers } from "ethers";
+import { BeanstalkConfig, DataSource, Provider, Reconfigurable, Signer } from "../types";
+import { enumFromValue } from "../utils";
+import { addresses, ChainId } from "../constants";
+import { Tokens } from "./tokens";
+import { Contracts } from "./contracts";
 
-import { EventManager } from './events/EventManager';
-import { Silo } from './silo';
-import { Sun } from './sun';
-import { Farm } from './farm';
-import { Permit } from './permit';
-import { Root } from './root';
-import { Depot } from './depot/depot';
-import { Sdk as Queries, getSdk as getQueries } from '../constants/generated-gql/graphql';
+import { EventManager } from "./events/EventManager";
+import { Silo } from "./silo";
+import { Sun } from "./sun";
+import { Farm } from "./farm";
+import { Permit } from "./permit";
+import { Root } from "./root";
+import { Depot } from "./depot/depot";
+import { Sdk as Queries, getSdk as getQueries } from "../constants/generated-gql/graphql";
+import { Token } from "src/classes/Token";
+import { FarmFromMode, FarmToMode } from "src";
+import { Swap } from "src/lib/swap/Swap";
 
 export class BeanstalkSDK {
   public DEBUG: boolean;
@@ -41,6 +44,7 @@ export class BeanstalkSDK {
   public readonly permit: Permit;
   public readonly root: Root;
   public readonly depot: Depot;
+  public readonly swap: Swap;
 
   constructor(config?: BeanstalkConfig) {
     this.handleConfig(config);
@@ -54,7 +58,7 @@ export class BeanstalkSDK {
     this.addresses = addresses;
     this.contracts = new Contracts(this);
     this.tokens = new Tokens(this);
-    this.graphql = new GraphQLClient(config?.subgraphUrl || 'https://graph.node.bean.money/subgraphs/name/beanstalk');
+    this.graphql = new GraphQLClient(config?.subgraphUrl || "https://graph.node.bean.money/subgraphs/name/beanstalk");
     this.queries = getQueries(this.graphql);
 
     // Internal
@@ -66,9 +70,10 @@ export class BeanstalkSDK {
     this.sun = new Sun(this);
     this.depot = new Depot(this);
     this.farm = new Farm(this);
-    
+
     // Ecosystem
     this.root = new Root(this);
+    this.swap = new Swap(this);
   }
 
   handleConfig(config: BeanstalkConfig = {}) {
@@ -78,7 +83,7 @@ export class BeanstalkSDK {
 
     this.signer = config.signer;
     if (!config.provider && !config.signer) {
-      console.log('WARNING: No provider or signer specified, using DefaultProvider.');
+      console.log("WARNING: No provider or signer specified, using DefaultProvider.");
       this.provider = ethers.getDefaultProvider();
     } else {
       this.provider = config.signer?.provider ?? config.provider!;
@@ -95,21 +100,21 @@ export class BeanstalkSDK {
   }
 
   getProviderFromUrl(url: string): Provider {
-    if (url.startsWith('ws')) {
+    if (url.startsWith("ws")) {
       return new ethers.providers.WebSocketProvider(url);
     }
-    if (url.startsWith('http')) {
+    if (url.startsWith("http")) {
       return new ethers.providers.JsonRpcProvider();
     }
 
-    throw new Error('rpcUrl is invalid');
+    throw new Error("rpcUrl is invalid");
   }
 
   async getAccount(_account?: string): Promise<string> {
     if (_account) return _account.toLowerCase();
-    if (!this.signer) throw new Error('Cannot get account without a signer');
+    if (!this.signer) throw new Error("Cannot get account without a signer");
     const account = await this.signer.getAddress();
-    if (!account) throw new Error('Failed to get account from signer');
+    if (!account) throw new Error("Failed to get account from signer");
     return account.toLowerCase();
   }
 

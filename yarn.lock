@@ -831,6 +831,7 @@ __metadata:
     "@types/bn.js": ^5
     "@types/chai": ^4
     "@types/eslint": ^8
+    "@types/graphlib": 2.1.8
     "@types/jest": ^29.1.2
     "@types/lodash": ^4.14.186
     "@types/lodash-es": ^4
@@ -839,6 +840,7 @@ __metadata:
     chai: 4.3.6
     dotenv: ^16.0.3
     eslint: 8.26.0
+    graphlib: 2.1.8
     graphql: 16.6.0
     graphql-request: ^4
     graphql-tag: 2.12.6
@@ -2742,6 +2744,13 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: d076bb61f45d0fc42dee496ef8b1c2f8742e15d5e47e90e20d0243386e426c04d4efd408a48875ab432f7960b4ce3414db20ed0fbbfc7bcc89d84e574f6e045a
+  languageName: node
+  linkType: hard
+
+"@types/graphlib@npm:2.1.8":
+  version: 2.1.8
+  resolution: "@types/graphlib@npm:2.1.8"
+  checksum: ca0285c30e76626c7d63942057e21d45a6c85a4f1b7add5ed892b6a02bad12ce3c7e927c7d56fbb7daf3ff286eae2dcc8e0f475a6c6104b99ae49b888d2fa883
   languageName: node
   linkType: hard
 
@@ -4950,6 +4959,15 @@ __metadata:
   version: 1.0.4
   resolution: "grapheme-splitter@npm:1.0.4"
   checksum: 0c22ec54dee1b05cd480f78cf14f732cb5b108edc073572c4ec205df4cd63f30f8db8025afc5debc8835a8ddeacf648a1c7992fe3dcd6ad38f9a476d84906620
+  languageName: node
+  linkType: hard
+
+"graphlib@npm:2.1.8":
+  version: 2.1.8
+  resolution: "graphlib@npm:2.1.8"
+  dependencies:
+    lodash: ^4.17.15
+  checksum: 1e0db4dea1c8187d59103d5582ecf32008845ebe2103959a51d22cb6dae495e81fb9263e22c922bca3aaecb56064a45cd53424e15a4626cfb5a0c52d0aff61a8
   languageName: node
   linkType: hard
 
