@@ -174,8 +174,8 @@ export class Work {
    * @returns Promise of BigNumber
    */
   async estimateReversed(desiredAmountOut: ethers.BigNumber | TokenValue): Promise<ethers.BigNumber> {
-    Work.sdk.debug(`[Work.estimateReversed()]`, { desiredAmountOut });
     let nextAmount = desiredAmountOut instanceof TokenValue ? desiredAmountOut.toBigNumber() : desiredAmountOut;
+    Work.sdk.debug(`[Work.estimateReversed()]`, { desiredAmountOut: nextAmount });
 
     // clear any previous results
     this.stepResults = [];

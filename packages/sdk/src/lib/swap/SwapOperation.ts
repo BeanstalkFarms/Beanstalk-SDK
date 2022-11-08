@@ -83,10 +83,10 @@ export class SwapOperation {
    * @param desiredAmountOut The end amount you want the workflow to output
    * @returns Promise of BigNumber
    */
-  async estimateReversed(desiredAmountOut: BigNumber): Promise<TokenValue> {
+  async estimateReversed(desiredAmountOut: BigNumber | TokenValue): Promise<TokenValue> {
     if (!this.isValid()) throw new Error("Invalid swap configuration");
     const est = await this.workflow.estimateReversed(desiredAmountOut);
-    return this.tokenOut.fromBlockchain(est);
+    return this.tokenIn.fromBlockchain(est);
   }
 
   /**

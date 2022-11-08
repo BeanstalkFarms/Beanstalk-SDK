@@ -97,7 +97,7 @@ export class Router {
       to: "WETH",
     });
     this.graph.setEdge("WETH", "ETH", {
-      step: (_: string, _2: FarmFromMode, to: FarmToMode) => new Router.sdk.farm.actions.UnwrapEth(to),
+      step: (_: string, from: FarmFromMode, _2: FarmToMode) => new Router.sdk.farm.actions.UnwrapEth(from),
       from: "WETH",
       to: "ETH",
     });

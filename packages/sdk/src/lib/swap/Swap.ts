@@ -36,6 +36,8 @@ export class Swap {
         }
         // Last leg, use (INTERNAL_TOLERANT, USER-DEFINED)
         else if (i == route.length - 1) {
+          // Maybe?
+          // from = tokenOut.symbol == "ETH" ? FarmFromMode.INTERNAL : FarmFromMode.INTERNAL_TOLERANT;
           from = FarmFromMode.INTERNAL_TOLERANT;
           to = _to || FarmToMode.EXTERNAL;
         }
