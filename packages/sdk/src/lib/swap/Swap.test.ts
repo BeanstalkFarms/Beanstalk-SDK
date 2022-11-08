@@ -1,26 +1,13 @@
 import { Token } from "src/classes/Token";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
+import { getTestUtils } from "src/utils.tests/provider";
 import { FarmFromMode, FarmToMode } from "../farm/types";
-import { getProvider, setupConnection } from "src/utils.tests/provider";
-import { DataSource } from "src/types";
-import { TokenValue } from "src/TokenValue";
-import { JsonRpcProvider } from "@ethersproject/providers";
-import { Tokens } from "../tokens";
 
-const { provider, signer, account } = setupConnection();
-const sdk = new BeanstalkSDK({
-  signer,
-});
+const { sdk, account, utils } = getTestUtils();
 let snapshot: string;
 
 async function reset() {
-  await provider.send("anvil_reset", [
-    {
-      forking: {
-        jsonRpcUrl: "https://eth-mainnet.g.alchemy.com/v2/f6piiDvMBMGRYvCOwLJFMD7cUjIvI1TP",
-      },
-    },
-  ]);
+  await utils.resetFork();
 }
 
 beforeAll(async () => {

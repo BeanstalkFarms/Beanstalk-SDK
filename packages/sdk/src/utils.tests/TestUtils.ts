@@ -70,4 +70,14 @@ export default class TestUtils {
 
     console.log(`Sent!`);
   }
+
+  async resetFork() {
+    await this.sdk.provider.send("anvil_reset", [
+      {
+        forking: {
+          jsonRpcUrl: "https://eth-mainnet.g.alchemy.com/v2/f6piiDvMBMGRYvCOwLJFMD7cUjIvI1TP",
+        },
+      },
+    ]);
+  }
 }

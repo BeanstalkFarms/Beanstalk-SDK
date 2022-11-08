@@ -1,4 +1,6 @@
 import { ethers } from "ethers";
+import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
+import TestUtils from "./TestUtils";
 
 // private key + account mapping
 // these keys are provided by hardhat/anvil
@@ -12,7 +14,7 @@ export const getProvider = () =>
     chainId: 1337,
   });
 
-export const setupConnection = (provider: ethers.providers.Provider = getProvider()) => {
+export const setupConnection = (provider: ethers.providers.JsonRpcProvider = getProvider()) => {
   const [privateKey, account] = ACCOUNTS[0];
   const signer = new ethers.Wallet(privateKey, provider);
   return {
@@ -20,4 +22,16 @@ export const setupConnection = (provider: ethers.providers.Provider = getProvide
     signer,
     account,
   };
+};
+
+export const getTestUtils = () => {
+  const { signer, account } = setupConnection();
+  const sdk = new BeanstalkSDK({
+    signer,
+    subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing",
+  });
+
+  const utils = new TestUtils(sdk);
+
+  return { sdk, utils, account };
 };
