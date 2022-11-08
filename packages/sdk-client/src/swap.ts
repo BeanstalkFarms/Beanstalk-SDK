@@ -13,6 +13,8 @@ async function main() {
 
   // await swap(sdk, sdk.tokens.USDT, sdk.tokens.USDT, "500", FarmFromMode.INTERNAL, FarmToMode.EXTERNAL);
   await swap(sdk, sdk.tokens.ETH, sdk.tokens.BEAN, "10");
+
+  // sdk.swap.getGraph()
 }
 
 async function swap(

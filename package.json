@@ -18,6 +18,7 @@
     "sdk:dev": "yarn workspace @beanstalk/sdk dev",
     "sdk:build": "yarn workspace @beanstalk/sdk build",
     "sdk:test": "jest --selectProjects sdk --silent --",
+    "sdk:testdev": "jest --selectProjects sdk --watch --detectOpenHandles --",
     "sdk:generate": "yarn workspace @beanstalk/sdk generate",
     "sdk:prettier": "yarn prettier packages/sdk -w",
     "ex": "yarn workspace @beanstalk/examples ts --",
