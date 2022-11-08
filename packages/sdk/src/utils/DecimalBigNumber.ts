@@ -58,6 +58,10 @@ export class DecimalBigNumber {
     this._value = value;
     this._decimals = decimals;
   }
+  
+  public static from(value: string | BigNumber | number): DecimalBigNumber {
+    return new DecimalBigNumber(value.toString());
+  }
 
   public getDecimals(): number {
     return this._decimals;
