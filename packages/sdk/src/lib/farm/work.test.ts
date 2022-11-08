@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { Work } from "src/lib/farm/Work";
 import { setupConnection } from "../../utils.tests/provider";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 
@@ -61,18 +62,27 @@ describe("Workflow", () => {
   });
 
   describe("copy", () => {
-    it("copies to a new instance with same steps", async () => {
-      const farm1 = sdk.farm.create();
+    let farm1: Work;
+    beforeAll(async () => {
+      farm1 = sdk.farm.create();
       farm1.add(() => "0xCALLDATA1");
+      await farm1.estimate(ethers.BigNumber.from(100));
+    });
+
+    it("copies to a new instance with same steps", async () => {
       const farm2 = farm1.copy();
+      await farm2.estimate(ethers.BigNumber.from(100));
 
       expect(farm1).not.toBe(farm2); // diff instances
       expect(farm1.steps.length).toEqual(1);
       expect(farm2.steps.length).toEqual(1);
-
-      await Promise.all([farm1.estimate(ethers.BigNumber.from(100)), farm2.estimate(ethers.BigNumber.from(100))]);
-
       expect(farm1.stepResults[0].encode()).toEqual(farm2.stepResults[0].encode());
+    });
+
+    it("doesn't copy results", async () => {
+      const farm3 = farm1.copy();
+
+      expect(farm3.stepResults.length).toBe(0);
     });
   });
 
