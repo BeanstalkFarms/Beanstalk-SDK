@@ -142,8 +142,8 @@ export class Work {
    * @returns Promise of BigNumber
    */
   async estimate(amountIn: ethers.BigNumber | TokenValue): Promise<ethers.BigNumber> {
-    Work.sdk.debug(`[Work.estimate()]`, { amountIn });
     let nextAmount = amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn;
+    Work.sdk.debug(`[Work.estimate()]`, { nextAmount });
 
     // clear any previous results
     this.stepResults = [];

@@ -6,10 +6,8 @@ main().catch((e) => {
 });
 
 async function main() {
-  const bal = await sdk.tokens.getBalance(sdk.tokens.BEAN, account);
-  console.log(`BEAN: internal: ${bal.internal.toHuman()}`);
-  console.log(`BEAN: external: ${bal.external.toHuman()}`);
-  console.log(`BEAN: total: ${bal.total.toHuman()}`);
-
-  const op = sdk.swap.buildSwap(sdk.tokens.BEAN, sdk.tokens.BEAN, account);
+  const bal = await sdk.tokens.getBalance(sdk.tokens.ROOT, account);
+  console.log(`Balance: internal: ${bal.internal.toHuman()}`);
+  console.log(`Balance: external: ${bal.external.toHuman()}`);
+  console.log(`Balance: total: ${bal.total.toHuman()}`);
 }

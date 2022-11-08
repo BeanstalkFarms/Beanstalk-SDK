@@ -100,4 +100,8 @@ export class SwapOperation {
 
     return this.workflow.execute(amountIn, slippage);
   }
+
+  getFarm() {
+    return this.workflow;
+  }
 }

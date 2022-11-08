@@ -88,7 +88,7 @@ export default class TestUtils {
   /**
    * To add more erc20 tokens later, you need the slot number. Get it with this:
    * npx slot20 balanceOf TOKENADDRESS RANDOM_HOLDER_ADDRESS -v
-   * npx slot20 balanceOf 0x3d5965EB520E53CC1A6AEe3A44E5c1De406E028F 0x21DE18B6A8f78eDe6D16C50A167f6B222DC08DF7 -v
+   * npx slot20 balanceOf 0x3d5965EB520E53CC1A6AEe3A44E5c1De406E028F 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -v
    * set reverse to true if mapping format is (key, slot)
    *
    * From this article: https://kndrck.co/posts/local_erc20_bal_mani_w_hh/
