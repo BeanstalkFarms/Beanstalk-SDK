@@ -86,6 +86,16 @@ describe("Workflow", () => {
     });
   });
 
+  describe("clear", () => {
+    it.todo("clears results");
+  });
+
+  describe("get", () => {
+    it.todo("freezes steps()");
+    it.todo("freezes stepResults()");
+    it.todo("freezes value()");
+  });
+
   describe("run", () => {
     it.skip("runs a BaseAction", async () => {});
     it.skip("runs a Function that returns a string", async () => {});

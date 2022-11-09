@@ -8,6 +8,7 @@ type StepResult = ActionResult;
 
 /**
  * @fixme "step results" conflicts with naming of results post-execution
+ * @fixme improved error messages
  */
 export class Work {
   static SLIPPAGE_PRECISION = 10 ** 6;
@@ -39,8 +40,6 @@ export class Work {
     return _amount.mul(Math.floor(Work.SLIPPAGE_PRECISION * (1 - _slippage))).div(Work.SLIPPAGE_PRECISION);
   }
 
-  //////////////////////// Getters ////////////////////////
-
   get steps(): Readonly<Step[]> {
     return Object.freeze(this._steps);
   }
@@ -53,6 +52,17 @@ export class Work {
     return Object.freeze(this._value);
   }
 
+  copy() {
+    const copy = new Work(Work.sdk);
+    copy.addSteps([...this._steps]);
+    return copy;
+  }
+
+  clearResults() {
+    this._stepResults = [];
+    this._value = ethers.BigNumber.from(0);
+  }
+
   //////////////////////// Steps ////////////////////////
 
   /**
@@ -62,6 +72,7 @@ export class Work {
    * @fixme should all Actions just be functions that are bound to `this`?
    */
   add(input: Farmable) {
+    this.clearResults();
     if (input instanceof BaseAction) {
       input.setSDK(Work.sdk);
       this._steps.push(input);
@@ -84,17 +95,6 @@ export class Work {
 
   addSteps(actions: (Action | Action[] | ActionFunction)[]) {
     this.add(actions);
-  }
-
-  copy() {
-    const copy = new Work(Work.sdk);
-    copy.addSteps([...this._steps]);
-    return copy;
-  }
-
-  clearResults() {
-    this._stepResults = [];
-    this._value = ethers.BigNumber.from(0);
   }
 
   //////////////////////// Run Actions ////////////////////////
