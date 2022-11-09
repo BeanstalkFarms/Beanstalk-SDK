@@ -7,7 +7,7 @@ type Step = Action | ActionFunction;
 type StepResult = ActionResult;
 
 /**
- *
+ * @fixme "step results" conflicts with naming of results post-execution
  */
 export class Work {
   static SLIPPAGE_PRECISION = 10 ** 6;
@@ -42,10 +42,10 @@ export class Work {
   //////////////////////// Getters ////////////////////////
 
   get steps(): Readonly<Step[]> {
-    return Object.freeze(this.steps);
+    return Object.freeze(this._steps);
   }
 
-  get results(): Readonly<StepResult[]> {
+  get stepResults(): Readonly<StepResult[]> {
     return Object.freeze(this._stepResults);
   }
 
@@ -68,7 +68,7 @@ export class Work {
       Work.sdk.debug(`Work.addStep(): ${input.name}`);
     } else if (input instanceof Function) {
       this._steps.push(input);
-      Work.sdk.debug(`Work.addStep(): function ${input.prototype.name}()`);
+      Work.sdk.debug(`Work.addStep(): function ${input.name || "<unknown>"}()`);
     } else if (Array.isArray(input)) {
       for (const elem of input) {
         this.add(elem); // recurse
