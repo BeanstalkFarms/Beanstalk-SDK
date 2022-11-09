@@ -3,13 +3,26 @@ import { TokenValue } from "src/TokenValue";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import { Action, ActionFunction, ActionResult, BaseAction, Farmable } from "./types";
 
+type Step = Action | ActionFunction;
+type StepResult = ActionResult;
+
+/**
+ *
+ */
 export class Work {
   static SLIPPAGE_PRECISION = 10 ** 6;
   static sdk: BeanstalkSDK;
 
-  public steps: (Action | ActionFunction)[] = [];
-  public stepResults: ActionResult[] = [];
-  private value: ethers.BigNumber = ethers.BigNumber.from(0);
+  /** Steps are run in sequence to prepare transaction data. */
+  private _steps: Step[] = [];
+
+  /** Each `_step` produces an ActionResult that can be encoded into the Farm call. */
+  private _stepResults: StepResult[] = [];
+
+  /** The amount of Ether to be used in this transaction. */
+  private _value: ethers.BigNumber = ethers.BigNumber.from(0);
+
+  //////////////////////// Constructor ////////////////////////
 
   constructor(sdk: BeanstalkSDK) {
     Work.sdk = sdk;
@@ -26,6 +39,20 @@ export class Work {
     return _amount.mul(Math.floor(Work.SLIPPAGE_PRECISION * (1 - _slippage))).div(Work.SLIPPAGE_PRECISION);
   }
 
+  //////////////////////// Getters ////////////////////////
+
+  get steps(): Readonly<Step[]> {
+    return Object.freeze(this.steps);
+  }
+
+  get results(): Readonly<StepResult[]> {
+    return Object.freeze(this._stepResults);
+  }
+
+  get value(): Readonly<ethers.BigNumber> {
+    return Object.freeze(this._value);
+  }
+
   //////////////////////// Steps ////////////////////////
 
   /**
@@ -37,9 +64,11 @@ export class Work {
   add(input: Farmable) {
     if (input instanceof BaseAction) {
       input.setSDK(Work.sdk);
-      this.steps.push(input);
+      this._steps.push(input);
+      Work.sdk.debug(`Work.addStep(): ${input.name}`);
     } else if (input instanceof Function) {
-      this.steps.push(input);
+      this._steps.push(input);
+      Work.sdk.debug(`Work.addStep(): function ${input.prototype.name}()`);
     } else if (Array.isArray(input)) {
       for (const elem of input) {
         this.add(elem); // recurse
@@ -50,16 +79,7 @@ export class Work {
   }
 
   addStep(action: Action | ActionFunction) {
-    if (action instanceof BaseAction) {
-      action.setSDK(Work.sdk);
-      this.steps.push(action);
-      Work.sdk.debug(`Work.addStep(): ${action.name}`);
-    } else if (action instanceof Function) {
-      this.steps.push(action);
-      Work.sdk.debug(`Work.addStep(): function ${action.prototype.name}()`);
-    } else {
-      throw new Error("Received action that is of unknown type");
-    }
+    this.add(action);
   }
 
   addSteps(actions: (Action | Action[] | ActionFunction)[]) {
@@ -68,8 +88,13 @@ export class Work {
 
   copy() {
     const copy = new Work(Work.sdk);
-    copy.addSteps([...this.steps]);
+    copy.addSteps([...this._steps]);
     return copy;
+  }
+
+  clearResults() {
+    this._stepResults = [];
+    this._value = ethers.BigNumber.from(0);
   }
 
   //////////////////////// Run Actions ////////////////////////
@@ -83,8 +108,8 @@ export class Work {
       // Action Instance
       if (action instanceof BaseAction) {
         result = await action.run(input, forward);
-        if (result.value) this.value = this.value.add(result.value);
-        this.stepResults.push(result);
+        if (result.value) this._value = this._value.add(result.value);
+        this._stepResults.push(result);
 
         return result.amountOut;
       }
@@ -102,15 +127,15 @@ export class Work {
             encode: () => result,
             decode: (data) => ({}),
           };
-          this.stepResults.push(actionResult);
+          this._stepResults.push(actionResult);
 
           return actionResult.amountOut;
         }
 
         // Otherwise, the function should be returning an ActionResult
         else {
-          if (result.value) this.value = this.value.add(result.value);
-          this.stepResults.push(result);
+          if (result.value) this._value = this._value.add(result.value);
+          this._stepResults.push(result);
 
           return result.amountOut;
         }
@@ -138,10 +163,10 @@ export class Work {
     Work.sdk.debug(`[Work.estimate()]`, { nextAmount });
 
     // clear any previous results
-    this.stepResults = [];
+    this._stepResults = [];
 
-    for (let i = 0; i < this.steps.length; i += 1) {
-      const action = this.steps[i];
+    for (let i = 0; i < this._steps.length; i += 1) {
+      const action = this._steps[i];
       try {
         nextAmount = await this.runAction(action, nextAmount, true);
       } catch (e) {
@@ -170,10 +195,10 @@ export class Work {
     Work.sdk.debug(`[Work.estimateReversed()]`, { desiredAmountOut: nextAmount });
 
     // clear any previous results
-    this.stepResults = [];
+    this._stepResults = [];
 
-    for (let i = this.steps.length - 1; i >= 0; i -= 1) {
-      nextAmount = await this.runAction(this.steps[i], nextAmount, false);
+    for (let i = this._steps.length - 1; i >= 0; i -= 1) {
+      nextAmount = await this.runAction(this._steps[i], nextAmount, false);
     }
     Work.sdk.debug(`[Work.estimateReversed(END)]`);
     return nextAmount;
@@ -189,13 +214,15 @@ export class Work {
    * @fixme statelessness of individual workflows
    */
   private encodeStepsWithSlippage(_slippage: number) {
+    if (this._stepResults.length === 0) throw new Error("Work: must run estimate() before encoding");
+
     const fnData: string[] = [];
-    for (let i = 0; i < this.stepResults.length; i += 1) {
-      const amountOut = this.stepResults[i].amountOut;
+    for (let i = 0; i < this._stepResults.length; i += 1) {
+      const amountOut = this._stepResults[i].amountOut;
       const minAmountOut = Work.slip(amountOut, _slippage);
       /// If the step doesn't have slippage (for ex, wrapping ETH),
       /// then `encode` should ignore minAmountOut
-      const encoded = this.stepResults[i].encode(minAmountOut);
+      const encoded = this._stepResults[i].encode(minAmountOut);
       fnData.push(encoded);
       Work.sdk.debug(`[chain] encoding step ${i}: expected amountOut = ${amountOut}, minAmountOut = ${minAmountOut}`);
     }
@@ -215,7 +242,7 @@ export class Work {
     const amountIn = _amountIn instanceof TokenValue ? _amountIn.toBigNumber() : _amountIn;
     await this.estimate(amountIn);
     const data = this.encodeStepsWithSlippage(slippage / 100);
-    const txn = await Work.sdk.contracts.beanstalk.farm(data, { value: this.value });
+    const txn = await Work.sdk.contracts.beanstalk.farm(data, { value: this._value });
     Work.sdk.debug(`[Work.execute(END)]`);
 
     return txn;
@@ -230,7 +257,7 @@ export class Work {
   async callStatic(amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<string[]> {
     await this.estimate(amountIn);
     const data = this.encodeStepsWithSlippage(slippage / 100);
-    const result = await Work.sdk.contracts.beanstalk.callStatic.farm(data, { value: this.value });
+    const result = await Work.sdk.contracts.beanstalk.callStatic.farm(data, { value: this._value });
 
     return result;
   }
@@ -251,7 +278,7 @@ export class Work {
   async estimateGas(amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<any> {
     await this.estimate(amountIn);
     const data = this.encodeStepsWithSlippage(slippage / 100);
-    const txn = Work.sdk.contracts.beanstalk.estimateGas.farm(data, { value: this.value });
+    const txn = Work.sdk.contracts.beanstalk.estimateGas.farm(data, { value: this._value });
 
     return txn;
   }
