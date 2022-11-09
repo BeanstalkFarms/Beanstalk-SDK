@@ -1,9 +1,9 @@
-import { ethers } from 'ethers';
-import { FarmFromMode, FarmToMode } from '../types';
-import { Action, ActionResult, BaseAction } from '../types';
+import { ethers } from "ethers";
+import { FarmFromMode, FarmToMode } from "../types";
+import { Action, ActionResult, BaseAction } from "../types";
 
 export class TransferToken extends BaseAction implements Action {
-  public name: string = 'transferToken';
+  public name: string = "transferToken";
 
   constructor(
     private _tokenIn: string,
@@ -15,23 +15,35 @@ export class TransferToken extends BaseAction implements Action {
   }
 
   async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
-    TransferToken.sdk.debug('[step@transferToken] run', {
-      _fromMode: this._fromMode,
-      _toMode: this._toMode,
-      _amountInStep,
+    TransferToken.sdk.debug(`[${this.name}.run()]`, {
+      tokenIn: this._tokenIn,
+      recipient: this._recipient,
+      amountInStep: _amountInStep,
+      forward: _forward,
+      fromMode: this._fromMode,
+      toMode: this._toMode,
     });
     return {
       name: this.name,
       amountOut: _amountInStep, // transfer exact amount
-      encode: () =>
-        TransferToken.sdk.contracts.beanstalk.interface.encodeFunctionData('transferToken', [
+      encode: () => {
+        TransferToken.sdk.debug(`[${this.name}.encode()]`, {
+          tokenIn: this._tokenIn,
+          recipient: this._recipient,
+          amountInStep: _amountInStep,
+          forward: _forward,
+          fromMode: this._fromMode,
+          toMode: this._toMode,
+        });
+        return TransferToken.sdk.contracts.beanstalk.interface.encodeFunctionData("transferToken", [
           this._tokenIn, //
           this._recipient, //
           _amountInStep, // ignore minAmountOut since there is no slippage
           this._fromMode, //
           this._toMode, //
-        ]),
-      decode: (data: string) => TransferToken.sdk.contracts.beanstalk.interface.decodeFunctionData('transferToken', data),
+        ]);
+      },
+      decode: (data: string) => TransferToken.sdk.contracts.beanstalk.interface.decodeFunctionData("transferToken", data),
     };
   }
 }

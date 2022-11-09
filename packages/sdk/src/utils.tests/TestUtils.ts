@@ -70,4 +70,66 @@ export default class TestUtils {
 
     console.log(`Sent!`);
   }
+
+  async resetFork() {
+    await this.sdk.provider.send("anvil_reset", [
+      {
+        forking: {
+          jsonRpcUrl: "https://eth-mainnet.g.alchemy.com/v2/f6piiDvMBMGRYvCOwLJFMD7cUjIvI1TP",
+        },
+      },
+    ]);
+  }
+
+  async mine() {
+    await this.sdk.provider.send("evm_mine", []); // Just mines to the next block
+  }
+
+  /**
+   * To add more erc20 tokens later, you need the slot number. Get it with this:
+   * npx slot20 balanceOf TOKENADDRESS RANDOM_HOLDER_ADDRESS -v
+   * npx slot20 balanceOf 0x3d5965EB520E53CC1A6AEe3A44E5c1De406E028F 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -v
+   * set reverse to true if mapping format is (key, slot)
+   *
+   * From this article: https://kndrck.co/posts/local_erc20_bal_mani_w_hh/
+   *
+   * @param account
+   * @param balance
+   */
+
+  async setDAIBalance(account: string, balance: TokenValue) {
+    this.setBalance(this.sdk.tokens.DAI.address, account, balance, 2);
+  }
+  async setUSDCBalance(account: string, balance: TokenValue) {
+    this.setBalance(this.sdk.tokens.USDC.address, account, balance, 9);
+  }
+  async setUSDTBalance(account: string, balance: TokenValue) {
+    this.setBalance(this.sdk.tokens.USDT.address, account, balance, 2);
+  }
+  async setCRV3Balance(account: string, balance: TokenValue) {
+    this.setBalance(this.sdk.tokens.CRV3.address, account, balance, 3, true);
+  }
+  async setWETHBalance(account: string, balance: TokenValue) {
+    this.setBalance(this.sdk.tokens.WETH.address, account, balance, 3);
+  }
+  async setBEANBalance(account: string, balance: TokenValue) {
+    this.setBalance(this.sdk.tokens.BEAN.address, account, balance, 0);
+  }
+  async setROOTBalance(account: string, balance: TokenValue) {
+    this.setBalance(this.sdk.tokens.ROOT.address, account, balance, 9);
+  }
+
+  private async setBalance(tokenAddress: string, account: string, balance: TokenValue, slot: number, reverse: boolean = false) {
+    const values = [account, slot];
+    if (reverse) values.reverse();
+    const index = ethers.utils.solidityKeccak256(["uint256", "uint256"], values);
+    await this.setStorageAt(tokenAddress, index.toString(), this.toBytes32(balance.toBigNumber()).toString());
+  }
+
+  private async setStorageAt(address: string, index: string, value: string) {
+    await this.sdk.provider.send("hardhat_setStorageAt", [address, index, value]);
+  }
+  private toBytes32(bn: ethers.BigNumber) {
+    return ethers.utils.hexlify(ethers.utils.zeroPad(bn.toHexString(), 32));
+  }
 }

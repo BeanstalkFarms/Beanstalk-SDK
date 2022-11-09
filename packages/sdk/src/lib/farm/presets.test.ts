@@ -9,7 +9,7 @@ let sdk: BeanstalkSDK;
 let test: TestUtils;
 
 beforeAll(async () => {
-  const { provider, signer, account: _account } = await setupConnection();
+  const { provider, signer, account: _account } = setupConnection();
   account = _account;
   sdk = new BeanstalkSDK({
     provider,

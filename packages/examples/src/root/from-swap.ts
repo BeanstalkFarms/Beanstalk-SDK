@@ -1,4 +1,5 @@
-import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test } from "@beanstalk/sdk";
+import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Token } from "@beanstalk/sdk";
+import { Farm } from "@beanstalk/sdk/dist/types/lib/farm";
 import { ethers } from "ethers";
 import { sdk, test, account } from "../setup";
 
@@ -24,10 +25,12 @@ import { sdk, test, account } from "../setup";
  * 5. `yarn ts ./src/roots-via-circulating.ts`
  *
  */
-export async function roots_from_circulating(token: ERC20Token, amount: TokenValue): Promise<TokenBalance> {
+export async function roots_from_swap(fromToken: Token, amount: TokenValue): Promise<TokenBalance> {
   // setup
   const account = await sdk.getAccount();
   console.log("Using account:", account);
+
+  const token = sdk.tokens.BEAN; // this is the token we are swapping to and using for deposit/mint
 
   // verify whitelisted in silo
   // fixme: sdk.silo.isWhitelisted(token) method
@@ -42,13 +45,14 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
   }
 
   // get balance and validate amount
-  const balance = await sdk.tokens.getBalance(token);
+  const balance = await sdk.tokens.getBalance(fromToken);
   console.log(`Account ${account} has balance ${balance.total.toHuman()} ${token.symbol}`);
   if (amount.gt(balance.total)) {
     throw new Error(`Not enough ${token.symbol}. Balance: ${balance.total.toHuman()} / Input: ${amount.toHuman()}`); // .toFixed?
   }
 
   const amountStr = amount.toBlockchain();
+  console.log("Amount String: ", amountStr);
 
   // sign permit to send `token` to Pipeline
   const permit = await sdk.permit.sign(
@@ -65,6 +69,11 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
 
   // farm
   const farm = sdk.farm.create();
+
+  // Swap
+  const swapOp = sdk.swap.buildSwap(fromToken, token, account, FarmFromMode.EXTERNAL, FarmToMode.EXTERNAL);
+  if (!swapOp.isValid()) throw new Error("Cannot swap between selected tokens");
+  farm.add(swapOp.getFarm().steps);
 
   // load pipeline
   farm.add(sdk.farm.presets.loadPipeline(token, amountStr, FarmFromMode.EXTERNAL, permit));
@@ -149,7 +158,7 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
 
   //
   console.log("Executing...");
-  const txn = await farm.execute(amountIn, 0.1);
+  const txn = await farm.execute(amount, 0.1);
   console.log("Transaction submitted...", txn.hash);
 
   const receipt = await txn.wait();
@@ -167,5 +176,6 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
 }
 
 (async () => {
-  await roots_from_circulating(sdk.tokens.BEAN, sdk.tokens.BEAN.amount(124));
+  await test.sendBean(account, sdk.tokens.BEAN.amount(124));
+  await roots_from_swap(sdk.tokens.ETH, sdk.tokens.ETH.amount(333));
 })();

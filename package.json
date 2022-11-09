@@ -17,12 +17,14 @@
   "scripts": {
     "sdk:dev": "yarn workspace @beanstalk/sdk dev",
     "sdk:build": "yarn workspace @beanstalk/sdk build",
-    "sdk:test": "jest --selectProjects sdk --silent --",
+    "sdk:test": "jest --selectProjects sdk --silent --runInBand --",
+    "sdk:testdev": "jest --selectProjects sdk --watch --runInBand --",
     "sdk:generate": "yarn workspace @beanstalk/sdk generate",
     "sdk:prettier": "yarn prettier packages/sdk -w",
     "ex": "yarn workspace @beanstalk/examples ts --",
     "format": "yarn sdk:prettier",
     "test": "yarn sdk:test",
-    "postinstall": "node -e \"try { require('husky').install() } catch (e) {if (e.code !== 'MODULE_NOT_FOUND') throw e}\""
+    "install-husky": "node -e \"try { require('husky').install() } catch (e) {if (e.code !== 'MODULE_NOT_FOUND') throw e}\"",
+    "postinstall": "yarn generate && yarn build && yarn install-husky"
   }
 }
