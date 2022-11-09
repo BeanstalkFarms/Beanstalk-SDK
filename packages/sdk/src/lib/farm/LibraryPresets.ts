@@ -1,12 +1,13 @@
 import { ERC20Token, Token } from "src/classes/Token";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
+import { TokenValue } from "src/TokenValue";
 import { Farmable, FarmFromMode, FarmToMode } from "../farm/types";
 import { EIP2612PermitMessage, SignedPermit } from "../permit";
 import { Exchange, ExchangeUnderlying } from "./actions/index";
-
+import { depositAndMintRoot } from "./presets/depositAndMintRoot";
 import { Action } from "./types";
 
-export type ActionBuilder = (fromMode?: FarmFromMode, toMode?: FarmToMode) => Action | Action[];
+export type ActionBuilder = (fromMode?: FarmFromMode, toMode?: FarmToMode) => Farmable;
 
 export class LibraryPresets {
   static sdk: BeanstalkSDK;
@@ -16,6 +17,7 @@ export class LibraryPresets {
   public readonly bean2usdt: ActionBuilder;
   public readonly weth2bean: ActionBuilder;
   public readonly bean2weth: ActionBuilder;
+  public readonly depositAndMintRoot: (account: string, token: ERC20Token, amount: TokenValue, permit: SignedPermit) => Farmable[];
 
   /**
    * Load the Pipeline in preparation for a set Pipe actions.
@@ -101,5 +103,7 @@ export class LibraryPresets {
       this.bean2usdt(fromMode, FarmToMode.INTERNAL) as Action,
       this.usdt2weth(FarmFromMode.INTERNAL, toMode) as Action,
     ];
+
+    this.depositAndMintRoot = depositAndMintRoot(LibraryPresets.sdk);
   }
 }

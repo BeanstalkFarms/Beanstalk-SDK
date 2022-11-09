@@ -121,7 +121,7 @@ export class TokenValue {
   toBlockchain(): string {
     return this.value.toBigNumber().toString();
   }
-  
+
   /**
    * @deprecated
    * Ambiguous function. This exists only as a safety, otherwise the .toString()
@@ -162,8 +162,8 @@ export class TokenValue {
   mul(num: TokenValue | BigNumber | number) {
     return TokenValue.from(this.value.mul(this.toDBN(num)));
   }
-  div(num: TokenValue | BigNumber | number) {
-    return TokenValue.from(this.value.div(this.toDBN(num)));
+  div(num: TokenValue | BigNumber | number, decimals?: number) {
+    return TokenValue.from(this.value.div(this.toDBN(num), decimals));
   }
   eq(num: TokenValue | BigNumber | number): boolean {
     return this.value.eq(this.toDBN(num));
@@ -187,7 +187,8 @@ export class TokenValue {
     return TokenValue.from(this.value.pow(num));
   }
   pct(num: number): TokenValue {
+    const minDecimals = this.decimals < 4 ? 4 : this.decimals;
     if (num < 0) throw new Error("Percent value must be bigger than 0");
-    return TokenValue.from(this.value.mul(num.toString()).div("100"));
+    return TokenValue.from(this.value.mul(num.toString()).div("100", minDecimals));
   }
 }

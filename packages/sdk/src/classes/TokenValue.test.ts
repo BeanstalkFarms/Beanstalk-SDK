@@ -1,5 +1,6 @@
 import { expect } from "@jest/globals";
 import { BigNumber } from "ethers";
+import { Token } from "graphql";
 import { TokenValue } from "./TokenValue";
 
 describe("TokenValues", function () {
@@ -223,5 +224,6 @@ describe("TokenValues", function () {
     expect(TokenValue.fromHuman(100, 0).pct(0.01).toHuman()).toEqual("0.01");
     expect(TokenValue.fromHuman(100, 3).pct(0).toHuman()).toEqual("0");
     expect(() => TokenValue.fromHuman(100, 3).pct(-1)).toThrow("Percent value must be bigger than 0");
+    expect(TokenValue.fromHuman("3843.992712", 6).pct(0.9).toHuman()).toEqual("34.595934");
   });
 });
