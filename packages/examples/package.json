@@ -5,7 +5,6 @@
     "@beanstalk/sdk": "workspace:*"
   },
   "scripts": {
-    "ts": "npx ts-node",
     "x": "node run.js"
   },
   "devDependencies": {

@@ -96,7 +96,16 @@ export default class TestUtils {
    * @param account
    * @param balance
    */
-
+  async setAllBalances(account: string, amount: string) {
+    return Promise.allSettled([
+      this.setDAIBalance(account, this.sdk.tokens.DAI.amount(amount)),
+      this.setUSDCBalance(account, this.sdk.tokens.USDC.amount(amount)),
+      this.setUSDTBalance(account, this.sdk.tokens.USDT.amount(amount)),
+      this.setCRV3Balance(account, this.sdk.tokens.CRV3.amount(amount)),
+      this.setWETHBalance(account, this.sdk.tokens.WETH.amount(amount)),
+      this.setBEANBalance(account, this.sdk.tokens.BEAN.amount(amount)),
+    ]);
+  }
   async setDAIBalance(account: string, balance: TokenValue) {
     this.setBalance(this.sdk.tokens.DAI.address, account, balance, 2);
   }
