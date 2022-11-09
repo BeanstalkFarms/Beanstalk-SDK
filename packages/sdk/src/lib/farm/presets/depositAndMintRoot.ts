@@ -6,11 +6,11 @@ import { Farmable, FarmFromMode, FarmToMode } from "src/lib/farm/types";
 import { ethers } from "ethers";
 
 export function depositAndMintRoot(sdk: BeanstalkSDK) {
-  return (account: string, token: ERC20Token, amount: TokenValue, permit: SignedPermit): Farmable[] => {
+  return (account: string, token: ERC20Token, permit: SignedPermit): Farmable[] => {
     const steps: Farmable = [];
     // load pipeline
-    steps.push(sdk.farm.presets.loadPipeline(token, amount.toBlockchain(), FarmFromMode.EXTERNAL, permit));
-    steps.push(async () => {
+    steps.push(sdk.farm.presets.loadPipeline(token, FarmFromMode.EXTERNAL, permit));
+    steps.push(async (amountIn: ethers.BigNumber) => {
       const season = await sdk.sun.getSeason();
       return sdk.depot.advancedPipe([
         // 0:
@@ -36,7 +36,7 @@ export function depositAndMintRoot(sdk: BeanstalkSDK) {
         // 3:
         // Deposit `_token` in the Silo
         // Use case: gives PIPELINE a deposit to transfer to ROOT
-        sdk.depot.advancedPacket(sdk.contracts.beanstalk, "deposit", [token.address, amount.toBlockchain(), FarmFromMode.EXTERNAL]),
+        sdk.depot.advancedPacket(sdk.contracts.beanstalk, "deposit", [token.address, amountIn.toString(), FarmFromMode.EXTERNAL]),
 
         // 4:
         // Mint ROOT using the deposit created in the above step
@@ -46,7 +46,7 @@ export function depositAndMintRoot(sdk: BeanstalkSDK) {
             {
               token: token.address,
               seasons: [season], // FIXME: will fail if season flips during execution
-              amounts: [amount.toBlockchain()], //
+              amounts: [amountIn.toString()], //
             },
           ],
           FarmToMode.EXTERNAL, // send to PIPELINE's external balance

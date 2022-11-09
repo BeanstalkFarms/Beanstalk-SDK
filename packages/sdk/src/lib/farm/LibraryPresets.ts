@@ -1,3 +1,4 @@
+import { ethers } from "ethers";
 import { ERC20Token, Token } from "src/classes/Token";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { TokenValue } from "src/TokenValue";
@@ -17,17 +18,12 @@ export class LibraryPresets {
   public readonly bean2usdt: ActionBuilder;
   public readonly weth2bean: ActionBuilder;
   public readonly bean2weth: ActionBuilder;
-  public readonly depositAndMintRoot: (account: string, token: ERC20Token, amount: TokenValue, permit: SignedPermit) => Farmable[];
+  public readonly depositAndMintRoot: (account: string, token: ERC20Token, permit: SignedPermit) => Farmable[];
 
   /**
    * Load the Pipeline in preparation for a set Pipe actions.
    */
-  public loadPipeline(
-    _token: ERC20Token,
-    _amount: string, // ??
-    _from: FarmFromMode,
-    _permit?: SignedPermit<EIP2612PermitMessage>
-  ) {
+  public loadPipeline(_token: ERC20Token, _from: FarmFromMode, _permit?: SignedPermit<EIP2612PermitMessage>) {
     let actions: Farmable[] = [];
 
     // FIXME
@@ -35,12 +31,12 @@ export class LibraryPresets {
 
     // give beanstalk permission to send this ERC-20 token from my balance -> pipeline
     if (_permit) {
-      actions.push(async function permitERC20() {
+      actions.push(async function permitERC20(amountIn: ethers.BigNumber) {
         return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [
           _token.address, // token address
           await LibraryPresets.sdk.getAccount(), // owner
           LibraryPresets.sdk.contracts.beanstalk.address, // spender
-          _amount, // value
+          amountIn.toString(), // value
           _permit.typedData.message.deadline, // deadline
           _permit.split.v,
           _permit.split.r,
@@ -50,11 +46,11 @@ export class LibraryPresets {
     }
 
     // transfer erc20 token from beanstalk -> pipeline
-    actions.push(async function transferToken() {
+    actions.push(async function transferToken(amountIn: ethers.BigNumber) {
       return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("transferToken", [
         _token.address, // token
         LibraryPresets.sdk.contracts.pipeline.address, // recipient
-        _amount, // amount
+        amountIn.toString(), // amount
         _from, // from
         FarmToMode.EXTERNAL, // to
       ]);
