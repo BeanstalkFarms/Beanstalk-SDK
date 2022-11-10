@@ -1,5 +1,5 @@
 import { sdk } from "../setup";
-import { Pipeline } from "@beanstalk/sdk";
+import { Clipboard } from "@beanstalk/sdk";
 import { ethers } from "ethers";
 
 function log(x: string[]) {
@@ -21,11 +21,12 @@ function display(_data: string) {
     pad("0x", "hex"),
     pad(data.substring(0, 2), "type"),
     pad(data.substring(2, 4), "use ether?"),
-    pad(data.substring(4, 4 + 2 * 32), "ether value"),
+    pad(data.substring(4, 4 + 2 * 32), "ether value"), // FIXME
+    // ...todo...
     "",
   ]);
 }
 
-display(Pipeline.encodeAdvancedData([]));
+display(Clipboard.encode([]));
 // ['bytes2', 'uint256'] + ['0x0001', ethers.utils.parseEther('1').toString()]
-display(Pipeline.encodeAdvancedData([], ethers.utils.parseEther("1")));
+display(Clipboard.encode([], ethers.utils.parseEther("1")));
