@@ -1,23 +1,22 @@
-import { BigNumber, ethers } from 'ethers';
-import { Token } from '../../classes/Token';
-import { BeanstalkSDK } from '../BeanstalkSDK';
+import { BigNumber, ethers } from "ethers";
+import { Token } from "../../classes/Token";
+import { BeanstalkSDK } from "../BeanstalkSDK";
 
 export enum FarmFromMode {
-  EXTERNAL = '0',
-  INTERNAL = '1',
-  INTERNAL_EXTERNAL = '2',
-  INTERNAL_TOLERANT = '3',
+  EXTERNAL = "0",
+  INTERNAL = "1",
+  INTERNAL_EXTERNAL = "2",
+  INTERNAL_TOLERANT = "3",
 }
 export enum FarmToMode {
-  EXTERNAL = '0',
-  INTERNAL = '1',
+  EXTERNAL = "0",
+  INTERNAL = "1",
 }
 
-export type Farmable = (
-  Action           // single action
+export type Farmable =
+  | Action // single action
   | ActionFunction // single action function
-  | Farmable[]     // array of actions or action functions (mixed)
-)
+  | Farmable[]; // array of actions or action functions (mixed)
 
 export class BaseAction {
   static sdk: BeanstalkSDK;
@@ -31,9 +30,12 @@ export class BaseAction {
   }
 }
 
-export type ActionFunction = (amountIn: BigNumber, forward?: boolean) => 
-  (string | ActionResult)             // synchronous
-  | Promise<string | ActionResult>;   // asynchronous
+export type ActionFunction = (
+  amountIn: BigNumber,
+  forward?: boolean
+) =>
+  | (string | ActionResult) // synchronous
+  | Promise<string | ActionResult>; // asynchronous
 
 export interface Action extends BaseAction {
   name: string;
@@ -47,4 +49,6 @@ export type ActionResult = {
   data?: any;
   encode: (minAmountOut?: ethers.BigNumber) => string;
   decode: (data: string) => Record<string, any>;
+  decodeResult: (result: any) => ethers.utils.Result;
+  print?: (result: any) => string;
 };

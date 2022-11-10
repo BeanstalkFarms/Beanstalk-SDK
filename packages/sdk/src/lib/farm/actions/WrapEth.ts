@@ -9,7 +9,7 @@ export class WrapEth extends BaseAction implements Action {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
+  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true) {
     WrapEth.sdk.debug(`[${this.name}.run()]`, { toMode: this.toMode, _amountInStep, _forward });
     return {
       name: this.name,
@@ -23,6 +23,7 @@ export class WrapEth extends BaseAction implements Action {
         ]);
       },
       decode: (data: string) => WrapEth.sdk.contracts.beanstalk.interface.decodeFunctionData("wrapEth", data),
+      decodeResult: (result: string) => WrapEth.sdk.contracts.beanstalk.interface.decodeFunctionResult("wrapEth", result),
     };
   }
 }

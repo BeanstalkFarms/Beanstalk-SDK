@@ -125,7 +125,8 @@ export class Work {
             name: action.name || "<unknown>",
             amountOut: BigNumber.from("0"),
             encode: () => result,
-            decode: (data) => ({}),
+            decode: (data) => ({}), // fixme
+            decodeResult: (data) => [], // fixme
           };
           this._stepResults.push(actionResult);
 
@@ -163,7 +164,7 @@ export class Work {
     Work.sdk.debug(`[Work.estimate()]`, { nextAmount });
 
     // clear any previous results
-    this._stepResults = [];
+    this.clearResults();
 
     for (let i = 0; i < this._steps.length; i += 1) {
       const action = this._steps[i];
@@ -256,17 +257,29 @@ export class Work {
    */
   async callStatic(amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<string[]> {
     await this.estimate(amountIn);
+
     const data = this.encodeStepsWithSlippage(slippage / 100);
     const result = await Work.sdk.contracts.beanstalk.callStatic.farm(data, { value: this._value });
 
     return result;
   }
 
-  // async decodeStatic(amountIn: ethers.BigNumber, slippage: number): Promise<any[]> {
-  //   const results = await this.callStatic(amountIn, slippage);
-  //   return results.map((result, index) => {
-  //     return this.steps[index].decode()
-  //   });
+  async decodeStatic(callStaticResult: string[]): Promise<ethers.utils.Result[]> {
+    return callStaticResult.map((result, index) => {
+      const decodedResult = this._stepResults[index].decodeResult(result);
+      Work.sdk.debug(`[Work.decodeStatic()]`, index, result, decodedResult);
+      return decodedResult;
+    });
+  }
+
+  // async printStatic(data: ethers.utils.Result[]) {
+  //   data.forEach((item, index) => {
+  //     if (this._stepResults[index].print) {
+  //       `[${index}] ${this._stepResults[index].print!(item)}`
+  //     } else {
+  //       `[${index}] [${JSON.stringify(item)}]`
+  //     }
+  //   })
   // }
 
   /**

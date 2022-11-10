@@ -15,7 +15,7 @@ export { DecimalBigNumber } from "src/utils/DecimalBigNumber";
 export * from "src/lib/farm/types";
 export type { TokenSiloBalance } from "src/lib/silo";
 export type { TokenBalance } from "src/lib/tokens";
-export { Clipboard } from "src/lib/depot";
+export { Depot, Clipboard } from "src/lib/depot";
 export type { PipeStruct, AdvancedPipeStruct } from "src/lib/depot";
 
 // Utilities

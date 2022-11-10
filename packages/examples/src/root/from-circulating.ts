@@ -1,4 +1,4 @@
-import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test } from "@beanstalk/sdk";
+import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Depot } from "@beanstalk/sdk";
 import { ethers } from "ethers";
 import { sdk, test, account } from "../setup";
 
@@ -69,65 +69,44 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
   // load pipeline
   farm.add(sdk.farm.presets.loadPipeline(token, amountStr, FarmFromMode.EXTERNAL, permit));
 
-  // execute pipeline:
-  // approve -> deposit -> mint -> transfer
   farm.add(async () => {
     const season = await sdk.sun.getSeason();
-    return sdk.depot.advancedPipe([
-      // 0:
-      // Approve BEANSTALK to use BEAN from PIPELINE
-      // Use case: deposit BEAN as Pipeline
-      // (it's gas-optimal for PIPELINE to deposit instead of FARMER)
-      sdk.depot.advancedPacket(sdk.tokens.BEAN.getContract(), "approve", [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256]),
+    const pipe = new Depot.AdvancedPipe();
+    pipe.setSDK(sdk);
 
-      // 1:
-      // Within Beanstalk: Approve ROOT to use deposits of `_token` owned by PIPELINE
-      // Use case: send `_token` Deposit from PIPELINE -> ROOT
-      sdk.depot.advancedPacket(sdk.contracts.beanstalk, "approveDeposit", [
-        sdk.contracts.root.address,
-        token.address,
-        ethers.constants.MaxUint256,
-      ]),
+    pipe.add(sdk.tokens.BEAN.getContract(), "approve", [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256]);
 
-      // 2:
-      // Approve BEANSTALK to use ROOT from PIPLEINE
-      // Use case: send ROOT from PIPELINE -> FARMER
-      sdk.depot.advancedPacket(sdk.tokens.ROOT.getContract(), "approve", [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256]),
+    pipe.add(sdk.contracts.beanstalk, "approveDeposit", [sdk.contracts.root.address, token.address, ethers.constants.MaxUint256]);
 
-      // 3:
-      // Deposit `_token` in the Silo
-      // Use case: gives PIPELINE a deposit to transfer to ROOT
-      sdk.depot.advancedPacket(sdk.contracts.beanstalk, "deposit", [token.address, amountStr, FarmFromMode.EXTERNAL]),
+    pipe.add(sdk.tokens.ROOT.getContract(), "approve", [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256]);
 
-      // 4:
-      // Mint ROOT using the deposit created in the above step
-      // Tokens are delivered to the external balance of PIPELINE
-      sdk.depot.advancedPacket(sdk.contracts.root, "mint", [
-        [
-          {
-            token: token.address,
-            seasons: [season], // FIXME: will fail if season flips during execution
-            amounts: [amountStr], //
-          },
-        ],
-        FarmToMode.EXTERNAL, // send to PIPELINE's external balance
-      ]),
+    pipe.add(sdk.contracts.beanstalk, "deposit", [token.address, amountStr, FarmFromMode.EXTERNAL]);
 
-      // 5:
-      // Transfer token from PIPELINE to ACCOUNT
-      sdk.depot.advancedPacket(
-        sdk.contracts.beanstalk,
-        "transferToken",
-        [
-          sdk.tokens.ROOT.address,
-          account,
-          "0", // Will be overwritten by advancedData
-          FarmFromMode.EXTERNAL, // use PIPELINE's external balance
-          FarmToMode.EXTERNAL, // TOOD: make this a parameter
-        ],
-        sdk.depot.encodeAdvancedData([4, 32, 100]) // packet 4, slot 32 -> packet 5, slot 100
-      ),
+    pipe.add(sdk.contracts.root, "mint", [
+      [
+        {
+          token: token.address,
+          seasons: [season], // FIXME: will fail if season flips during execution
+          amounts: [amountStr], //
+        },
+      ],
+      FarmToMode.EXTERNAL, // send to PIPELINE's external balance
     ]);
+
+    pipe.add(
+      sdk.contracts.beanstalk,
+      "transferToken",
+      [
+        sdk.tokens.ROOT.address,
+        account,
+        "0", // Will be overwritten by advancedData
+        FarmFromMode.EXTERNAL, // use PIPELINE's external balance
+        FarmToMode.EXTERNAL, // TOOD: make this a parameter
+      ],
+      sdk.depot.encodeAdvancedData([4, 32, 100]) // packet 4, slot 32 -> packet 5, slot 100
+    );
+
+    return pipe;
   });
 
   const amountIn = ethers.BigNumber.from(amountStr);
@@ -139,15 +118,15 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
 
   // TEST: Extract result from Pipeline calls
   const callStatic = await farm.callStatic(amountIn, 0.1);
-  console.log("callStatic", callStatic);
-  const advancedPipeResult = sdk.contracts.beanstalk.interface.decodeFunctionResult("advancedPipe", callStatic[2]);
-  console.log("Pipe result:", advancedPipeResult);
-  const mintResult = sdk.contracts.root.interface.decodeFunctionResult("mint", advancedPipeResult.results[4]);
-  console.log("Mint result:", mintResult[0].toString());
-  const transferTokenResult = sdk.contracts.beanstalk.interface.decodeFunctionResult("transferToken", advancedPipeResult.results[5]);
-  console.log("Transfer result:", transferTokenResult);
+  const results = farm.decodeStatic(callStatic);
 
-  //
+  // Farm item #3   (advancedPipe)
+  // Pipe item #5   (mint)
+  // First return value
+  const mintResult = results[2][4][0];
+
+  console.log("Executing this transaction is expected to mint", mintResult.toString(), "ROOT");
+
   console.log("Executing...");
   const txn = await farm.execute(amountIn, 0.1);
   console.log("Transaction submitted...", txn.hash);
@@ -162,10 +141,12 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
 
   console.log(`ROOT balance for Account :`, accountBalanceOfRoot.total.toHuman());
   console.log(`ROOT balance for Pipeline:`, pipelineBalanceOfRoot.total.toHuman());
+  console.log(`^ This should be 0 if Pipeline was properly unloaded.`);
 
   return accountBalanceOfRoot;
 }
 
 (async () => {
+  await test.setBEANBalance(account, sdk.tokens.BEAN.amount(150));
   await roots_from_circulating(sdk.tokens.BEAN, sdk.tokens.BEAN.amount(124));
 })();
