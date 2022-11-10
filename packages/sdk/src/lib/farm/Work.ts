@@ -1,4 +1,5 @@
 import { BigNumber, ContractTransaction, ethers } from "ethers";
+import { result } from "lodash";
 import { TokenValue } from "src/TokenValue";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import { Action, ActionFunction, ActionResult, BaseAction, Farmable } from "./types";
@@ -99,55 +100,48 @@ export class Work {
 
   //////////////////////// Run Actions ////////////////////////
 
-  /**
-   *
-   */
-  private async runAction(action: Action | ActionFunction, input: ethers.BigNumber, forward: boolean) {
-    let result;
+  private async runAction(action: Action | ActionFunction, amountInStep: ethers.BigNumber, forward: boolean): Promise<ActionResult> {
+    let result: ActionResult;
+
     try {
       // Action Instance
       if (action instanceof BaseAction) {
-        result = await action.run(input, forward);
-        if (result.value) this._value = this._value.add(result.value);
-        this._stepResults.push(result);
-
-        return result.amountOut;
+        result = await action.run(amountInStep, forward);
       }
 
       // Action Function
       else if (action instanceof Function) {
-        const result = await action.call(this, input, forward);
+        const fnResult = await action.call(this, amountInStep, forward);
 
         // If an action function returns a string, we assume it's
         // the encoded calldata to include in the Farm function
-        if (typeof result === "string") {
-          const actionResult: ActionResult = {
+        if (typeof fnResult === "string") {
+          result = {
             name: action.name || "<unknown>",
             amountOut: BigNumber.from("0"),
-            encode: () => result,
+            encode: () => fnResult,
             decode: (data) => ({}), // fixme
             decodeResult: (data) => [], // fixme
           };
-          this._stepResults.push(actionResult);
-
-          return actionResult.amountOut;
         }
 
         // Otherwise, the function should be returning an ActionResult
         else {
-          if (result.value) this._value = this._value.add(result.value);
-          this._stepResults.push(result);
-
-          return result.amountOut;
+          result = fnResult;
         }
       } else {
         throw new Error("Received action that is of unknown type");
       }
     } catch (e) {
-      console.log(`[farm/estimate] Failed to estimate step ${action.name}`, input.toString(), forward);
+      console.log(`[farm/estimate] Failed to estimate step ${action.name}`, amountInStep.toString(), forward);
       console.error(e);
       throw e;
     }
+
+    if (result.value) this._value = this._value.add(result.value);
+    this._stepResults.push(result);
+
+    return result;
   }
 
   //////////////////////// Estimate ////////////////////////
@@ -161,7 +155,7 @@ export class Work {
    */
   async estimate(amountIn: ethers.BigNumber | TokenValue): Promise<ethers.BigNumber> {
     let nextAmount = amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn;
-    Work.sdk.debug(`[Work.estimate()]`, { nextAmount });
+    Work.sdk.debug(`[Work.estimate()]`, { amountIn: nextAmount.toString() });
 
     // clear any previous results
     this.clearResults();
@@ -169,9 +163,14 @@ export class Work {
     for (let i = 0; i < this._steps.length; i += 1) {
       const action = this._steps[i];
       try {
-        nextAmount = await this.runAction(action, nextAmount, true);
+        const nextResult = await this.runAction(action, nextAmount, true);
+        Work.sdk.debug(`[${i}][${action.name || "<unknown>"}]`, {
+          amountOut: nextResult.amountOut.toString(),
+          value: nextResult.value?.toString() || null,
+        });
+        nextAmount = nextResult.amountOut;
       } catch (e) {
-        console.log(`[farm/estimate] Failed to estimate action ${i} "${action.name || "unknown"}"`, {
+        Work.sdk.debug(`[Work.estimate()] Failed to estimate action ${i} "${action.name || "unknown"}"`, {
           type: typeof action,
           input: nextAmount.toString(),
           forward: true,
@@ -180,7 +179,9 @@ export class Work {
         throw e;
       }
     }
+
     Work.sdk.debug(`[Work.estimate(END)]`);
+
     return nextAmount;
   }
 
@@ -196,12 +197,30 @@ export class Work {
     Work.sdk.debug(`[Work.estimateReversed()]`, { desiredAmountOut: nextAmount });
 
     // clear any previous results
-    this._stepResults = [];
+    this.clearResults();
 
     for (let i = this._steps.length - 1; i >= 0; i -= 1) {
-      nextAmount = await this.runAction(this._steps[i], nextAmount, false);
+      const action = this._steps[i];
+      try {
+        const nextResult = await this.runAction(action, nextAmount, false);
+        Work.sdk.debug(`[${i}][${action.name || "<unknown>"}]`, {
+          amountOut: nextResult.amountOut.toString(),
+          value: nextResult.value?.toString() || null,
+        });
+        nextAmount = nextResult.amountOut;
+      } catch (e) {
+        Work.sdk.debug(`[Work.estimateReversed()] Failed to estimate action ${i} "${action.name || "unknown"}"`, {
+          type: typeof action,
+          input: nextAmount.toString(),
+          forward: true,
+        });
+        console.error(e);
+        throw e;
+      }
     }
+
     Work.sdk.debug(`[Work.estimateReversed(END)]`);
+
     return nextAmount;
   }
 
