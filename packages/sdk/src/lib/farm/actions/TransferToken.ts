@@ -14,7 +14,7 @@ export class TransferToken extends BaseAction implements Action {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
+  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true) {
     TransferToken.sdk.debug(`[${this.name}.run()]`, {
       tokenIn: this._tokenIn,
       recipient: this._recipient,
@@ -44,6 +44,7 @@ export class TransferToken extends BaseAction implements Action {
         ]);
       },
       decode: (data: string) => TransferToken.sdk.contracts.beanstalk.interface.decodeFunctionData("transferToken", data),
+      decodeResult: (result: string) => TransferToken.sdk.contracts.beanstalk.interface.decodeFunctionResult("transferToken", result),
     };
   }
 }

@@ -8,7 +8,8 @@ export const sdk = new BeanstalkSDK({
   provider,
   signer: signer,
   subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing",
-  source: DataSource.LEDGER
+  source: DataSource.LEDGER,
+  DEBUG: true,
 });
 
 export const test = new Test.TestUtils(sdk);

@@ -68,26 +68,26 @@ function displayAssembly<C extends ethers.Contract, N extends keyof C["functions
 
 // ----
 
-// displayAssembly(sdk.contracts.root, 'mint', [
-//   [
-//     {
-//       token: sdk.tokens.BEAN.address,
-//       seasons: ['6075'],
-//       amounts: [sdk.tokens.BEAN.stringify(100)]
-//     },
-//     {
-//       token: sdk.tokens.BEAN_CRV3_LP.address,
-//       seasons: ['6075'],
-//       amounts: [sdk.tokens.BEAN_CRV3_LP.stringify(500)]
-//     }
-//   ],
-//   FarmToMode.INTERNAL,
-// ]);
-
-displayAssembly(sdk.contracts.beanstalk, "transferToken", [
-  sdk.contracts.root.address,
-  account,
-  "1", // amount - will be overwritten by advancedData
-  FarmFromMode.EXTERNAL, // pipeline holds in external
-  FarmFromMode.INTERNAL, // farmer wants in their internal
+displayAssembly(sdk.contracts.root, "mint", [
+  [
+    {
+      amounts: [sdk.tokens.BEAN.amount(100).toBlockchain()],
+      token: sdk.tokens.BEAN.address,
+      seasons: ["6075"],
+    },
+    {
+      token: sdk.tokens.BEAN_CRV3_LP.address,
+      seasons: ["6075"],
+      amounts: [sdk.tokens.BEAN_CRV3_LP.amount(500).toBlockchain()],
+    },
+  ],
+  FarmToMode.INTERNAL,
 ]);
+
+// displayAssembly(sdk.contracts.beanstalk, "transferToken", [
+//   sdk.contracts.root.address,
+//   account,
+//   "1", // amount - will be overwritten by advancedData
+//   FarmFromMode.EXTERNAL, // pipeline holds in external
+//   FarmFromMode.INTERNAL, // farmer wants in their internal
+// ]);

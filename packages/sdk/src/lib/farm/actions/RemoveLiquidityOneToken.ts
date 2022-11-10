@@ -16,7 +16,7 @@ export class RemoveLiquidityOneToken extends BaseAction implements Action {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
+  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true) {
     RemoveLiquidityOneToken.sdk.debug(`[${this.name}.run()]`, {
       pool: this._pool,
       registry: this._registry,
@@ -60,6 +60,7 @@ export class RemoveLiquidityOneToken extends BaseAction implements Action {
     return {
       name: this.name,
       amountOut,
+      data: {},
       encode: (minAmountOut?: ethers.BigNumber) => {
         RemoveLiquidityOneToken.sdk.debug(`[${this.name}.encode()]`, {
           pool: this._pool,
@@ -84,7 +85,8 @@ export class RemoveLiquidityOneToken extends BaseAction implements Action {
       },
       decode: (data: string) =>
         RemoveLiquidityOneToken.sdk.contracts.beanstalk.interface.decodeFunctionData("removeLiquidityOneToken", data),
-      data: {},
+      decodeResult: (result: string) =>
+        RemoveLiquidityOneToken.sdk.contracts.beanstalk.interface.decodeFunctionResult("removeLiquidityOneToken", result),
     };
   }
 }

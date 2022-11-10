@@ -9,7 +9,7 @@ export class UnwrapEth extends BaseAction implements Action {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
+  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true) {
     UnwrapEth.sdk.debug(`[${this.name}.run()]`, { fromMode: this.fromMode, _amountInStep, _forward });
     return {
       name: this.name,
@@ -23,6 +23,7 @@ export class UnwrapEth extends BaseAction implements Action {
         ]);
       },
       decode: (data: string) => UnwrapEth.sdk.contracts.beanstalk.interface.decodeFunctionData("unwrapEth", data),
+      decodeResult: (result: string) => UnwrapEth.sdk.contracts.beanstalk.interface.decodeFunctionResult("unwrapEth", result),
     };
   }
 }

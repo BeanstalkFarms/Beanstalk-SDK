@@ -17,7 +17,7 @@ export class AddLiquidity extends BaseAction implements Action {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<ActionResult> {
+  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true) {
     AddLiquidity.sdk.debug(`[${this.name}.run()]`, {
       pool: this._pool,
       registry: this._registry,
@@ -83,6 +83,13 @@ export class AddLiquidity extends BaseAction implements Action {
     return {
       name: this.name,
       amountOut,
+      // fixme: deprecated ?
+      data: {
+        pool: this._pool,
+        registry: this._registry,
+        fromMode: this._fromMode,
+        toMode: this._toMode,
+      },
       encode: (minAmountOut?: ethers.BigNumber) => {
         AddLiquidity.sdk.debug(`[${this.name}.encode()]`, {
           pool: this._pool,
@@ -103,12 +110,7 @@ export class AddLiquidity extends BaseAction implements Action {
         ]);
       },
       decode: (data: string) => AddLiquidity.sdk.contracts.beanstalk.interface.decodeFunctionData("addLiquidity", data),
-      data: {
-        pool: this._pool,
-        registry: this._registry,
-        fromMode: this._fromMode,
-        toMode: this._toMode,
-      },
+      decodeResult: (result: string) => AddLiquidity.sdk.contracts.beanstalk.interface.decodeFunctionResult("addLiquidity", result),
     };
   }
 }

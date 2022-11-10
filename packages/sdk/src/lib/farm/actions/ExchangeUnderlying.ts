@@ -17,7 +17,7 @@ export class ExchangeUnderlying extends BaseAction implements Action {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, forward: boolean = true): Promise<ActionResult> {
+  async run(_amountInStep: ethers.BigNumber, forward: boolean = true) {
     ExchangeUnderlying.sdk.debug(`[${this.name}.run()]`, {
       pool: this.pool,
       tokenIn: this.tokenIn.symbol,
@@ -48,6 +48,14 @@ export class ExchangeUnderlying extends BaseAction implements Action {
     return {
       name: this.name,
       amountOut,
+      // fixme: deprecated ?
+      data: {
+        pool: this.pool,
+        tokenIn: this.tokenIn.address,
+        tokenOut: this.tokenOut.address,
+        fromMode: this.fromMode,
+        toMode: this.toMode,
+      },
       encode: (minAmountOut?: ethers.BigNumber) => {
         ExchangeUnderlying.sdk.debug(`[${this.name}.encode()]`, {
           pool: this.pool,
@@ -70,13 +78,8 @@ export class ExchangeUnderlying extends BaseAction implements Action {
         ]);
       },
       decode: (data: string) => ExchangeUnderlying.sdk.contracts.beanstalk.interface.decodeFunctionData("exchangeUnderlying", data),
-      data: {
-        pool: this.pool,
-        tokenIn: this.tokenIn.address,
-        tokenOut: this.tokenOut.address,
-        fromMode: this.fromMode,
-        toMode: this.toMode,
-      },
+      decodeResult: (result: string) =>
+        ExchangeUnderlying.sdk.contracts.beanstalk.interface.decodeFunctionResult("exchangeUnderlying", result),
     };
   }
 }
