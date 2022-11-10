@@ -77,6 +77,12 @@ export class Depot {
 
   static AdvancedPipe = AdvancedPipe;
 
+  createAdvancedPipe() {
+    const pipe = new AdvancedPipe();
+    pipe.setSDK(Depot.sdk);
+    return pipe;
+  }
+
   // ---- V1 ---- //
 
   pipe(packet: PipeStruct) {

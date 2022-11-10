@@ -71,17 +71,12 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
 
   farm.add(async () => {
     const season = await sdk.sun.getSeason();
-    const pipe = new Depot.AdvancedPipe();
-    pipe.setSDK(sdk);
+    const pipe = sdk.depot.createAdvancedPipe();
 
     pipe.add(sdk.tokens.BEAN.getContract(), "approve", [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256]);
-
     pipe.add(sdk.contracts.beanstalk, "approveDeposit", [sdk.contracts.root.address, token.address, ethers.constants.MaxUint256]);
-
     pipe.add(sdk.tokens.ROOT.getContract(), "approve", [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256]);
-
     pipe.add(sdk.contracts.beanstalk, "deposit", [token.address, amountStr, FarmFromMode.EXTERNAL]);
-
     pipe.add(sdk.contracts.root, "mint", [
       [
         {
@@ -92,7 +87,6 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
       ],
       FarmToMode.EXTERNAL, // send to PIPELINE's external balance
     ]);
-
     pipe.add(
       sdk.contracts.beanstalk,
       "transferToken",
@@ -116,13 +110,12 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
   const gas = await farm.estimateGas(amountIn, 0.1);
   console.log("Estimated gas:", gas.toString());
 
-  // TEST: Extract result from Pipeline calls
   const callStatic = await farm.callStatic(amountIn, 0.1);
   const results = farm.decodeStatic(callStatic);
 
   // Farm item #3   (advancedPipe)
   // Pipe item #5   (mint)
-  // First return value
+  // Get first return value
   const mintResult = results[2][4][0];
 
   console.log("Executing this transaction is expected to mint", mintResult.toString(), "ROOT");
