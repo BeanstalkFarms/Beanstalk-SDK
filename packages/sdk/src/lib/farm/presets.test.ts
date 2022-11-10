@@ -37,7 +37,7 @@ describe("Facet: Pipeline", () => {
     it.skip("throws", async () => {
       // Setup
       const amount = sdk.tokens.BEAN.amount(100);
-      farm.add(sdk.farm.presets.loadPipeline(sdk.tokens.BEAN, amount.toBlockchain(), FarmFromMode.EXTERNAL));
+      farm.add(sdk.farm.presets.loadPipeline(sdk.tokens.BEAN, FarmFromMode.EXTERNAL));
 
       // Execute
       expect(async () => {
@@ -73,7 +73,7 @@ describe("Facet: Pipeline", () => {
         )
       );
 
-      farm.add(sdk.farm.presets.loadPipeline(sdk.tokens.BEAN, amount.toBlockchain(), FarmFromMode.EXTERNAL, permit));
+      farm.add(sdk.farm.presets.loadPipeline(sdk.tokens.BEAN, FarmFromMode.EXTERNAL, permit));
 
       // Estimate
       await farm.estimate(amount.toBigNumber());

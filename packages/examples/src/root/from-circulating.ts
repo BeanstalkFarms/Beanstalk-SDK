@@ -66,23 +66,22 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
   // farm
   const farm = sdk.farm.create();
 
-  // load pipeline
-  farm.add(sdk.farm.presets.loadPipeline(token, amountStr, FarmFromMode.EXTERNAL, permit));
+  farm.add(sdk.farm.presets.loadPipeline(token, FarmFromMode.EXTERNAL, permit));
 
-  farm.add(async () => {
+  farm.add(async (amountInStep: ethers.BigNumber) => {
     const season = await sdk.sun.getSeason();
     const pipe = sdk.depot.createAdvancedPipe();
 
     pipe.add(sdk.tokens.BEAN.getContract(), "approve", [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256]);
     pipe.add(sdk.contracts.beanstalk, "approveDeposit", [sdk.contracts.root.address, token.address, ethers.constants.MaxUint256]);
     pipe.add(sdk.tokens.ROOT.getContract(), "approve", [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256]);
-    pipe.add(sdk.contracts.beanstalk, "deposit", [token.address, amountStr, FarmFromMode.EXTERNAL]);
+    pipe.add(sdk.contracts.beanstalk, "deposit", [token.address, amountInStep, FarmFromMode.EXTERNAL]);
     pipe.add(sdk.contracts.root, "mint", [
       [
         {
           token: token.address,
           seasons: [season], // FIXME: will fail if season flips during execution
-          amounts: [amountStr], //
+          amounts: [amountInStep], //
         },
       ],
       FarmToMode.EXTERNAL, // send to PIPELINE's external balance
