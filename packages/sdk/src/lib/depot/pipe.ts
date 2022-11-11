@@ -1,7 +1,8 @@
 import { ethers } from "ethers";
-import { Workflow } from "src/classes/Workflow";
+import { Step, Workflow } from "src/classes/Workflow";
 import { Beanstalk } from "src/constants/generated";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
+import { Clipboard } from "src/lib/depot/clipboard";
 import { AdvancedPipeStruct } from "src/lib/depot/depot";
 import { TokenValue } from "src/TokenValue";
 
@@ -25,6 +26,26 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
       this._steps.map((step) => step.encode()),
       "0", // fixme
     ]);
+  }
+
+  wrap<C extends ethers.Contract, M extends keyof C["functions"], A extends Parameters<C["functions"][M]>>(
+    contract: C,
+    method: M,
+    args: A,
+    amountOut: ethers.BigNumber,
+    advancedData: string = Clipboard.encode([])
+  ): Step<AdvancedPipeStruct> {
+    return {
+      name: method.toString(),
+      amountOut,
+      encode: () => ({
+        target: contract.address,
+        callData: contract.interface.encodeFunctionData(method.toString(), args),
+        advancedData,
+      }),
+      decode: () => undefined,
+      decodeResult: () => undefined,
+    };
   }
 
   async execute(): Promise<ethers.ContractTransaction> {
