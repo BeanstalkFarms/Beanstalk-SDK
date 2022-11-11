@@ -24,7 +24,7 @@ export class SwapOperation {
   }
 
   public isValid(): boolean {
-    return this.workflow.steps.length > 0;
+    return this.workflow.length > 0;
   }
 
   getPath(): PathSegment[] {

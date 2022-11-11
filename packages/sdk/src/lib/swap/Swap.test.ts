@@ -13,80 +13,84 @@ beforeAll(async () => {
   // TODO: will reset() screw up other tests (files) that run in parallel?
   await reset();
 
-  // add a bit of each coin
-  await Promise.all([
-    utils.setDAIBalance(account, sdk.tokens.DAI.amount(30000)),
-    utils.setUSDCBalance(account, sdk.tokens.USDC.amount(30000)),
-    utils.setUSDTBalance(account, sdk.tokens.USDT.amount(30000)),
-    utils.setCRV3Balance(account, sdk.tokens.CRV3.amount(30000)),
-    utils.setWETHBalance(account, sdk.tokens.WETH.amount(30000)),
-    utils.setBEANBalance(account, sdk.tokens.BEAN.amount(30000)),
-  ]);
-  await utils.mine();
+  // // add a bit of each coin
+  // await Promise.all([
+  //   utils.setDAIBalance(account, sdk.tokens.DAI.amount(30000)),
+  //   utils.setUSDCBalance(account, sdk.tokens.USDC.amount(30000)),
+  //   utils.setUSDTBalance(account, sdk.tokens.USDT.amount(30000)),
+  //   utils.setCRV3Balance(account, sdk.tokens.CRV3.amount(30000)),
+  //   utils.setWETHBalance(account, sdk.tokens.WETH.amount(30000)),
+  //   utils.setBEANBalance(account, sdk.tokens.BEAN.amount(30000)),
+  // ]);
+  // await utils.mine();
 
-  // set max allowance
-  await Promise.all([
-    await sdk.tokens.DAI.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
-    await sdk.tokens.USDC.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
-    await sdk.tokens.USDT.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
-    await sdk.tokens.CRV3.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
-    await sdk.tokens.WETH.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
-    await sdk.tokens.BEAN.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
-  ]);
+  // // set max allowance
+  // await Promise.all([
+  //   await sdk.tokens.DAI.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
+  //   await sdk.tokens.USDC.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
+  //   await sdk.tokens.USDT.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
+  //   await sdk.tokens.CRV3.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
+  //   await sdk.tokens.WETH.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
+  //   await sdk.tokens.BEAN.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
+  // ]);
 });
 
-describe("Swap", function () {
-  describe.each([
-    // ETH => x
-    [sdk.tokens.ETH, sdk.tokens.WETH],
-    [sdk.tokens.ETH, sdk.tokens.USDT],
-    [sdk.tokens.ETH, sdk.tokens.USDC],
-    [sdk.tokens.ETH, sdk.tokens.DAI],
-    [sdk.tokens.ETH, sdk.tokens.BEAN],
-    [sdk.tokens.ETH, sdk.tokens.CRV3],
-
-    // BEAN => x
-    [sdk.tokens.BEAN, sdk.tokens.ETH],
-    [sdk.tokens.BEAN, sdk.tokens.WETH],
-    [sdk.tokens.BEAN, sdk.tokens.BEAN],
-    [sdk.tokens.BEAN, sdk.tokens.USDT],
-    [sdk.tokens.BEAN, sdk.tokens.USDC],
-    [sdk.tokens.BEAN, sdk.tokens.DAI],
-    [sdk.tokens.BEAN, sdk.tokens.BEAN],
-    [sdk.tokens.BEAN, sdk.tokens.CRV3],
-  ])("BEAN->x", (tokenIn, tokenOut) => {
-    it.each([
-      [FarmFromMode.EXTERNAL, FarmToMode.EXTERNAL],
-      [FarmFromMode.EXTERNAL, FarmToMode.INTERNAL],
-    ])(`swap(${tokenIn.symbol}, ${tokenOut.symbol}, %s, %s)`, async (from, to) => {
-      if (tokenOut.symbol === "ETH" && to === FarmToMode.INTERNAL) {
-        return;
-      }
-      await swapTest(tokenIn, tokenOut, from, to);
-    });
+describe.only("Swap", function () {
+  it("quick", async () => {
+    await swapTest(sdk.tokens.ETH, sdk.tokens.WETH, FarmFromMode.EXTERNAL, FarmToMode.EXTERNAL);
   });
+  // describe.only.each([
+  //   // ETH => x
+  //   [sdk.tokens.ETH, sdk.tokens.WETH],
+  //   // [sdk.tokens.ETH, sdk.tokens.USDT],
+  //   // [sdk.tokens.ETH, sdk.tokens.USDC],
+  //   // [sdk.tokens.ETH, sdk.tokens.DAI],
+  //   // [sdk.tokens.ETH, sdk.tokens.BEAN],
+  //   // [sdk.tokens.ETH, sdk.tokens.CRV3],
+
+  //   // // BEAN => x
+  //   // [sdk.tokens.BEAN, sdk.tokens.ETH],
+  //   // [sdk.tokens.BEAN, sdk.tokens.WETH],
+  //   // [sdk.tokens.BEAN, sdk.tokens.BEAN],
+  //   // [sdk.tokens.BEAN, sdk.tokens.USDT],
+  //   // [sdk.tokens.BEAN, sdk.tokens.USDC],
+  //   // [sdk.tokens.BEAN, sdk.tokens.DAI],
+  //   // [sdk.tokens.BEAN, sdk.tokens.BEAN],
+  //   // [sdk.tokens.BEAN, sdk.tokens.CRV3],
+  // ])("BEAN->x", (tokenIn, tokenOut) => {
+  //   it.each([
+  //     [FarmFromMode.EXTERNAL, FarmToMode.EXTERNAL],
+  //     // [FarmFromMode.EXTERNAL, FarmToMode.INTERNAL],
+  //   ])(`swap(${tokenIn.symbol}, ${tokenOut.symbol}, %s, %s)`, async (from, to) => {
+  //     if (tokenOut.symbol === "ETH" && to === FarmToMode.INTERNAL) {
+  //       return;
+  //     }
+  //     sdk.DEBUG = true;
+  //     await swapTest(tokenIn, tokenOut, from, to);
+  //   });
+  // });
 
   // x => BEAN
-  describe.each([sdk.tokens.USDC, sdk.tokens.USDT, sdk.tokens.DAI, sdk.tokens.CRV3, sdk.tokens.BEAN])("Buy BEAN", (tokenIn) => {
-    const BEAN = sdk.tokens.BEAN;
+  //   describe.each([sdk.tokens.USDC, sdk.tokens.USDT, sdk.tokens.DAI, sdk.tokens.CRV3, sdk.tokens.BEAN])("Buy BEAN", (tokenIn) => {
+  //     const BEAN = sdk.tokens.BEAN;
 
-    beforeAll(async () => {
-      await transferToFarmBalance(tokenIn, "10000");
-    });
+  //     beforeAll(async () => {
+  //       await transferToFarmBalance(tokenIn, "10000");
+  //     });
 
-    it(`${tokenIn.symbol}:BEAN - EXTERNAL -> INTERNAL`, async () => {
-      await swapTest(tokenIn, BEAN, FarmFromMode.EXTERNAL, FarmToMode.INTERNAL, "2000");
-    });
-    it(`${tokenIn.symbol}:BEAN - EXTERNAL -> EXTERNAL`, async () => {
-      await swapTest(tokenIn, BEAN, FarmFromMode.EXTERNAL, FarmToMode.EXTERNAL, "2000");
-    });
-    it(`${tokenIn.symbol}:BEAN - INTERNAL -> INTERNAL`, async () => {
-      await swapTest(tokenIn, BEAN, FarmFromMode.INTERNAL, FarmToMode.INTERNAL, "2000");
-    });
-    it(`${tokenIn.symbol}:BEAN - INTERNAL -> EXTERNAL`, async () => {
-      await swapTest(tokenIn, BEAN, FarmFromMode.INTERNAL, FarmToMode.EXTERNAL, "2000");
-    });
-  });
+  //     it(`${tokenIn.symbol}:BEAN - EXTERNAL -> INTERNAL`, async () => {
+  //       await swapTest(tokenIn, BEAN, FarmFromMode.EXTERNAL, FarmToMode.INTERNAL, "2000");
+  //     });
+  //     it(`${tokenIn.symbol}:BEAN - EXTERNAL -> EXTERNAL`, async () => {
+  //       await swapTest(tokenIn, BEAN, FarmFromMode.EXTERNAL, FarmToMode.EXTERNAL, "2000");
+  //     });
+  //     it(`${tokenIn.symbol}:BEAN - INTERNAL -> INTERNAL`, async () => {
+  //       await swapTest(tokenIn, BEAN, FarmFromMode.INTERNAL, FarmToMode.INTERNAL, "2000");
+  //     });
+  //     it(`${tokenIn.symbol}:BEAN - INTERNAL -> EXTERNAL`, async () => {
+  //       await swapTest(tokenIn, BEAN, FarmFromMode.INTERNAL, FarmToMode.EXTERNAL, "2000");
+  //     });
+  //   });
 });
 
 async function transferToFarmBalance(tokenIn: Token, _amount: string) {
@@ -106,7 +110,7 @@ async function swapTest(tokenIn: Token, tokenOut: Token, from: FarmFromMode, to:
   const v = ["ETH", "WETH"].includes(tokenIn.symbol) ? 30 : 300;
   const amount = tokenIn.fromHuman(_amount ? _amount : v);
   const slippage = 0.5;
-  const amountWithSlippage = amount.pct(1 - slippage);
+  const amountWithSlippage = amount.pct(100 - slippage);
 
   // Checks there are tokens to spend
   expect(tokenInBalanceBefore.gte(amount)).toBe(true);

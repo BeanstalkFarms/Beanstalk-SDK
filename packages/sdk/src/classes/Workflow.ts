@@ -150,8 +150,8 @@ export abstract class Workflow<EncodedResult extends any = string> {
     return Object.freeze([...this._generators]);
   }
 
-  get steps(): Readonly<Step<EncodedResult>[]> {
-    return Object.freeze([...this._steps]);
+  get length(): number {
+    return this._generators.length;
   }
 
   get value(): Readonly<ethers.BigNumber> {
@@ -169,6 +169,9 @@ export abstract class Workflow<EncodedResult extends any = string> {
       }
     } else {
       this.sdk.debug(`[Workflow][${this.name}][add] ${input.name}`);
+      if (input instanceof StepClass) {
+        input.setSDK(this.sdk);
+      }
       this._generators.push(input);
     }
 
