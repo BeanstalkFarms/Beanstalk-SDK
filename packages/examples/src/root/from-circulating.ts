@@ -1,4 +1,4 @@
-import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Clipboard } from "@beanstalk/sdk";
+import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Clipboard, DataSource } from "@beanstalk/sdk";
 import { ethers } from "ethers";
 import { sdk, test, account } from "../setup";
 
@@ -97,6 +97,7 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
       async (amountInStep) => {
         const season = await sdk.sun.getSeason();
         const amountOut = amountInStep; // FIXME
+        const minAmountOut = amountInStep; // FIXME
         return pipe.wrap(
           sdk.contracts.root,
           "mint",
@@ -108,9 +109,10 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
                 amounts: [amountInStep], //
               },
             ],
-            FarmToMode.EXTERNAL, // send to PIPELINE's external balance
+            FarmToMode.EXTERNAL, // send tokens to PIPELINE's external balance
+            minAmountOut,
           ],
-          amountOut
+          amountOut // pass this to next element
         );
       },
       (amountInStep) =>
@@ -130,7 +132,7 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
     ])
   );
 
-  const amountIn = ethers.BigNumber.from(amountStr);
+  const amountIn = amount.toBigNumber();
   const amountOut = await farm.estimate(amountIn);
   console.log("Estimated amountOut:", amountOut.toString());
 
@@ -156,14 +158,21 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
 
   Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
 
-  const accountBalanceOfRoot = await sdk.tokens.getBalance(sdk.tokens.ROOT);
-  const pipelineBalanceOfRoot = await sdk.tokens.getBalance(sdk.tokens.ROOT, sdk.contracts.pipeline.address);
+  const accountBalanceOfBEAN = await sdk.tokens.getBalance(sdk.tokens.BEAN);
+  const accountBalanceOfROOT = await sdk.tokens.getBalance(sdk.tokens.ROOT);
+  const pipelineBalanceOfBEAN = await sdk.tokens.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address);
+  const pipelineBalanceOfROOT = await sdk.tokens.getBalance(sdk.tokens.ROOT, sdk.contracts.pipeline.address);
 
-  console.log(`ROOT balance for Account :`, accountBalanceOfRoot.total.toHuman());
-  console.log(`ROOT balance for Pipeline:`, pipelineBalanceOfRoot.total.toHuman());
-  console.log(`^ This should be 0 if Pipeline was properly unloaded.`);
+  console.log(`(1) BEAN balance for Account :`, accountBalanceOfBEAN.total.toHuman());
+  console.log(`(2) ROOT balance for Account :`, accountBalanceOfROOT.total.toHuman());
+  console.log(`(3) BEAN balance for Pipeline:`, pipelineBalanceOfBEAN.total.toHuman());
+  console.log(`(4) ROOT balance for Pipeline:`, pipelineBalanceOfROOT.total.toHuman());
+  console.log(` ^ 3 and 4 should be 0 if Pipeline was properly unloaded.`);
 
-  return accountBalanceOfRoot;
+  const siloBalance = await sdk.silo.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address, { source: DataSource.LEDGER });
+  console.log(siloBalance.deposited.crates);
+
+  return accountBalanceOfROOT;
 }
 
 (async () => {
