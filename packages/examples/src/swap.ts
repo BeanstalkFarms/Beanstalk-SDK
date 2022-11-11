@@ -10,7 +10,7 @@ main()
   .finally(() => process.exit());
 
 async function main() {
-  const sdk = new BeanstalkSDK({ signer, DEBUG: true });
+  const sdk = new BeanstalkSDK({ signer, DEBUG: false });
 
   // await swap(sdk, sdk.tokens.USDT, sdk.tokens.USDT, "500", FarmFromMode.INTERNAL, FarmToMode.EXTERNAL);
   // await swap(sdk, sdk.tokens.BEAN, sdk.tokens.ETH, "300");
