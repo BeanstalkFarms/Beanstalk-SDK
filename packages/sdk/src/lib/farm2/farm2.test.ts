@@ -36,27 +36,6 @@ describe("farm2", () => {
     farm
       // transfer tokens to Pipeline
       .add((amountInStep) => `${amountInStep.toHexString()}01`)
-      // .addExternal([
-      //   async (amountInStep) => {
-      //     const amount = await calculateAmount();
-      //     return {
-      //     // mint
-      //     // no equivalent of get_dy
-      //     // cannot callstatic to get the amount of roots minted
-      //     // need to create a function that uses the amount of tokens
-      //     // transferred in the first farm step to calculate how many
-      //     // roots will be received in this step.
-      //     target: sdk.contracts.root.address,
-      //     callData: `${amountInStep.toHexString()}02`,
-      //     advancedData: '0x0000',
-      //   },
-      //   {
-      //     // transfer
-      //     target: sdk.contracts.root.address,
-      //     callData: `${amountInStep.toHexString()}02`,
-      //     advancedData: '0x0000',
-      //   }
-      // ])
       .add(
         pipe.add((amountInStep) => ({
           target: sdk.contracts.root.address,
