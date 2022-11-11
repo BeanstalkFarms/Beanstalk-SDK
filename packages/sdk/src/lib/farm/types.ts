@@ -1,4 +1,5 @@
 import { BigNumber, ethers } from "ethers";
+import { Step } from "src/classes/Workflow";
 import { Token } from "../../classes/Token";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 
@@ -28,6 +29,17 @@ export class BaseAction {
   protected direction(_x1: Token, _x2: Token, _forward: boolean): Token[] {
     return _forward ? [_x1, _x2] : [_x2, _x1];
   }
+}
+
+export abstract class StepClass<EncodedResult extends any = string> {
+  static sdk: BeanstalkSDK;
+  name: string;
+
+  public setSDK(sdk: BeanstalkSDK) {
+    BaseAction.sdk = sdk;
+  }
+
+  abstract run(_amountInStep: ethers.BigNumber, _forward: boolean): Promise<Step<EncodedResult>>;
 }
 
 export type ActionFunction = (

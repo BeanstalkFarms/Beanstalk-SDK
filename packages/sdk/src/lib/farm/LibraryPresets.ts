@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { ERC20Token, Token } from "src/classes/Token";
+import { Step, StepGenerator } from "src/classes/Workflow";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { Farmable, FarmFromMode, FarmToMode } from "../farm/types";
 import { EIP2612PermitMessage, SignedPermit } from "../permit";
@@ -7,7 +8,7 @@ import { Exchange, ExchangeUnderlying } from "./actions/index";
 
 import { Action } from "./types";
 
-export type ActionBuilder = (fromMode?: FarmFromMode, toMode?: FarmToMode) => Action | Action[];
+export type ActionBuilder = (fromMode?: FarmFromMode, toMode?: FarmToMode) => StepGenerator<string> | StepGenerator<string>[];
 
 export class LibraryPresets {
   static sdk: BeanstalkSDK;

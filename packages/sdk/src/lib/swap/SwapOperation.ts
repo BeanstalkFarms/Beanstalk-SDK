@@ -3,7 +3,7 @@ import { TokenValue } from "src/TokenValue";
 import { Token } from "../../classes/Token";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import { FarmFromMode, FarmToMode } from "../farm/types";
-import { Work } from "../farm/Work";
+import { Work } from "../farm/workflow";
 
 type PathSegment = {
   from: string;

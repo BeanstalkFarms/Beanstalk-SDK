@@ -9,7 +9,7 @@ import { Contracts } from "./contracts";
 import { EventManager } from "./events/EventManager";
 import { Silo } from "./silo";
 import { Sun } from "./sun";
-import { Farm } from "./farm";
+import { Farm } from "./farm/farm";
 import { Permit } from "./permit";
 import { Root } from "./root";
 import { Depot } from "./depot/depot";

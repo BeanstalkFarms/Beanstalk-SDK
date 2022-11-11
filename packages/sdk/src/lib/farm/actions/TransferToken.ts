@@ -1,8 +1,7 @@
 import { ethers } from "ethers";
-import { FarmFromMode, FarmToMode } from "../types";
-import { Action, ActionResult, BaseAction } from "../types";
+import { FarmFromMode, FarmToMode, StepClass } from "../types";
 
-export class TransferToken extends BaseAction implements Action {
+export class TransferToken extends StepClass {
   public name: string = "transferToken";
 
   constructor(

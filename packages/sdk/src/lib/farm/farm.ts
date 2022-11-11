@@ -1,14 +1,17 @@
-import { ethers } from "ethers";
-import { Workflow } from "src/classes/Workflow";
+import { BeanstalkSDK } from "../BeanstalkSDK";
+import * as ActionLibrary from "./actions";
+import { LibraryPresets } from "./LibraryPresets";
+import { Step, Workflow } from "src/classes/Workflow";
 import { Beanstalk } from "src/constants/generated";
-import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
-import { AdvancedPipeStruct } from "src/lib/depot";
 import { TokenValue } from "src/TokenValue";
+import { ethers } from "ethers";
+
+export type FarmStep = Step<string>;
 
 /**
  * The "Farm" is a Workflow that encodes a call to `beanstalk.farm()`.
  */
-export class Farm extends Workflow<string> {
+export class FarmWorkflow extends Workflow<string> {
   private contract: Beanstalk;
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "Farm") {
@@ -17,7 +20,7 @@ export class Farm extends Workflow<string> {
   }
 
   copy() {
-    return this._copy(Farm);
+    return this._copy(FarmWorkflow);
   }
 
   encode() {
@@ -41,36 +44,20 @@ export class Farm extends Workflow<string> {
 }
 
 /**
- * The "AdvancedPipe" is a Workflow that encodes a call to `beanstalk.advancedPipe()`.
+ *
  */
-export class AdvancedPipe extends Workflow<AdvancedPipeStruct> {
-  private contract: Beanstalk;
+export class Farm {
+  static sdk: BeanstalkSDK;
+  public readonly actions: typeof ActionLibrary;
+  public presets: LibraryPresets;
 
-  constructor(protected sdk: BeanstalkSDK, public name: string = "AdvancedPipe") {
-    super(sdk, name);
-    this.contract = this.sdk.contracts.beanstalk;
+  constructor(sdk: BeanstalkSDK) {
+    Farm.sdk = sdk;
+    this.actions = ActionLibrary;
+    this.presets = new LibraryPresets(Farm.sdk);
   }
 
-  copy() {
-    return this._copy(AdvancedPipe);
-  }
-
-  encode() {
-    return this.contract.interface.encodeFunctionData("advancedPipe", [
-      this._steps.map((step) => step.encode()),
-      "0", // fixme
-    ]);
-  }
-
-  async execute(): Promise<ethers.ContractTransaction> {
-    throw new Error("Not implemented");
-  }
-
-  async callStatic(_amountIn: ethers.BigNumber | TokenValue, _slippage: number): Promise<string[]> {
-    throw new Error("Not implemented");
-  }
-
-  async estimateGas(_amountIn: ethers.BigNumber | TokenValue, _slippage: number): Promise<ethers.BigNumber> {
-    throw new Error("Not implemented");
+  create(name?: string) {
+    return new FarmWorkflow(Farm.sdk, name);
   }
 }
