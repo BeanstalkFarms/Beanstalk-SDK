@@ -1,8 +1,8 @@
 import { ethers } from "ethers";
-import { Workflow } from "src/classes/Workflow";
-import { Token } from "../../../classes/Token";
-import { CurveMetaPool__factory, CurvePlainPool__factory } from "../../../constants/generated";
-import { StepClass, FarmFromMode, FarmToMode } from "../types";
+import { StepClass, Workflow } from "src/classes/Workflow";
+import { Token } from "src/classes/Token";
+import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
+import { FarmFromMode, FarmToMode } from "../types";
 
 export class Exchange extends StepClass {
   public name: string = "exchange";

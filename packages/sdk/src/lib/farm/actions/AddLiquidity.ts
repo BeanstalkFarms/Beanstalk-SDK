@@ -1,7 +1,8 @@
 import { ethers } from "ethers";
-import { CurveMetaPool__factory, CurvePlainPool__factory } from "../../../constants/generated";
-import { assert } from "../../../utils";
-import { FarmFromMode, FarmToMode, StepClass } from "../types";
+import { StepClass } from "src/classes/Workflow";
+import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
+import { assert } from "src/utils";
+import { FarmFromMode, FarmToMode } from "../types";
 
 export class AddLiquidity extends StepClass {
   public name: string = "addLiquidity";

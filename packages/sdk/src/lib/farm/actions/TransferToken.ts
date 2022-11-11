@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
-import { FarmFromMode, FarmToMode, StepClass } from "../types";
+import { StepClass } from "src/classes/Workflow";
+import { FarmFromMode, FarmToMode } from "../types";
 
 export class TransferToken extends StepClass {
   public name: string = "transferToken";

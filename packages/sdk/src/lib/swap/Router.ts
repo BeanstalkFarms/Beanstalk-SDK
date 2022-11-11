@@ -1,7 +1,8 @@
 import { Graph, alg } from "graphlib";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { Token } from "src/classes/Token";
-import { Action, FarmFromMode, FarmToMode, StepClass } from "src/lib/farm/types";
+import { FarmFromMode, FarmToMode } from "src/lib/farm/types";
+import { StepClass } from "src/classes/Workflow";
 
 type RouterResult = {
   step: (account: string, fromMode?: FarmFromMode, toMode?: FarmToMode) => StepClass;

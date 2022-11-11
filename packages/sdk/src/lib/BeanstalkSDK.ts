@@ -12,10 +12,7 @@ import { Sun } from "./sun";
 import { Farm } from "./farm/farm";
 import { Permit } from "./permit";
 import { Root } from "./root";
-import { Depot } from "./depot/depot";
 import { Sdk as Queries, getSdk as getQueries } from "../constants/generated-gql/graphql";
-import { Token } from "src/classes/Token";
-import { FarmFromMode, FarmToMode } from "src";
 import { Swap } from "src/lib/swap/Swap";
 
 export class BeanstalkSDK {
@@ -37,13 +34,12 @@ export class BeanstalkSDK {
 
   //
   public readonly farm: Farm;
-  // public readonly swap: Swap;
   public readonly silo: Silo;
   public readonly events: EventManager;
   public readonly sun: Sun;
   public readonly permit: Permit;
   public readonly root: Root;
-  public readonly depot: Depot;
+  // public readonly depot: Depot;
   public readonly swap: Swap;
 
   constructor(config?: BeanstalkConfig) {
@@ -68,7 +64,7 @@ export class BeanstalkSDK {
     // Facets
     this.silo = new Silo(this);
     this.sun = new Sun(this);
-    this.depot = new Depot(this);
+    // this.depot = new Depot(this);
     this.farm = new Farm(this);
 
     // Ecosystem

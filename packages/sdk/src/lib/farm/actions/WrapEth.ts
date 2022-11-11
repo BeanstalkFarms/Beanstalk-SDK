@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
-import { FarmToMode, StepClass } from "../types";
+import { StepClass } from "src/classes/Workflow";
+import { FarmToMode } from "../types";
 
 export class WrapEth extends StepClass {
   public name: string = "wrapEth";
