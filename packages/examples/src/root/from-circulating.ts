@@ -1,4 +1,4 @@
-import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Depot } from "@beanstalk/sdk";
+import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Clipboard } from "@beanstalk/sdk";
 import { ethers } from "ethers";
 import { sdk, test, account } from "../setup";
 
@@ -65,59 +65,87 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
 
   // farm
   const farm = sdk.farm.create();
+  const pipe = sdk.farm.createAdvancedPipe();
 
   farm.add(sdk.farm.presets.loadPipeline(token, FarmFromMode.EXTERNAL, permit));
-
-  farm.add(async (amountInStep: ethers.BigNumber) => {
-    const season = await sdk.sun.getSeason();
-    const pipe = sdk.depot.createAdvancedPipe();
-
-    pipe.add(sdk.tokens.BEAN.getContract(), "approve", [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256]);
-    pipe.add(sdk.contracts.beanstalk, "approveDeposit", [sdk.contracts.root.address, token.address, ethers.constants.MaxUint256]);
-    pipe.add(sdk.tokens.ROOT.getContract(), "approve", [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256]);
-    pipe.add(sdk.contracts.beanstalk, "deposit", [token.address, amountInStep, FarmFromMode.EXTERNAL]);
-    pipe.add(sdk.contracts.root, "mint", [
-      [
-        {
-          token: token.address,
-          seasons: [season], // FIXME: will fail if season flips during execution
-          amounts: [amountInStep], //
-        },
-      ],
-      FarmToMode.EXTERNAL, // send to PIPELINE's external balance
-    ]);
-    pipe.add(
-      sdk.contracts.beanstalk,
-      "transferToken",
-      [
-        sdk.tokens.ROOT.address,
-        account,
-        "0", // Will be overwritten by advancedData
-        FarmFromMode.EXTERNAL, // use PIPELINE's external balance
-        FarmToMode.EXTERNAL, // TOOD: make this a parameter
-      ],
-      sdk.depot.encodeAdvancedData([4, 32, 100]) // packet 4, slot 32 -> packet 5, slot 100
-    );
-
-    return pipe;
-  });
+  farm.add(
+    pipe.add([
+      (amountInStep) =>
+        pipe.wrap(
+          sdk.tokens.BEAN.getContract(),
+          "approve",
+          [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
+          amountInStep // pass-thru
+        ),
+      (amountInStep) =>
+        pipe.wrap(
+          sdk.contracts.beanstalk,
+          "approveDeposit",
+          [sdk.contracts.root.address, token.address, ethers.constants.MaxUint256],
+          amountInStep // pass-thru
+        ),
+      (amountInStep) =>
+        pipe.wrap(
+          sdk.tokens.ROOT.getContract(),
+          "approve",
+          [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
+          amountInStep // pass-thru
+        ),
+      async (amountInStep) => {
+        return pipe.wrap(sdk.contracts.beanstalk, "deposit", [token.address, amountInStep, FarmFromMode.EXTERNAL], amountInStep);
+      },
+      async (amountInStep) => {
+        const season = await sdk.sun.getSeason();
+        const amountOut = amountInStep; // FIXME
+        return pipe.wrap(
+          sdk.contracts.root,
+          "mint",
+          [
+            [
+              {
+                token: token.address,
+                seasons: [season], // FIXME: will fail if season flips during execution
+                amounts: [amountInStep], //
+              },
+            ],
+            FarmToMode.EXTERNAL, // send to PIPELINE's external balance
+          ],
+          amountOut
+        );
+      },
+      (amountInStep) =>
+        pipe.wrap(
+          sdk.contracts.beanstalk,
+          "transferToken",
+          [
+            sdk.tokens.ROOT.address,
+            account,
+            "0", // Will be overwritten by advancedData
+            FarmFromMode.EXTERNAL, // use PIPELINE's external balance
+            FarmToMode.EXTERNAL, // TOOD: make this a parameter
+          ],
+          amountInStep,
+          Clipboard.encode([4, 32, 100]) // packet 4, slot 32 -> packet 5, slot 100
+        ),
+    ])
+  );
 
   const amountIn = ethers.BigNumber.from(amountStr);
   const amountOut = await farm.estimate(amountIn);
   console.log("Estimated amountOut:", amountOut.toString());
 
-  const gas = await farm.estimateGas(amountIn, 0.1);
-  console.log("Estimated gas:", gas.toString());
+  // const gas = await farm.estimateGas(amountIn, 0.1);
+  // console.log("Estimated gas:", gas.toString());
 
-  const callStatic = await farm.callStatic(amountIn, 0.1);
-  const results = farm.decodeStatic(callStatic);
+  // const callStatic = await farm.callStatic(amountIn, 0.1);
+  // const results = farm.decodeStatic(callStatic);
 
   // Farm item #3   (advancedPipe)
   // Pipe item #5   (mint)
   // Get first return value
-  const mintResult = results[2][4][0];
+  // const mintResult = results[2][4][0];
 
-  console.log("Executing this transaction is expected to mint", mintResult.toString(), "ROOT");
+  // console.log("Executing this transaction is expected to mint", mintResult.toString(), "ROOT");
 
   console.log("Executing...");
   const txn = await farm.execute(amountIn, 0.1);

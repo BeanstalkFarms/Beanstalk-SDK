@@ -168,7 +168,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
         this.add(elem); // recurse
       }
     } else {
-      this.sdk.debug(`[Workflow][${this.name}][add] ${input.name}`);
+      this.sdk.debug(`[Workflow][${this.name}][add] ${input.name || "<unknown>"}`);
       if (input instanceof StepClass) {
         input.setSDK(this.sdk);
       }
@@ -247,7 +247,6 @@ export abstract class Workflow<EncodedResult extends any = string> {
       this._value = this._value.add(step.value);
     }
 
-    this.sdk.debug(`[Workflow][${this.name}][buildStep]`, step);
     return step;
   }
 
@@ -267,7 +266,11 @@ export abstract class Workflow<EncodedResult extends any = string> {
       const generator = this._generators[i];
       const step = await this.buildStep(generator, nextAmount, true);
       nextAmount = step.amountOut;
-      this.sdk.debug(`[Workflow][${this.name}][estimate][${i}/${step.name || "<unknown>"}]`, step);
+      this.sdk.debug(
+        `[Workflow][${this.name}][estimate][${i} / ${step.name || "<unknown>"}]`,
+        step.amountOut.toString(),
+        step.value?.toNumber() || 0
+      );
     }
 
     return nextAmount;
@@ -289,7 +292,11 @@ export abstract class Workflow<EncodedResult extends any = string> {
       const generator = this._generators[i];
       const step = await this.buildStep(generator, nextAmount, false);
       nextAmount = step.amountOut;
-      this.sdk.debug(`[Workflow][${this.name}][estimateReversed][${i}/${step.name || "<unknown>"}]`, step);
+      this.sdk.debug(
+        `[Workflow][${this.name}][estimateReversed][${i}/${step.name || "<unknown>"}]`,
+        step.amountOut.toString(),
+        step.value?.toNumber() || 0
+      );
     }
 
     return nextAmount;
