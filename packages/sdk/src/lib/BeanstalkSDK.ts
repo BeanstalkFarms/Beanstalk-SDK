@@ -1,11 +1,10 @@
 import { GraphQLClient } from "graphql-request";
 import { ethers } from "ethers";
-import { BeanstalkConfig, DataSource, Provider, Reconfigurable, Signer } from "../types";
-import { enumFromValue } from "../utils";
-import { addresses, ChainId } from "../constants";
+import { BeanstalkConfig, DataSource, Provider, Reconfigurable, Signer } from "src/types";
+import { enumFromValue } from "src/utils";
+import { addresses, ChainId } from "src/constants";
 import { Tokens } from "./tokens";
 import { Contracts } from "./contracts";
-
 import { EventManager } from "./events/EventManager";
 import { Silo } from "./silo";
 import { Sun } from "./sun";

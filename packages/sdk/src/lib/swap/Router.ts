@@ -76,7 +76,7 @@ export class Router {
     this.graph = new Graph({
       multigraph: true,
       directed: true,
-      compound: false,
+      compound: false
     });
 
     ////// Add Nodes
@@ -94,36 +94,36 @@ export class Router {
     this.graph.setEdge("ETH", "WETH", {
       step: (_: string, _2: FarmFromMode, to: FarmToMode) => new Router.sdk.farm.actions.WrapEth(to),
       from: "ETH",
-      to: "WETH",
+      to: "WETH"
     });
     this.graph.setEdge("WETH", "ETH", {
       step: (_: string, from: FarmFromMode, _2: FarmToMode) => new Router.sdk.farm.actions.UnwrapEth(from),
       from: "WETH",
-      to: "ETH",
+      to: "ETH"
     });
 
     // WETH<>USDT
     this.graph.setEdge("WETH", "USDT", {
       step: (_: string, from: FarmFromMode, to: FarmToMode) => Router.sdk.farm.presets.weth2usdt(from, to),
       from: "WETH",
-      to: "USDT",
+      to: "USDT"
     });
     this.graph.setEdge("USDT", "WETH", {
       step: (_: string, from: FarmFromMode, to: FarmToMode) => Router.sdk.farm.presets.usdt2weth(from, to),
       from: "USDT",
-      to: "WETH",
+      to: "WETH"
     });
 
     // USDT<>BEAN
     this.graph.setEdge("USDT", "BEAN", {
       step: (_: string, from: FarmFromMode, to: FarmToMode) => Router.sdk.farm.presets.usdt2bean(from, to),
       from: "USDT",
-      to: "BEAN",
+      to: "BEAN"
     });
     this.graph.setEdge("BEAN", "USDT", {
       step: (_: string, from: FarmFromMode, to: FarmToMode) => Router.sdk.farm.presets.bean2usdt(from, to),
       from: "BEAN",
-      to: "USDT",
+      to: "USDT"
     });
 
     // USDC<>BEAN
@@ -137,7 +137,7 @@ export class Router {
           to
         ),
       from: "USDC",
-      to: "BEAN",
+      to: "BEAN"
     });
     this.graph.setEdge("BEAN", "USDC", {
       step: (_: string, from: FarmFromMode, to: FarmToMode) =>
@@ -149,7 +149,7 @@ export class Router {
           to
         ),
       from: "BEAN",
-      to: "USDC",
+      to: "USDC"
     });
 
     // DAI<>BEAN
@@ -163,7 +163,7 @@ export class Router {
           to
         ),
       from: "DAI",
-      to: "BEAN",
+      to: "BEAN"
     });
     this.graph.setEdge("BEAN", "DAI", {
       step: (_: string, from: FarmFromMode, to: FarmToMode) =>
@@ -175,7 +175,7 @@ export class Router {
           to
         ),
       from: "BEAN",
-      to: "DAI",
+      to: "DAI"
     });
 
     // CRV3<>BEAN
@@ -190,7 +190,7 @@ export class Router {
           to
         ),
       from: "3CRV",
-      to: "BEAN",
+      to: "BEAN"
     });
     this.graph.setEdge("BEAN", "3CRV", {
       step: (_: string, from: FarmFromMode, to: FarmToMode) =>
@@ -203,7 +203,7 @@ export class Router {
           to
         ),
       from: "BEAN",
-      to: "3CRV",
+      to: "3CRV"
     });
   }
 
@@ -213,7 +213,7 @@ export class Router {
         return new Router.sdk.farm.actions.TransferToken(token.address, account, from, to);
       },
       from: token.symbol,
-      to: token.symbol,
+      to: token.symbol
     };
   }
 

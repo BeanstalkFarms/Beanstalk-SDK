@@ -1,10 +1,9 @@
-import { BeanstalkSDK } from '../BeanstalkSDK';
-import { EventType, reduceEvent, sortEvents } from './utils';
-import { Blocks } from '../../constants/blocks';
-import { ChainId } from '../../constants';
-import { TypedEvent } from '../../constants/generated/common';
-import { flattenDeep } from 'lodash';
-import { Event } from 'ethers';
+import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
+import { EventType, reduceEvent, sortEvents } from "./utils";
+import { Blocks } from "src/constants/blocks";
+import { ChainId } from "src/constants";
+import { flattenDeep } from "lodash";
+import { Event } from "ethers";
 
 export class EventManager {
   private readonly sdk: BeanstalkSDK;
@@ -17,14 +16,9 @@ export class EventManager {
     this.sdk = sdk;
   }
 
-  async getSiloEvents(
-    _account: string,
-    _token?: string,
-    _fromBlock?: number,
-    _toBlock?: number
-  ) {
+  async getSiloEvents(_account: string, _token?: string, _fromBlock?: number, _toBlock?: number) {
     const fromBlockOrGenesis = _fromBlock || Blocks[ChainId.MAINNET].BEANSTALK_GENESIS_BLOCK;
-    const toBlock = _toBlock || 'latest';
+    const toBlock = _toBlock || "latest";
     return Promise.all([
       this.sdk.contracts.beanstalk.queryFilter(
         this.sdk.contracts.beanstalk.filters.AddDeposit(_account, _token),
@@ -55,24 +49,24 @@ export class EventManager {
         this.sdk.contracts.beanstalk.filters.RemoveDeposits(_account, _token),
         fromBlockOrGenesis,
         toBlock
-      ),
+      )
     ]).then(this.reduceAndSort);
   }
 
   async getFieldEvents(_account: string, _fromBlock?: number, _toBlock?: number) {
-    if (!_account) throw new Error('account missing');
+    if (!_account) throw new Error("account missing");
     const rawEvents = await this.getRawEventsByType(EventType.FIELD, _account, _fromBlock, _toBlock);
     return this.reduceAndSort(rawEvents);
   }
 
   async getMarketEvents(_account: string, _fromBlock?: number, _toBlock?: number) {
-    if (!_account) throw new Error('account missing');
+    if (!_account) throw new Error("account missing");
     const rawEvents = await this.getRawEventsByType(EventType.MARKET, _account, _fromBlock, _toBlock);
     return this.reduceAndSort(rawEvents);
   }
 
   async getFertilizerEvents(_account: string, _fromBlock?: number, _toBlock?: number) {
-    if (!_account) throw new Error('account missing');
+    if (!_account) throw new Error("account missing");
     const rawEvents = await this.getRawEventsByType(EventType.FERTILIER, _account, _fromBlock, _toBlock);
     return this.reduceAndSort(rawEvents);
   }
@@ -81,16 +75,12 @@ export class EventManager {
     const fromBlockOrGenesis = _fromBlock || Blocks[ChainId.MAINNET].BEANSTALK_GENESIS_BLOCK;
     const fromBlockOrBIP10 = _fromBlock || Blocks[ChainId.MAINNET].BIP10_COMMITTED_BLOCK;
     const fromBlockOrFertLaunch = _fromBlock || Blocks[ChainId.MAINNET].FERTILIZER_LAUNCH_BLOCK;
-    const toBlock = _toBlock || 'latest';
+    const toBlock = _toBlock || "latest";
 
     switch (eventType) {
       case EventType.SILO:
         return Promise.all([
-          this.sdk.contracts.beanstalk.queryFilter(
-            this.sdk.contracts.beanstalk.filters.AddDeposit(_account),
-            fromBlockOrGenesis,
-            toBlock
-          ),
+          this.sdk.contracts.beanstalk.queryFilter(this.sdk.contracts.beanstalk.filters.AddDeposit(_account), fromBlockOrGenesis, toBlock),
           this.sdk.contracts.beanstalk.queryFilter(
             this.sdk.contracts.beanstalk.filters.AddWithdrawal(_account),
             fromBlockOrGenesis,
@@ -115,12 +105,12 @@ export class EventManager {
             this.sdk.contracts.beanstalk.filters.RemoveDeposits(_account),
             fromBlockOrGenesis,
             toBlock
-          ),
+          )
         ]);
       case EventType.FIELD:
         return Promise.all([
           this.sdk.contracts.beanstalk.queryFilter(
-            this.sdk.contracts.beanstalk.filters['Sow(address,uint256,uint256,uint256)'](_account),
+            this.sdk.contracts.beanstalk.filters["Sow(address,uint256,uint256,uint256)"](_account),
             fromBlockOrGenesis,
             toBlock
           ),
@@ -134,7 +124,7 @@ export class EventManager {
             this.sdk.contracts.beanstalk.filters.PlotTransfer(null, _account), // to
             fromBlockOrGenesis,
             toBlock
-          ),
+          )
         ]);
       case EventType.MARKET:
         return Promise.all([
@@ -144,7 +134,7 @@ export class EventManager {
             toBlock
           ),
           this.sdk.contracts.beanstalk.queryFilter(
-            this.sdk.contracts.beanstalk.filters['PodListingCancelled(address,uint256)'](_account),
+            this.sdk.contracts.beanstalk.filters["PodListingCancelled(address,uint256)"](_account),
             fromBlockOrBIP10,
             toBlock
           ),
@@ -168,7 +158,7 @@ export class EventManager {
             this.sdk.contracts.beanstalk.filters.PodOrderFilled(null, _account), // to
             fromBlockOrBIP10,
             toBlock
-          ),
+          )
         ]);
 
       case EventType.FERTILIER:
@@ -218,7 +208,7 @@ export class EventManager {
             ),
             fromBlockOrFertLaunch,
             toBlock
-          ),
+          )
         ]);
 
       default:
@@ -228,8 +218,6 @@ export class EventManager {
 
   // : TypedEvent[]
   private reduceAndSort(events: Event[][]) {
-    return flattenDeep<Event[]>(events)
-      .reduce(reduceEvent, [])
-      .sort(sortEvents);
+    return flattenDeep<Event[]>(events).reduce(reduceEvent, []).sort(sortEvents);
   }
 }

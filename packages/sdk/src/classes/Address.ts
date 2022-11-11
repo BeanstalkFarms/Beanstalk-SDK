@@ -1,4 +1,4 @@
-import { ChainId, TESTNET_CHAINS } from '../constants/chains';
+import { ChainId, TESTNET_CHAINS } from "src/constants/chains";
 
 export type AddressDefinition = {
   [id: number]: string;
@@ -12,7 +12,7 @@ export class Address {
 
   static make<T extends string | AddressDefinition>(input: T): Address {
     const addresses: AddressDefinition = {};
-    if (typeof input == 'string') {
+    if (typeof input == "string") {
       addresses[ChainId.MAINNET] = input;
     } else {
       Object.assign(addresses, input);

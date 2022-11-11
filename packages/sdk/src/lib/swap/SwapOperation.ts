@@ -1,9 +1,8 @@
 import { ContractTransaction, ethers, BigNumber } from "ethers";
 import { Workflow } from "src/classes/Workflow";
 import { TokenValue } from "src/TokenValue";
-import { Token } from "../../classes/Token";
-import { BeanstalkSDK } from "../BeanstalkSDK";
-import { FarmFromMode, FarmToMode } from "../farm/types";
+import { Token } from "src/classes/Token";
+import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 
 type PathSegment = {
   from: string;

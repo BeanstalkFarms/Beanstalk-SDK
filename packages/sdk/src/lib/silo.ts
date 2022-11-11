@@ -1,7 +1,7 @@
 import { ethers, BigNumber } from "ethers";
 import _ from "lodash";
-import { Token } from "../classes/Token";
-import { DataSource, StringMap } from "../types";
+import { Token } from "src/classes/Token";
+import { DataSource, StringMap } from "src/types";
 import { BeanstalkSDK } from "./BeanstalkSDK";
 import EventProcessor from "./events/processor";
 import { EIP712Domain, EIP712TypedData, Permit } from "./permit";
@@ -10,10 +10,10 @@ import {
   DepositTokenPermitMessage,
   DepositTokensPermitMessage,
   sortCratesBySeason,
-  _parseWithdrawalCrates,
+  _parseWithdrawalCrates
 } from "./silo.utils";
-import { TokenValue } from "../classes/TokenValue";
-import { MAX_UINT256 } from "../constants";
+import { TokenValue } from "src/classes/TokenValue";
+import { MAX_UINT256 } from "src/constants";
 
 /**
  * A Crate is an `amount` of a token Deposited or
@@ -123,7 +123,7 @@ export class Silo {
       return query.whitelistTokens.map((e) => ({
         token: e.token,
         stalk: parseInt(e.stalk),
-        seeds: parseInt(e.seeds) / 1e4,
+        seeds: parseInt(e.seeds) / 1e4
       }));
     }
     throw new Error(`Unsupported source: ${source}`);
@@ -138,16 +138,16 @@ export class Silo {
       deposited: {
         amount: TokenValue.ZERO,
         bdv: TokenValue.ZERO,
-        crates: [] as DepositCrate[],
+        crates: [] as DepositCrate[]
       },
       withdrawn: {
         amount: TokenValue.ZERO,
-        crates: [] as WithdrawalCrate[],
+        crates: [] as WithdrawalCrate[]
       },
       claimable: {
         amount: TokenValue.ZERO,
-        crates: [] as WithdrawalCrate[],
-      },
+        crates: [] as WithdrawalCrate[]
+      }
     };
   }
 
@@ -174,7 +174,7 @@ export class Silo {
       amount: amount,
       bdv: bdv,
       stalk: token.getStalk(bdv), // FIXME: include grown stalk?
-      seeds: token.getSeeds(bdv),
+      seeds: token.getSeeds(bdv)
     };
 
     state.amount = state.amount.add(amount);
@@ -203,7 +203,7 @@ export class Silo {
 
     const crate: Crate<TokenValue> = {
       season: season,
-      amount: amount,
+      amount: amount
     };
 
     state.amount = state.amount.add(amount);
@@ -242,7 +242,7 @@ export class Silo {
       const events = await Silo.sdk.events.getSiloEvents(account, _token.address);
       const processor = new EventProcessor(Silo.sdk, account, {
         season: ethers.BigNumber.from(season.toString()), // FIXME: verbose
-        whitelist,
+        whitelist
       });
 
       const { deposits, withdrawals } = processor.ingestAll(events);
@@ -255,7 +255,7 @@ export class Silo {
           const rawCrate = {
             season: s.toString(),
             amount: _crates[s].amount.toString(),
-            bdv: _crates[s].bdv.toString(),
+            bdv: _crates[s].bdv.toString()
           };
           // Update the total deposited of this token
           // and return a parsed crate object
@@ -287,7 +287,7 @@ export class Silo {
       const query = await Silo.sdk.queries.getSiloBalance({
         token: _token.address.toLowerCase(),
         account,
-        season,
+        season
       }); // crates ordered in asc order
       if (!query.farmer) return balance;
 
@@ -339,7 +339,7 @@ export class Silo {
       const events = await Silo.sdk.events.getSiloEvents(account);
       const processor = new EventProcessor(Silo.sdk, account, {
         season: ethers.BigNumber.from(season.toString()), // FIXME: verbose
-        whitelist,
+        whitelist
       });
       const { deposits, withdrawals } = processor.ingestAll(events);
 
@@ -355,7 +355,7 @@ export class Silo {
           const rawCrate = {
             season: s.toString(),
             amount: _crates[s].amount.toString(),
-            bdv: _crates[s].bdv.toString(),
+            bdv: _crates[s].bdv.toString()
           };
 
           // Update the total deposited of this token
@@ -490,7 +490,7 @@ export class Silo {
     const deadline = _deadline || MAX_UINT256;
     const [domain, nonce] = await Promise.all([
       this._getEIP712Domain(),
-      _nonce || Silo.sdk.contracts.beanstalk.depositPermitNonces(owner).then((nonce) => nonce.toString()),
+      _nonce || Silo.sdk.contracts.beanstalk.depositPermitNonces(owner).then((nonce) => nonce.toString())
     ]);
 
     return this._createTypedDepositTokenPermitData(domain, {
@@ -499,7 +499,7 @@ export class Silo {
       token,
       value,
       nonce,
-      deadline,
+      deadline
     });
   }
 
@@ -534,7 +534,7 @@ export class Silo {
     const deadline = _deadline || MAX_UINT256;
     const [domain, nonce] = await Promise.all([
       this._getEIP712Domain(),
-      _nonce || Silo.sdk.contracts.beanstalk.depositPermitNonces(owner).then((nonce) => nonce.toString()),
+      _nonce || Silo.sdk.contracts.beanstalk.depositPermitNonces(owner).then((nonce) => nonce.toString())
     ]);
 
     return this._createTypedDepositTokensPermitData(domain, {
@@ -543,7 +543,7 @@ export class Silo {
       tokens,
       values,
       nonce,
-      deadline,
+      deadline
     });
   }
 
@@ -558,7 +558,7 @@ export class Silo {
       // FIXME: switch to below after protocol patch
       // chainId: (await Silo.sdk.provider.getNetwork()).chainId,
       chainId: 1,
-      verifyingContract: "0xc1e088fc1323b20bcbee9bd1b9fc9546db5624c5",
+      verifyingContract: "0xc1e088fc1323b20bcbee9bd1b9fc9546db5624c5"
     };
   }
 
@@ -571,12 +571,12 @@ export class Silo {
         { name: "token", type: "address" },
         { name: "value", type: "uint256" },
         { name: "nonce", type: "uint256" },
-        { name: "deadline", type: "uint256" },
-      ],
+        { name: "deadline", type: "uint256" }
+      ]
     },
     primaryType: "Permit",
     domain,
-    message,
+    message
   });
 
   private _createTypedDepositTokensPermitData = (domain: EIP712Domain, message: DepositTokensPermitMessage) => ({
@@ -588,11 +588,11 @@ export class Silo {
         { name: "tokens", type: "address[]" },
         { name: "values", type: "uint256[]" },
         { name: "nonce", type: "uint256" },
-        { name: "deadline", type: "uint256" },
-      ],
+        { name: "deadline", type: "uint256" }
+      ]
     },
     primaryType: "Permit",
     domain,
-    message,
+    message
   });
 }

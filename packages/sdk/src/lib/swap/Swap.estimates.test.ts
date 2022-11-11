@@ -1,8 +1,5 @@
-import { ERC20Token, Token } from "src/classes/Token";
-import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
-import { TokenValue } from "src/TokenValue";
+import { Token } from "src/classes/Token";
 import { getTestUtils } from "src/utils.tests/provider";
-import { FarmFromMode, FarmToMode } from "../farm/types";
 
 const { sdk, account, utils } = getTestUtils();
 
@@ -29,7 +26,7 @@ describe("Estimate", function () {
     [sdk.tokens.BEAN, sdk.tokens.USDC],
     [sdk.tokens.BEAN, sdk.tokens.DAI],
     [sdk.tokens.BEAN, sdk.tokens.BEAN],
-    [sdk.tokens.BEAN, sdk.tokens.CRV3],
+    [sdk.tokens.BEAN, sdk.tokens.CRV3]
   ])("Estimate BEAN->x", (tokenIn, tokenOut) => {
     it(`estimate(${tokenIn.symbol}, ${tokenOut.symbol})`, async () => {
       await estimate(tokenIn, tokenOut);

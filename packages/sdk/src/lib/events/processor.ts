@@ -1,5 +1,5 @@
-import { BigNumber as EBN, ethers } from 'ethers';
-import { Token } from '../../classes/Token';
+import { BigNumber as EBN, ethers } from "ethers";
+import { Token } from "src/classes/Token";
 import {
   SowEvent,
   HarvestEvent,
@@ -15,33 +15,33 @@ import {
   PodListingFilledEvent,
   PodOrderCreatedEvent,
   PodOrderCancelledEvent,
-  PodOrderFilledEvent,
-} from '../../constants/generated/Beanstalk/Beanstalk';
-import {  StringMap } from '../../types';
-import { BeanstalkSDK } from '../BeanstalkSDK';
-import { PodListing, PodOrder } from './types';
+  PodOrderFilledEvent
+} from "../../constants/generated/Beanstalk/Beanstalk";
+import { StringMap } from "../../types";
+import { BeanstalkSDK } from "../BeanstalkSDK";
+import { PodListing, PodOrder } from "./types";
 
 // ----------------------------------------
 
 const SupportedEvents = [
   // Field
-  'Sow',
-  'Harvest',
-  'PlotTransfer',
+  "Sow",
+  "Harvest",
+  "PlotTransfer",
   // Silo
-  'AddDeposit',
-  'RemoveDeposit',
-  'RemoveDeposits',
-  'AddWithdrawal',
-  'RemoveWithdrawal',
-  'RemoveWithdrawals',
+  "AddDeposit",
+  "RemoveDeposit",
+  "RemoveDeposits",
+  "AddWithdrawal",
+  "RemoveWithdrawal",
+  "RemoveWithdrawals",
   // Market
-  'PodListingCreated',
-  'PodListingCancelled',
-  'PodListingFilled',
-  'PodOrderCreated',
-  'PodOrderCancelled',
-  'PodOrderFilled',
+  "PodListingCreated",
+  "PodListingCancelled",
+  "PodListingFilled",
+  "PodOrderCreated",
+  "PodOrderCancelled",
+  "PodOrderFilled"
 ] as const;
 const SupportedEventsSet = new Set(SupportedEvents);
 
@@ -97,8 +97,7 @@ export type EventProcessorData = {
   };
 };
 
-
-export type EventKeys = 'event' | 'args' | 'blockNumber' | 'transactionIndex' | 'transactionHash' | 'logIndex';
+export type EventKeys = "event" | "args" | "blockNumber" | "transactionIndex" | "transactionHash" | "logIndex";
 export type Simplify<T extends ethers.Event> = Pick<T, EventKeys> & { returnValues?: any };
 export type Event = Simplify<ethers.Event>;
 
@@ -117,16 +116,16 @@ export default class EventProcessor {
   // |      DATA STORAGE        |
   // ----------------------------
 
-  plots: EventProcessorData['plots'];
-  deposits: EventProcessorData['deposits'];       // token => season => amount
-  withdrawals: EventProcessorData['withdrawals']; // token => season => amount
-  listings: EventProcessorData['listings'];
-  orders: EventProcessorData['orders'];
+  plots: EventProcessorData["plots"];
+  deposits: EventProcessorData["deposits"]; // token => season => amount
+  withdrawals: EventProcessorData["withdrawals"]; // token => season => amount
+  listings: EventProcessorData["listings"];
+  orders: EventProcessorData["orders"];
 
   /// /////////////////////// SETUP //////////////////////////
 
   constructor(sdk: BeanstalkSDK, account: string, epp: EventProcessingParameters, initialState?: Partial<EventProcessorData>) {
-    if (!epp.whitelist || typeof epp !== 'object') throw new Error('EventProcessor: Missing whitelist.');
+    if (!epp.whitelist || typeof epp !== "object") throw new Error("EventProcessor: Missing whitelist.");
     this.sdk = sdk;
     // Setup
     this.account = account.toLowerCase();
@@ -152,7 +151,7 @@ export default class EventProcessor {
   }
 
   ingestAll<T extends Event>(events: T[]) {
-    events.forEach(event => {
+    events.forEach((event) => {
       this.ingest(event);
     });
     return this.data();
@@ -164,7 +163,7 @@ export default class EventProcessor {
       deposits: this.deposits,
       withdrawals: this.withdrawals,
       listings: this.listings,
-      orders: this.orders,
+      orders: this.orders
     };
   }
 
@@ -172,7 +171,7 @@ export default class EventProcessor {
   getToken(event: Event): Token {
     const token = this.sdk.tokens.findByAddress(event?.args?.token);
     if (!token) {
-      this.sdk.debug('token not found for this event', { event });
+      this.sdk.debug("token not found for this event", { event });
       throw new Error(`token not found for address ${event?.args?.token}`);
     }
 
@@ -446,27 +445,19 @@ export default class EventProcessor {
   // /// /////////////////////// SILO: DEPOSIT  //////////////////////////
 
   // eslint-disable-next-line class-methods-use-this
-  _upsertDeposit(
-    existing: DepositCrateRaw | undefined,
-    amount: EBN,
-    bdv: EBN
-  ) {
+  _upsertDeposit(existing: DepositCrateRaw | undefined, amount: EBN, bdv: EBN) {
     return existing
       ? {
           amount: existing.amount.add(amount),
-          bdv: existing.bdv.add(bdv),
+          bdv: existing.bdv.add(bdv)
         }
       : {
           amount,
-          bdv,
+          bdv
         };
   }
 
-  _removeDeposit(
-    season: string,
-    token: Token,
-    amount: EBN
-  ) {
+  _removeDeposit(season: string, token: Token, amount: EBN) {
     if (!this.epp.whitelist.has(token)) throw new Error(`Attempted to process an event with an unknown token: ${token}`);
     const existingDeposit = this.deposits.get(token)?.[season];
     if (!existingDeposit) throw new Error(`Received a 'RemoveDeposit' event for an unknown deposit: ${token.address} ${season}`);
@@ -480,11 +471,7 @@ export default class EventProcessor {
 
     this.deposits.set(token, {
       ...this.deposits.get(token),
-      [season]: this._upsertDeposit(
-        existingDeposit,
-        amount.mul(-1),
-        bdv.mul(-1)
-      ),
+      [season]: this._upsertDeposit(existingDeposit, amount.mul(-1), bdv.mul(-1))
     });
 
     if (this.deposits.get(token)?.[season]?.amount?.eq(0)) {
@@ -499,31 +486,19 @@ export default class EventProcessor {
     const tokDeposits = this.deposits.get(token);
     this.deposits.set(token, {
       ...tokDeposits,
-      [event.args.season]: this._upsertDeposit(
-        tokDeposits?.[event.args.season],
-        event.args.amount,
-        event.args.bdv
-      ),
+      [event.args.season]: this._upsertDeposit(tokDeposits?.[event.args.season], event.args.amount, event.args.bdv)
     });
   }
 
   RemoveDeposit(event: Simplify<RemoveDepositEvent>) {
     const token = this.getToken(event);
-    this._removeDeposit(
-      event.args.season.toString(),
-      token,
-      event.args.amount
-    );
+    this._removeDeposit(event.args.season.toString(), token, event.args.amount);
   }
 
   RemoveDeposits(event: Simplify<RemoveDepositsEvent>) {
     const token = this.getToken(event);
     event.args.seasons.forEach((season, index) => {
-      this._removeDeposit(
-        season.toString(),
-        token,
-        event.args.amounts[index]
-      );
+      this._removeDeposit(season.toString(), token, event.args.amounts[index]);
     });
   }
 
@@ -533,10 +508,10 @@ export default class EventProcessor {
   _upsertWithdrawal(existing: WithdrawalCrateRaw | undefined, amount: EBN) {
     return existing
       ? {
-          amount: existing.amount.add(amount),
+          amount: existing.amount.add(amount)
         }
       : {
-          amount,
+          amount
         };
   }
 
@@ -563,30 +538,19 @@ export default class EventProcessor {
     const tokWithdrawals = this.withdrawals.get(token);
     this.withdrawals.set(token, {
       ...tokWithdrawals,
-      [event.args.season]: this._upsertWithdrawal(
-        tokWithdrawals?.[event.args.season],
-        event.args.amount
-      ),
+      [event.args.season]: this._upsertWithdrawal(tokWithdrawals?.[event.args.season], event.args.amount)
     });
   }
 
   RemoveWithdrawal(event: Simplify<RemoveWithdrawalEvent>) {
     const token = this.getToken(event);
-    this._removeWithdrawal(
-      event.args.season.toString(),
-      token,
-      event.args.amount
-    );
+    this._removeWithdrawal(event.args.season.toString(), token, event.args.amount);
   }
 
   RemoveWithdrawals(event: Simplify<RemoveWithdrawalsEvent>) {
     const token = this.getToken(event);
-    event.args.seasons.forEach(season => {
-      this._removeWithdrawal(
-        season.toString(),
-        token,
-        event.args.amount
-      );
+    event.args.seasons.forEach((season) => {
+      this._removeWithdrawal(season.toString(), token, event.args.amount);
     });
   }
 

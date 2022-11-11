@@ -1,7 +1,7 @@
 import { Token } from "src/classes/Token";
 import { TokenValue } from "src/TokenValue";
 import { getTestUtils } from "src/utils.tests/provider";
-import { FarmFromMode, FarmToMode } from "../farm/types";
+import { FarmFromMode, FarmToMode } from "src/lib/farm/types";
 
 const { sdk, account, utils } = getTestUtils();
 jest.setTimeout(10000);
@@ -20,7 +20,7 @@ beforeAll(async () => {
     utils.setUSDTBalance(account, sdk.tokens.USDT.amount(30000)),
     utils.setCRV3Balance(account, sdk.tokens.CRV3.amount(30000)),
     utils.setWETHBalance(account, sdk.tokens.WETH.amount(30000)),
-    utils.setBEANBalance(account, sdk.tokens.BEAN.amount(30000)),
+    utils.setBEANBalance(account, sdk.tokens.BEAN.amount(30000))
   ]);
   await utils.mine();
 
@@ -31,7 +31,7 @@ beforeAll(async () => {
     await sdk.tokens.USDT.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
     await sdk.tokens.CRV3.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
     await sdk.tokens.WETH.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
-    await sdk.tokens.BEAN.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber()),
+    await sdk.tokens.BEAN.approve(sdk.contracts.beanstalk.address, TokenValue.MAX_UINT256.toBigNumber())
   ]);
 });
 
@@ -53,11 +53,11 @@ describe.only("Swap", function () {
     [sdk.tokens.BEAN, sdk.tokens.USDC],
     [sdk.tokens.BEAN, sdk.tokens.DAI],
     [sdk.tokens.BEAN, sdk.tokens.BEAN],
-    [sdk.tokens.BEAN, sdk.tokens.CRV3],
+    [sdk.tokens.BEAN, sdk.tokens.CRV3]
   ])("BEAN->x", (tokenIn, tokenOut) => {
     it.each([
       [FarmFromMode.EXTERNAL, FarmToMode.EXTERNAL],
-      [FarmFromMode.EXTERNAL, FarmToMode.INTERNAL],
+      [FarmFromMode.EXTERNAL, FarmToMode.INTERNAL]
     ])(`swap(${tokenIn.symbol}, ${tokenOut.symbol}, %s, %s)`, async (from, to) => {
       if (tokenOut.symbol === "ETH" && to === FarmToMode.INTERNAL) {
         return;

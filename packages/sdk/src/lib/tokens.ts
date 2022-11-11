@@ -1,9 +1,8 @@
-import { addresses, ZERO_BN } from "../constants";
-import { Token, BeanstalkToken, ERC20Token, NativeToken } from "../classes/Token";
+import { addresses, ZERO_BN } from "src/constants";
+import { Token, BeanstalkToken, ERC20Token, NativeToken } from "src/classes/Token";
 import { BeanstalkSDK } from "./BeanstalkSDK";
-import { TokenFacet } from "../constants/generated/Beanstalk/Beanstalk";
 import { EIP2612PermitMessage, EIP712Domain, EIP712TypedData, Permit } from "./permit";
-import { TokenValue } from "../classes/TokenValue";
+import { TokenValue } from "src/classes/TokenValue";
 import { BigNumber } from "ethers";
 
 export type TokenBalance = {
@@ -51,12 +50,12 @@ export class Tokens {
     this.ETH = new NativeToken(this.sdk, null, 18, {
       name: "Ether",
       symbol: "ETH",
-      displayDecimals: 4,
+      displayDecimals: 4
     });
 
     this.WETH = new ERC20Token(this.sdk, addresses.WETH.get(this.sdk.chainId), 18, {
       name: "Wrapped Ether",
-      symbol: "WETH",
+      symbol: "WETH"
     });
 
     /// Beanstalk
@@ -68,11 +67,11 @@ export class Tokens {
       {
         name: "Bean",
         displayName: "Bean",
-        symbol: "BEAN",
+        symbol: "BEAN"
       },
       {
         stalk: 1,
-        seeds: 2,
+        seeds: 2
       }
     );
 
@@ -85,11 +84,11 @@ export class Tokens {
         displayName: "BEAN:3CRV LP",
         symbol: "BEAN3CRV",
         isLP: true,
-        color: "#DFB385",
+        color: "#DFB385"
       },
       {
         stalk: 1,
-        seeds: 4,
+        seeds: 4
       }
     );
 
@@ -102,11 +101,11 @@ export class Tokens {
         displayName: "Unripe Bean",
         symbol: "urBEAN",
         displayDecimals: 2,
-        isUnripe: true,
+        isUnripe: true
       },
       {
         stalk: 1,
-        seeds: 2,
+        seeds: 2
       }
     );
 
@@ -119,44 +118,44 @@ export class Tokens {
         displayName: "Unripe BEAN:3CRV LP",
         symbol: "urBEAN3CRV",
         displayDecimals: 2,
-        isUnripe: true,
+        isUnripe: true
       },
       {
         stalk: 1,
-        seeds: 4,
+        seeds: 4
       }
     );
 
     this.ROOT = new ERC20Token(this.sdk, addresses.ROOT.get(this.sdk.chainId), 6, {
       name: "Root",
-      symbol: "ROOT",
+      symbol: "ROOT"
     });
 
     /// Beanstalk "Tokens" (non ERC-20)
 
     this.STALK = new BeanstalkToken(this.sdk, null, 10, {
       name: "Stalk",
-      symbol: "STALK",
+      symbol: "STALK"
     });
 
     this.SEEDS = new BeanstalkToken(this.sdk, null, 6, {
       name: "Seeds",
-      symbol: "SEED",
+      symbol: "SEED"
     });
 
     this.PODS = new BeanstalkToken(this.sdk, null, 6, {
       name: "Pods",
-      symbol: "PODS",
+      symbol: "PODS"
     });
 
     this.SPROUTS = new BeanstalkToken(this.sdk, null, 6, {
       name: "Sprouts",
-      symbol: "SPROUT",
+      symbol: "SPROUT"
     });
 
     this.RINSABLE_SPROUTS = new BeanstalkToken(this.sdk, null, 6, {
       name: "Rinsable Sprouts",
-      symbol: "rSPROUT",
+      symbol: "rSPROUT"
     });
 
     /// Common ERC-20 Tokens
@@ -164,27 +163,27 @@ export class Tokens {
     this.CRV3 = new ERC20Token(this.sdk, addresses.CRV3.get(this.sdk.chainId), 18, {
       name: "3CRV",
       symbol: "3CRV",
-      isLP: true,
+      isLP: true
     });
 
     this.DAI = new ERC20Token(this.sdk, addresses.DAI.get(this.sdk.chainId), 18, {
       name: "Dai",
-      symbol: "DAI",
+      symbol: "DAI"
     });
 
     this.USDC = new ERC20Token(this.sdk, addresses.USDC.get(this.sdk.chainId), 6, {
       name: "USD Coin",
-      symbol: "USDC",
+      symbol: "USDC"
     });
 
     this.USDT = new ERC20Token(this.sdk, addresses.USDT.get(this.sdk.chainId), 6, {
       name: "Tether",
-      symbol: "USDT",
+      symbol: "USDT"
     });
 
     this.LUSD = new ERC20Token(this.sdk, addresses.LUSD.get(this.sdk.chainId), 6, {
       name: "LUSD",
-      symbol: "LUSD",
+      symbol: "LUSD"
     });
 
     /// Legacy
@@ -199,11 +198,11 @@ export class Tokens {
         symbol: "BEAN:ETH",
 
         displayDecimals: 9,
-        isLP: true,
+        isLP: true
       },
       {
         stalk: 1,
-        seeds: 4,
+        seeds: 4
       }
     );
 
@@ -277,7 +276,7 @@ export class Tokens {
     return {
       internal: token.fromBlockchain(result.internalBalance),
       external: token.fromBlockchain(result.externalBalance),
-      total: token.fromBlockchain(result.totalBalance),
+      total: token.fromBlockchain(result.totalBalance)
     };
   }
 
@@ -296,7 +295,7 @@ export class Tokens {
       return this.makeTokenBalance(_token, {
         internalBalance: ZERO_BN,
         externalBalance: balance,
-        totalBalance:    balance,
+        totalBalance: balance
       });
     }
 
@@ -346,15 +345,12 @@ export class Tokens {
    * @ref https://github.com/dmihal/eth-permit/blob/34f3fb59f0e32d8c19933184f5a7121ee125d0a5/src/eth-permit.ts#L85
    */
   private async getEIP712DomainForToken(token: ERC20Token): Promise<EIP712Domain> {
-    const [name, chainId] = await Promise.all([
-      token.getName(), 
-      this.sdk.provider.getNetwork().then((network) => network.chainId)
-    ]);
+    const [name, chainId] = await Promise.all([token.getName(), this.sdk.provider.getNetwork().then((network) => network.chainId)]);
     return {
       name,
       version: "1",
       chainId,
-      verifyingContract: token.address,
+      verifyingContract: token.address
     };
   }
 
@@ -391,7 +387,7 @@ export class Tokens {
       token
         .getContract()
         .nonces(owner)
-        .then((r) => r.toString()),
+        .then((r) => r.toString())
     ]);
 
     return this.createTypedERC2612Data(domain, {
@@ -399,7 +395,7 @@ export class Tokens {
       spender,
       value,
       nonce,
-      deadline,
+      deadline
     });
   }
 
@@ -411,11 +407,11 @@ export class Tokens {
         { name: "spender", type: "address" },
         { name: "value", type: "uint256" },
         { name: "nonce", type: "uint256" },
-        { name: "deadline", type: "uint256" },
-      ],
+        { name: "deadline", type: "uint256" }
+      ]
     },
     primaryType: "Permit",
     domain,
-    message,
+    message
   });
 }
