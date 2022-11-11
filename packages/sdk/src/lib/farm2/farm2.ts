@@ -3,19 +3,19 @@ import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { AdvancedPipeStruct } from "src/lib/depot";
 import { TokenValue } from "src/TokenValue";
 
-export type StepGenerator<StepGeneratorResult extends any = string | Step> = (
+export type StepGenerator<EncodedResult extends any = string> = (
   amountIn: ethers.BigNumber,
   forward?: boolean
 ) =>
-  | StepGeneratorResult // synchronous
-  | Promise<StepGeneratorResult>; // asynchronous
+  | (EncodedResult | Step<EncodedResult>) // synchronous
+  | Promise<EncodedResult | Step<EncodedResult>>; // asynchronous
 
-export type Step<Encoded extends any = any> = {
+export type Step<EncodedResult extends any> = {
   name: string;
   amountOut: ethers.BigNumber;
   value?: ethers.BigNumber;
   data?: any;
-  encode: (minAmountOut?: ethers.BigNumber) => Encoded;
+  encode: (minAmountOut?: ethers.BigNumber) => EncodedResult;
   decode: (data: string) => undefined | Record<string, any>;
   decodeResult: (result: any) => undefined | ethers.utils.Result;
   print?: (result: any) => string;
@@ -24,20 +24,22 @@ export type Step<Encoded extends any = any> = {
 // Something that generates steps. Either:
 // a. A function that returns a Step
 // b. A class that contains Steps
-type StepGenerators = StepGenerator | Chainable | StepGenerators[];
+type StepGenerators<EncodedResult extends any = string> = StepGenerator<EncodedResult> | Chainable<any> | StepGenerators<EncodedResult>[];
 
-interface ChainableCls {
+// Something to which you can .add StepGenerators.
+// Independently encodable.
+interface ChainableCls<EncodedResult extends any = any> {
   name: string;
-  _generators: (StepGenerator | Chainable)[];
-  _steps: Step<string>[];
+  _generators: (StepGenerator<EncodedResult> | Chainable<EncodedResult>)[];
+  _steps: Step<any>[];
   _value: ethers.BigNumber;
-  add(g: StepGenerators): void;
+  add(g: StepGenerators<EncodedResult>): void;
   encode(): string;
 }
 
-export class Chainable implements ChainableCls {
-  _generators: (StepGenerator | Chainable)[] = [];
-  _steps: Step[] = [];
+export class Chainable<EncodedResult extends any = string> implements ChainableCls {
+  _generators: (StepGenerator<EncodedResult> | Chainable<EncodedResult>)[] = [];
+  _steps: Step<EncodedResult>[] = [];
   _value = ethers.BigNumber.from(0);
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "Chainable") {}
@@ -50,17 +52,23 @@ export class Chainable implements ChainableCls {
 
   // Add a new StepGenerator to the list of generators.
   // Steps aren't generated until `.estimate()` is called.
-  add(s: StepGenerators) {
+  add(s: StepGenerators<EncodedResult>) {
     if (Array.isArray(s)) {
-      for (const elem of s) this.add(elem);
+      for (const elem of s) this.add(elem); // recurse
     } else {
+      this.sdk.debug(`[Chainable][${this.name}][add] ${s.name}`);
       this._generators.push(s);
     }
+    return this;
   }
 
   // Run a StepGenerator to produce a step.
-  async buildStep(gen: StepGenerator | Chainable, amountInStep: ethers.BigNumber, forward: boolean): Promise<Step> {
-    let step: Step;
+  async buildStep(
+    gen: StepGenerator<EncodedResult> | Chainable<EncodedResult>,
+    amountInStep: ethers.BigNumber,
+    forward: boolean
+  ): Promise<typeof this._steps[number]> {
+    let step: typeof this._steps[number];
 
     if (gen instanceof Chainable) {
       const nextAmount = await gen.estimate(amountInStep);
@@ -70,26 +78,34 @@ export class Chainable implements ChainableCls {
       step = {
         name: gen.name,
         amountOut: nextAmount,
-        encode: () => gen.encode(),
+        encode: () => gen.encode() as EncodedResult,
         decode: () => undefined, // fixme
         decodeResult: () => undefined, // fixme
       };
     } else {
-      const fnResult = await gen.call(this, amountInStep, forward);
+      const fnResult = (await gen.call(this, amountInStep, forward)) as Step<EncodedResult> | EncodedResult;
 
-      if (typeof fnResult === "string") {
+      this.sdk.debug(`[Chainable][${this.name}][buildStep] fnResult =`, typeof fnResult, fnResult);
+
+      // ASSUMPTION:
+      // if the StepGenerator returns an object with `.encode()` function,
+      // the object itself is a Step. Otherwise, it's the EncodedResult
+      // itself (could be a string or a struct), for which we manually compose
+      // an appropriate step.
+      if (typeof (fnResult as Step<EncodedResult>)?.encode === "function") {
+        step = fnResult as Step<EncodedResult>;
+      } else {
         step = {
           name: gen.name || "<unknown>",
           amountOut: amountInStep, // propagate amountOut
-          encode: () => fnResult, //
+          encode: () => fnResult as EncodedResult, //
           decode: () => undefined, //
           decodeResult: () => undefined, //
         };
-      } else {
-        step = fnResult;
       }
     }
 
+    this.sdk.debug(`[Chainable][${this.name}][buildStep]`, step);
     this._steps.push(step);
     if (step.value) this._value.add(step.value);
 
@@ -117,33 +133,11 @@ export class Chainable implements ChainableCls {
   encode(): string {
     throw new Error("Not implemented");
   }
-
-  //
-  private encodeStepsWithSlippage(_slippage: number) {
-    if (this._steps.length === 0) throw new Error("Work: must run estimate() before encoding");
-
-    const fnData: string[] = [];
-
-    for (let i = 0; i < this._steps.length; i += 1) {
-      const amountOut = this._steps[i].amountOut;
-      const minAmountOut = Chainable.slip(amountOut, _slippage);
-
-      /// If the step doesn't have slippage (for ex, wrapping ETH),
-      /// then `encode` should ignore minAmountOut
-      const encoded = this._steps[i].encode(minAmountOut);
-
-      fnData.push(encoded);
-
-      this.sdk.debug(`[chain] encoding step ${i}: expected amountOut = ${amountOut}, minAmountOut = ${minAmountOut}`);
-    }
-
-    return fnData;
-  }
 }
 
-export class Farm extends Chainable {
-  _steps: Step<string>[] = [];
+// --------------------------------------------------
 
+export class Farm extends Chainable<string> {
   constructor(protected sdk: BeanstalkSDK, public name: string = "Farm") {
     super(sdk, name);
   }
@@ -153,9 +147,7 @@ export class Farm extends Chainable {
   }
 }
 
-export class Pipe extends Chainable {
-  _steps: Step<AdvancedPipeStruct>[] = [];
-
+export class Pipe extends Chainable<AdvancedPipeStruct> {
   constructor(protected sdk: BeanstalkSDK, public name: string = "Pipe") {
     super(sdk, name);
   }
@@ -167,6 +159,28 @@ export class Pipe extends Chainable {
     ]);
   }
 }
+
+//
+// private encodeStepsWithSlippage(_slippage: number) {
+//   if (this._steps.length === 0) throw new Error("Work: must run estimate() before encoding");
+
+//   const fnData: string[] = [];
+
+//   for (let i = 0; i < this._steps.length; i += 1) {
+//     const amountOut = this._steps[i].amountOut;
+//     const minAmountOut = Chainable.slip(amountOut, _slippage);
+
+//     /// If the step doesn't have slippage (for ex, wrapping ETH),
+//     /// then `encode` should ignore minAmountOut
+//     const encoded = this._steps[i].encode(minAmountOut);
+
+//     fnData.push(encoded);
+
+//     this.sdk.debug(`[chain] encoding step ${i}: expected amountOut = ${amountOut}, minAmountOut = ${minAmountOut}`);
+//   }
+
+//   return fnData;
+// }
 
 // async execute(_amountIn: ethers.BigNumber | TokenValue, slippage: number) {
 //   const amountIn = _amountIn instanceof TokenValue ? _amountIn.toBigNumber() : _amountIn;

@@ -24,16 +24,49 @@ describe("farm2", () => {
     const farm = new Farm(sdk, "Farm");
     const pipe = new Pipe(sdk, "AdvancedPipe");
 
-    const deposit: StepGenerator = (amountInStep) =>
-      sdk.contracts.beanstalk.interface.encodeFunctionData("deposit", [sdk.tokens.BEAN.address, amountInStep, FarmFromMode.EXTERNAL]); // example
+    // sdk.farm.create();
+    // farm
+    //   .add(new sdk.farm.actions.Exchange(
+    //     '0x',
+    //     '0x',
+    //     sdk.tokens.BEAN,
+    //     sdk.tokens.BEAN_CRV3_LP,
+    //   ))
 
-    // const bet     : StepGenerator = `; // example
-    const other: StepGenerator = (amountInStep) => `${ethers.utils.hexZeroPad(amountInStep.toHexString(), 64)}`; // example
+    farm
+      // transfer tokens to Pipeline
+      .add((amountInStep) => `${amountInStep.toHexString()}01`)
+      // .addExternal([
+      //   async (amountInStep) => {
+      //     const amount = await calculateAmount();
+      //     return {
+      //     // mint
+      //     // no equivalent of get_dy
+      //     // cannot callstatic to get the amount of roots minted
+      //     // need to create a function that uses the amount of tokens
+      //     // transferred in the first farm step to calculate how many
+      //     // roots will be received in this step.
+      //     target: sdk.contracts.root.address,
+      //     callData: `${amountInStep.toHexString()}02`,
+      //     advancedData: '0x0000',
+      //   },
+      //   {
+      //     // transfer
+      //     target: sdk.contracts.root.address,
+      //     callData: `${amountInStep.toHexString()}02`,
+      //     advancedData: '0x0000',
+      //   }
+      // ])
+      .add(
+        pipe.add((amountInStep) => ({
+          target: sdk.contracts.root.address,
+          callData: `${amountInStep.toHexString()}02`,
+          advancedData: "0x0000",
+        }))
+      )
+      .add((amountInStep) => `${amountInStep.mul(2).toHexString()}03`);
 
-    farm.add(deposit);
-    pipe.add((amountInStep) => `${ethers.utils.hexZeroPad(amountInStep.toHexString(), 64)}`);
-    farm.add(pipe);
-    farm.add(other);
+    farm.add(() => "0xCALLDATA");
 
     console.log("generators", farm._generators);
     console.log("steps", farm._steps);
