@@ -22,7 +22,7 @@ const config = [
   // This lets you do this on the client side:
   // import { Thing } from "@beanstalk/sdk/Thing"
   makeEntry("dist/js/DecimalBigNumber.js", "DecimalBigNumber"),
-  makeEntry("dist/js/TokenValue.js", "TokenValue"),
+  makeEntry("dist/js/TokenValue.js", "TokenValue")
 ];
 
 export default config;
@@ -39,7 +39,7 @@ function makeEntry(inputFile, name) {
     output: [
       { file: esmPath, format: "es", sourcemap: true },
       { file: cjsPath, format: "cjs", sourcemap: true },
-      { file: udmPath, format: "umd", sourcemap: true, name: "BeanstalkSDK" },
+      { file: udmPath, format: "umd", sourcemap: true, name: "BeanstalkSDK" }
     ],
     external: Object.keys(pkg.dependencies),
     plugins: [
@@ -49,17 +49,17 @@ function makeEntry(inputFile, name) {
       excludeDeps(),
       multi({ preserveModules: true }),
       alias({
-        resolve: ['.js', '.d.ts'],
-        entries: [{ find: 'src', replacement: path.join(__dirname, './dist/js') }],
-      }),
-    ],
+        resolve: [".js", ".d.ts"],
+        entries: [{ find: "src", replacement: path.join(__dirname, "./dist/js") }]
+      })
+    ]
   };
 
   const pkgExport = {
     types: typesPath,
     module: esmPath,
     default: cjsPath,
-    browser: udmPath,
+    browser: udmPath
   };
 
   pkg.exports = pkg.exports || {};
@@ -67,7 +67,7 @@ function makeEntry(inputFile, name) {
   pkg.exports[key] = pkgExport;
 
   // Write back to package.json !!!!
-  fs.writeFileSync("./package.json", JSON.stringify(pkg, null, 2));
+  fs.writeFileSync("./package.json", JSON.stringify(pkg, null, 2) + "\n");
 
   return config;
 }
