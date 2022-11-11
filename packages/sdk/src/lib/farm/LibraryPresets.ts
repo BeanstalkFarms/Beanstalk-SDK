@@ -1,12 +1,10 @@
 import { ethers } from "ethers";
 import { ERC20Token, Token } from "src/classes/Token";
-import { Step, StepGenerator } from "src/classes/Workflow";
+import { StepGenerator } from "src/classes/Workflow";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
-import { Farmable, FarmFromMode, FarmToMode } from "../farm/types";
+import { FarmFromMode, FarmToMode } from "../farm/types";
 import { EIP2612PermitMessage, SignedPermit } from "../permit";
 import { Exchange, ExchangeUnderlying } from "./actions/index";
-
-import { Action } from "./types";
 
 export type ActionBuilder = (fromMode?: FarmFromMode, toMode?: FarmToMode) => StepGenerator<string> | StepGenerator<string>[];
 
@@ -28,14 +26,14 @@ export class LibraryPresets {
     _from: FarmFromMode,
     _permit?: SignedPermit<EIP2612PermitMessage>
   ) {
-    let actions: Farmable[] = [];
+    let generators: StepGenerator[] = [];
 
     // FIXME
     if (_from !== FarmFromMode.EXTERNAL) throw new Error("Not implemented");
 
     // give beanstalk permission to send this ERC-20 token from my balance -> pipeline
     if (_permit) {
-      actions.push(async function permitERC20(_amountInStep: ethers.BigNumber) {
+      generators.push(async function permitERC20(_amountInStep: ethers.BigNumber) {
         return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [
           _token.address, // token address
           await LibraryPresets.sdk.getAccount(), // owner
@@ -50,7 +48,7 @@ export class LibraryPresets {
     }
 
     // transfer erc20 token from beanstalk -> pipeline
-    actions.push(async function transferToken(_amountInStep: ethers.BigNumber) {
+    generators.push(async function transferToken(_amountInStep: ethers.BigNumber) {
       return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("transferToken", [
         _token.address, // token
         LibraryPresets.sdk.contracts.pipeline.address, // recipient
@@ -60,7 +58,7 @@ export class LibraryPresets {
       ]);
     });
 
-    return actions;
+    return generators;
   }
 
   constructor(sdk: BeanstalkSDK) {
@@ -96,12 +94,12 @@ export class LibraryPresets {
 
     //////// WETH <> BEAN
     this.weth2bean = (fromMode?: FarmFromMode, toMode?: FarmToMode) => [
-      this.weth2usdt(fromMode, FarmToMode.INTERNAL) as Action,
-      this.usdt2bean(FarmFromMode.INTERNAL, toMode) as Action,
+      this.weth2usdt(fromMode, FarmToMode.INTERNAL) as StepGenerator,
+      this.usdt2bean(FarmFromMode.INTERNAL, toMode) as StepGenerator,
     ];
     this.bean2weth = (fromMode?: FarmFromMode, toMode?: FarmToMode) => [
-      this.bean2usdt(fromMode, FarmToMode.INTERNAL) as Action,
-      this.usdt2weth(FarmFromMode.INTERNAL, toMode) as Action,
+      this.bean2usdt(fromMode, FarmToMode.INTERNAL) as StepGenerator,
+      this.usdt2weth(FarmFromMode.INTERNAL, toMode) as StepGenerator,
     ];
   }
 }
