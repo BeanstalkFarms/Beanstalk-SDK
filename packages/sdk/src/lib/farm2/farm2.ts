@@ -24,79 +24,113 @@ export type Step<EncodedResult extends any> = {
 // Something that generates steps. Either:
 // a. A function that returns a Step
 // b. A class that contains Steps
-type StepGenerators<EncodedResult extends any = string> = StepGenerator<EncodedResult> | Chainable<any> | StepGenerators<EncodedResult>[];
+type StepGenerators<EncodedResult extends any = string> = StepGenerator<EncodedResult> | Workflow<any> | StepGenerators<EncodedResult>[];
 
 // Something to which you can .add StepGenerators.
 // Independently encodable.
-interface ChainableCls<EncodedResult extends any = any> {
-  name: string;
-  _generators: (StepGenerator<EncodedResult> | Chainable<EncodedResult>)[];
-  _steps: Step<any>[];
-  _value: ethers.BigNumber;
-  add(g: StepGenerators<EncodedResult>): void;
-  encode(): string;
-}
+// interface WorkflowCls<EncodedResult extends any = any> {
+//   name: string;
+//   _generators: (StepGenerator<EncodedResult> | Workflow<EncodedResult>)[];
+//   _steps: Step<any>[];
+//   _value: ethers.BigNumber;
+//   add(g: StepGenerators<EncodedResult>): void;
+//   encode(): string;
+// }
 
-export class Chainable<EncodedResult extends any = string> implements ChainableCls {
-  _generators: (StepGenerator<EncodedResult> | Chainable<EncodedResult>)[] = [];
+/**
+ * A `Workflow` allows for iterative preparation of an Ethereum transaction
+ * that involves multiple steps. This includes Beanstalk's `farm()` function,
+ * the `pipeMulti` and `pipeAdvanced` functions provided by Pipeline and Depot,
+ * etc.
+ *
+ * ## BASICS
+ *
+ * There are three main components of a workflow:
+ *
+ * 1. **Step Generators** are asynchronous functions which create a Step. A Step
+ *    Generator will often perform an on-chain lookup mixed with some post-processing
+ *    to figure out what the result of a particular function call will be. For example,
+ *    the Step Generator for Curve's `exchange()` function will use a static call to
+ *    `get_dy` on the Curve pool of interest to determine how much of the requested
+ *    token will be received during an exchange.
+ *
+ * 2. **Steps** represent single Ethereum function calls that will eventually
+ *    be executed on-chain. Each Step includes functions to encode calldata,
+ *    decode calldata, and decode the result of a function call.
+ *
+ * 3. The `encode()` function, which condenses each Step encoded within `.steps` into
+ *    a single hex-encoded string for submission to Ethereum.
+ *
+ */
+export abstract class Workflow<EncodedResult extends any = string> {
+  _generators: (StepGenerator<EncodedResult> | Workflow<EncodedResult>)[] = [];
   _steps: Step<EncodedResult>[] = [];
   _value = ethers.BigNumber.from(0);
 
-  constructor(protected sdk: BeanstalkSDK, public name: string = "Chainable") {}
+  constructor(protected sdk: BeanstalkSDK, public name: string = "Workflow") {}
 
   //
   static SLIPPAGE_PRECISION = 10 ** 6;
   private static slip(_amount: ethers.BigNumber, _slippage: number) {
-    return _amount.mul(Math.floor(Chainable.SLIPPAGE_PRECISION * (1 - _slippage))).div(Chainable.SLIPPAGE_PRECISION);
+    return _amount.mul(Math.floor(Workflow.SLIPPAGE_PRECISION * (1 - _slippage))).div(Workflow.SLIPPAGE_PRECISION);
   }
 
-  // Add a new StepGenerator to the list of generators.
-  // Steps aren't generated until `.estimate()` is called.
+  /**
+   * Add a new StepGenerator to the list of generators.
+   * Each StepGenerator is called during `.estimate()`.
+   */
   add(s: StepGenerators<EncodedResult>) {
     if (Array.isArray(s)) {
       for (const elem of s) this.add(elem); // recurse
     } else {
-      this.sdk.debug(`[Chainable][${this.name}][add] ${s.name}`);
+      this.sdk.debug(`[Workflow][${this.name}][add] ${s.name}`);
       this._generators.push(s);
     }
     return this;
   }
 
-  // Run a StepGenerator to produce a step.
+  /**
+   * Run a StepGenerator to produce a Step.
+   */
   async buildStep(
-    gen: StepGenerator<EncodedResult> | Chainable<EncodedResult>,
+    input: StepGenerator<EncodedResult> | Workflow<EncodedResult>,
     amountInStep: ethers.BigNumber,
     forward: boolean
   ): Promise<typeof this._steps[number]> {
     let step: typeof this._steps[number];
 
-    if (gen instanceof Chainable) {
-      const nextAmount = await gen.estimate(amountInStep);
+    if (input instanceof Workflow) {
+      // This input is a Workflow.
+      // Let's reduce this Workflow to a single Step.
+      const nextAmount = await input.estimate(amountInStep);
 
-      // Create a step which encodes the steps
-      // inside the underlying Chainable class.
+      // Create a Step which encodes the steps
+      // inside the underlying Workflow class.
       step = {
-        name: gen.name,
-        amountOut: nextAmount,
-        encode: () => gen.encode() as EncodedResult,
+        name: input.name, // Match the Workflow's name
+        amountOut: nextAmount, // The result of this Step is the final result of the Workflow.
+        encode: () => input.encode() as EncodedResult, // Encode the entire Workflow into one element.
         decode: () => undefined, // fixme
         decodeResult: () => undefined, // fixme
       };
     } else {
-      const fnResult = (await gen.call(this, amountInStep, forward)) as Step<EncodedResult> | EncodedResult;
+      // This input is a Function.
+      // We call the function and investigate the shape of its return value.
+      const fnResult = (await input.call(this, amountInStep, forward)) as Step<EncodedResult> | EncodedResult;
 
-      this.sdk.debug(`[Chainable][${this.name}][buildStep] fnResult =`, typeof fnResult, fnResult);
-
-      // ASSUMPTION:
-      // if the StepGenerator returns an object with `.encode()` function,
+      // If the StepGenerator returns an object with `.encode()` function,
       // the object itself is a Step. Otherwise, it's the EncodedResult
       // itself (could be a string or a struct), for which we manually compose
       // an appropriate step.
       if (typeof (fnResult as Step<EncodedResult>)?.encode === "function") {
         step = fnResult as Step<EncodedResult>;
-      } else {
+      }
+
+      // `fnResult` is of type `EncodedResult`. This might be something
+      // like `string`, `AdvancedPipeStruct`, etc.
+      else {
         step = {
-          name: gen.name || "<unknown>",
+          name: input.name || "<unknown>",
           amountOut: amountInStep, // propagate amountOut
           encode: () => fnResult as EncodedResult, //
           decode: () => undefined, //
@@ -105,21 +139,24 @@ export class Chainable<EncodedResult extends any = string> implements ChainableC
       }
     }
 
-    this.sdk.debug(`[Chainable][${this.name}][buildStep]`, step);
     this._steps.push(step);
     if (step.value) this._value.add(step.value);
 
+    this.sdk.debug(`[Workflow][${this.name}][buildStep]`, step);
     return step;
   }
 
-  //
+  /**
+   * Estimate the `amountOut` received for executing this Workflow on-chain
+   * by iterating through its StepGenerators.
+   */
   async estimate(amountIn: ethers.BigNumber | TokenValue): Promise<ethers.BigNumber> {
     let nextAmount = amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn;
 
     for (let i = 0; i < this._generators.length; i += 1) {
-      const gen = this._generators[i];
+      const generator = this._generators[i];
       try {
-        const step = await this.buildStep(gen, nextAmount, true);
+        const step = await this.buildStep(generator, nextAmount, true);
         nextAmount = step.amountOut;
       } catch (e) {
         throw e;
@@ -129,7 +166,10 @@ export class Chainable<EncodedResult extends any = string> implements ChainableC
     return nextAmount;
   }
 
-  //
+  /**
+   * Encode this Workflow into a single hex string for submission to Ethereum.
+   * This must be implemented by extensions of Workflow.
+   */
   encode(): string {
     throw new Error("Not implemented");
   }
@@ -137,7 +177,10 @@ export class Chainable<EncodedResult extends any = string> implements ChainableC
 
 // --------------------------------------------------
 
-export class Farm extends Chainable<string> {
+/**
+ * The "Farm" is a Workflow that encodes a call to `beanstalk.farm()`.
+ */
+export class Farm extends Workflow<string> {
   constructor(protected sdk: BeanstalkSDK, public name: string = "Farm") {
     super(sdk, name);
   }
@@ -147,7 +190,10 @@ export class Farm extends Chainable<string> {
   }
 }
 
-export class Pipe extends Chainable<AdvancedPipeStruct> {
+/**
+ * The "AdvancedPipe" is a Workflow that encodes a call to `beanstalk.advancedPipe()`.
+ */
+export class AdvancedPipe extends Workflow<AdvancedPipeStruct> {
   constructor(protected sdk: BeanstalkSDK, public name: string = "Pipe") {
     super(sdk, name);
   }
@@ -168,7 +214,7 @@ export class Pipe extends Chainable<AdvancedPipeStruct> {
 
 //   for (let i = 0; i < this._steps.length; i += 1) {
 //     const amountOut = this._steps[i].amountOut;
-//     const minAmountOut = Chainable.slip(amountOut, _slippage);
+//     const minAmountOut = Workflow.slip(amountOut, _slippage);
 
 //     /// If the step doesn't have slippage (for ex, wrapping ETH),
 //     /// then `encode` should ignore minAmountOut

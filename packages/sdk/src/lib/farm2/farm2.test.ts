@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { FarmFromMode } from "src/lib/farm/types";
-import { Farm, Pipe, StepGenerator } from "src/lib/farm2/farm2";
+import { Farm, AdvancedPipe, StepGenerator } from "src/lib/farm2/farm2";
 
 import { setupConnection } from "../../utils.tests/provider";
 import { BeanstalkSDK } from "../BeanstalkSDK";
@@ -22,7 +22,7 @@ beforeAll(async () => {
 describe("farm2", () => {
   it("test", async () => {
     const farm = new Farm(sdk, "Farm");
-    const pipe = new Pipe(sdk, "AdvancedPipe");
+    const pipe = new AdvancedPipe(sdk, "AdvancedPipe");
 
     // sdk.farm.create();
     // farm
