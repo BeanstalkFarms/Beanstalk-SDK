@@ -5,6 +5,7 @@ import { Step, Workflow } from "src/classes/Workflow";
 import { Beanstalk } from "src/constants/generated";
 import { TokenValue } from "src/TokenValue";
 import { ethers } from "ethers";
+import { AdvancedPipeWorkflow } from "src/lib/depot/pipe";
 
 export type FarmStep = Step<string>;
 
@@ -59,5 +60,12 @@ export class Farm {
 
   create(name?: string) {
     return new FarmWorkflow(Farm.sdk, name);
+  }
+
+  /**
+   * @todo discuss name
+   */
+  createAdvancedPipe(name?: string) {
+    return new AdvancedPipeWorkflow(Farm.sdk, name);
   }
 }
