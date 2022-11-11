@@ -135,7 +135,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
     return _forward ? [_x1, _x2] : [_x2, _x1];
   }
 
-  clearEstimate() {
+  clearSteps() {
     this._steps = [];
     this._value = ethers.BigNumber.from(0);
   }
@@ -257,6 +257,8 @@ export abstract class Workflow<EncodedResult extends any = string> {
    * @returns Promise of BigNumber
    */
   async estimate(amountIn: ethers.BigNumber | TokenValue): Promise<ethers.BigNumber> {
+    this.clearSteps();
+
     let nextAmount = amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn;
 
     for (let i = 0; i < this._generators.length; i += 1) {
@@ -277,6 +279,8 @@ export abstract class Workflow<EncodedResult extends any = string> {
    * @returns Promise of BigNumber
    */
   async estimateReversed(amountIn: ethers.BigNumber | TokenValue) {
+    this.clearSteps();
+
     let nextAmount = amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn;
 
     for (let i = this._steps.length - 1; i >= 0; i -= 1) {
