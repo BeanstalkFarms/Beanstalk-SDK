@@ -2,10 +2,9 @@
 
 // Workflow Action template
 import { ethers } from "ethers";
-import { BeanstalkSDK } from "../../BeanstalkSDK";
-import { Action, ActionResult, BaseAction, StringAddress } from "../types";
+import { StepClass } from "../types";
 
-export class ActionTemplate extends BaseAction implements Action {
+export class ActionTemplate extends StepClass {
   public name: string = "exchange";
 
   constructor() {}

@@ -35,8 +35,8 @@ beforeAll(async () => {
   ]);
 });
 
-describe("Swap", function () {
-  describe.each([
+describe.only("Swap", function () {
+  describe.only.each([
     // ETH => x
     [sdk.tokens.ETH, sdk.tokens.WETH],
     [sdk.tokens.ETH, sdk.tokens.USDT],
@@ -106,7 +106,7 @@ async function swapTest(tokenIn: Token, tokenOut: Token, from: FarmFromMode, to:
   const v = ["ETH", "WETH"].includes(tokenIn.symbol) ? 30 : 300;
   const amount = tokenIn.fromHuman(_amount ? _amount : v);
   const slippage = 0.5;
-  const amountWithSlippage = amount.pct(1 - slippage);
+  const amountWithSlippage = amount.pct(100 - slippage);
 
   // Checks there are tokens to spend
   expect(tokenInBalanceBefore.gte(amount)).toBe(true);

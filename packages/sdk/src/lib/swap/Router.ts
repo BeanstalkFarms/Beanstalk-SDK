@@ -1,11 +1,11 @@
 import { Graph, alg } from "graphlib";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { Token } from "src/classes/Token";
-import { Action, FarmFromMode, FarmToMode } from "src/lib/farm/types";
-import { ActionBuilder } from "src/lib/farm/LibraryPresets";
+import { FarmFromMode, FarmToMode } from "src/lib/farm/types";
+import { StepClass } from "src/classes/Workflow";
 
 type RouterResult = {
-  step: (account: string, fromMode?: FarmFromMode, toMode?: FarmToMode) => Action;
+  step: (account: string, fromMode?: FarmFromMode, toMode?: FarmToMode) => StepClass;
   from: string;
   to: string;
 };
@@ -209,7 +209,7 @@ export class Router {
 
   private buildSelfTransfer(token: Token): RouterResult {
     return {
-      step: (account: string, from?: FarmFromMode, to?: FarmToMode): Action => {
+      step: (account: string, from?: FarmFromMode, to?: FarmToMode): StepClass => {
         return new Router.sdk.farm.actions.TransferToken(token.address, account, from, to);
       },
       from: token.symbol,

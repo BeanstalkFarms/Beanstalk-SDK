@@ -1,8 +1,8 @@
 import { ethers } from "ethers";
+import { StepClass } from "src/classes/Workflow";
 import { FarmToMode } from "../types";
-import { Action, ActionResult, BaseAction } from "../types";
 
-export class WrapEth extends BaseAction implements Action {
+export class WrapEth extends StepClass {
   public name: string = "wrapEth";
 
   constructor(private toMode: FarmToMode = FarmToMode.INTERNAL) {

@@ -1,9 +1,9 @@
 import { ethers } from "ethers";
-import { CurveMetaPool__factory, CurvePlainPool__factory } from "../../../constants/generated";
+import { StepClass } from "src/classes/Workflow";
+import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
-import { Action, ActionResult, BaseAction } from "../types";
 
-export class RemoveLiquidityOneToken extends BaseAction implements Action {
+export class RemoveLiquidityOneToken extends StepClass {
   public name: string = "RemoveLiquidityOneToken";
 
   constructor(

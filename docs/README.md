@@ -16,8 +16,8 @@ import {
   NativeToken,
   ERC20Token,
   BeanstalkToken,
-  Address
-} from '@beanstalk/sdk';
+  Address,
+} from "@beanstalk/sdk";
 ```
 
 TODO: add types and root classes (Token, Address, etc..) to export
@@ -27,7 +27,7 @@ TODO: add types and root classes (Token, Address, etc..) to export
 Create an instance
 
 ```javascript
-import { BeanstalkSDK } from '@beanstalk/sdk';
+import { BeanstalkSDK } from "@beanstalk/sdk";
 
 const sdk = new BeanstalkSDK(options);
 ```
@@ -54,7 +54,6 @@ const options = {
 - If `rpcUrl` is provided, SDK will use a `WebSocketProvider` or `JsonRpcProvider`, depending on the protocol in the url (`ws` vs `http`)
 - If `signer` is provided, `sdk.provider` will be set to `signer.provider`
 
-
 ## SDK properties and methods
 
 - `sdk.chainId` - (type [ChainID](./ChainId.md#chainid)) is inferred from `sdk.provider.network.chainId` or defaults to `1`
@@ -64,11 +63,13 @@ const options = {
 - `sdk.swap` - all functionality needed to perform [Swaps](#Swap)
 
 TODO:
+
 - `sdk.balances` - retrieve various [Balances](#balances)
 - `sdk.silo` - all funtionality needed to interact with the [Silo](#silo)
 - `sdk.farm` - Handle `farm()` mechanics in a nice way [Farm](#farm)
 
 TBD:
+
 - `sdk.field` - all funtionality needed to interact with the [Field](#field)
 - `sdk.barn` - all funtionality needed to interact with the [Barn](#barn)
 - `sdk.market` - all funtionality needed to interact with the [Market](#market)
@@ -169,11 +170,11 @@ Peform token swaps.
 ```javascript
 // TODO - we should be able to get this from Token obj
 // sdk.tokeks.ETH.parseHuman('90')
-const amountIn = ethers.utils.parseUnits('90', 18);
+const amountIn = ethers.utils.parseUnits("90", 18);
 const tokenIn = sdk.tokens.ETH;
 const tokenOut = sdk.tokens.BEAN;
-const fromMode = '0';
-const toMode = '0';
+const fromMode = "0";
+const toMode = "0";
 
 const est = await sdk.swap.estimate(true, amountIn, account, tokenIn, tokenOut, fromMode, toMode);
 
@@ -184,15 +185,16 @@ await sdk.swap.execute(est, 0.1);
 ```
 
 ## Balances
+
 TODO
 
 ```javascript
-sdk.balances.getStalk()
-sdk.balances.getSeeds()
-sdk.balances.getPods()
-sdk.balances.getSprouts()
+sdk.balances.getStalk();
+sdk.balances.getSeeds();
+sdk.balances.getPods();
+sdk.balances.getSprouts();
 
-sdk.balances.getAll()
+sdk.balances.getAll();
 // {
 //   deposited: { BEAN: 100, BEAN3CRV: 50, urBEAN: 0, urBEAN3CRV: 0, total: 150},
 //   withdrawn: { BEAN: 100, BEAN3CRV: 50, urBEAN: 0, urBEAN3CRV: 0, total: 150},
@@ -201,49 +203,52 @@ sdk.balances.getAll()
 //   circulating: { BEAN: 100, BEAN3CRV: 50, urBEAN: 0, urBEAN3CRV: 0, total: 150},
 // }
 
-sdk.balances.getDeposited()
+sdk.balances.getDeposited();
 //  { BEAN: 100, BEAN3CRV: 50, urBEAN: 0, urBEAN3CRV: 0, total: 150}
-sdk.balances.getWithdraw()
-sdk.balances.getClaimable()
-sdk.balances.getFarm()
-sdk.balances.getCirculating()
-
+sdk.balances.getWithdraw();
+sdk.balances.getClaimable();
+sdk.balances.getFarm();
+sdk.balances.getCirculating();
 ```
 
 ## Silo
 
 TODO
+
 ```javascript
-  sdk.silo.deposit()
-  sdk.silo.getDeposits()
-  sdk.silo.convert()
-  sdk.silo.transfer()
-  sdk.silo.withdraw()
-  sdk.silo.getWithdrawals()
-  sdk.silo.claim()
+sdk.silo.deposit();
+sdk.silo.getDeposits();
+sdk.silo.convert();
+sdk.silo.transfer();
+sdk.silo.withdraw();
+sdk.silo.getWithdrawals();
+sdk.silo.claim();
 ```
 
 ## Farm
+
 TODO
 
 ```javascript
   const workflow =  new sdk.farm.WorkflowBuilder()
-  workflow.addStep(workflow.library.swapETH_TO_BEAN(...))
+  workflow.add(workflow.library.swapETH_TO_BEAN(...))
 
   // or more manuall
-  workflow.addStep(workflow.library.swapWETH_TO_USDT(...))
-  workflow.addStep(workflow.library.swapUSDT_TO_BEAN(...))
+  workflow.add(workflow.library.swapWETH_TO_USDT(...))
+  workflow.add(workflow.library.swapUSDT_TO_BEAN(...))
 
   // or lowest level
-  workflow.addStep(workflow.library.exchange(...))
-  workflow.addStep(workflow.library.exchangeUnderlying(...))
+  workflow.add(workflow.library.exchange(...))
+  workflow.add(workflow.library.exchangeUnderlying(...))
 
-  workflow.addStep(workflow.library.deposit(...))
+  workflow.add(workflow.library.deposit(...))
 
   const estimate = await workflow.estimate()
   const tx = await workflow.execute();
 ```
+
 The SDK could also provide a library of pre-build workflows
+
 ```javascript
 
   // swap ETH to WETH
@@ -262,22 +267,22 @@ The SDK could also provide a library of pre-build workflows
 TBD
 
 ```javascript
-sdk.field.getAvailableSoil()
-sdk.field.getTemperature()
-sdk.field.getPodline()
-sdk.field.podsHarvested()
+sdk.field.getAvailableSoil();
+sdk.field.getTemperature();
+sdk.field.getPodline();
+sdk.field.podsHarvested();
 
-sdk.field.sow()
-sdk.field.transfer()
-sdk.field.harvest()
+sdk.field.sow();
+sdk.field.transfer();
+sdk.field.harvest();
 
-sdk.getPlots()
-
+sdk.getPlots();
 ```
 
 ## Barn
+
 TBD
 
 ## Market
-TBD
 
+TBD

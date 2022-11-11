@@ -1,10 +1,10 @@
 import { ethers } from "ethers";
-import { Token } from "../../../classes/Token";
-import { CurveMetaPool, CurveMetaPool__factory } from "../../../constants/generated";
+import { StepClass, Workflow } from "src/classes/Workflow";
+import { Token } from "src/classes/Token";
+import { CurveMetaPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
-import { Action, ActionResult, BaseAction } from "../types";
 
-export class ExchangeUnderlying extends BaseAction implements Action {
+export class ExchangeUnderlying extends StepClass {
   public name: string = "exchangeUnderlying";
 
   constructor(
@@ -27,7 +27,7 @@ export class ExchangeUnderlying extends BaseAction implements Action {
       fromMode: this.fromMode,
       toMode: this.toMode,
     });
-    const [tokenIn, tokenOut] = this.direction(this.tokenIn, this.tokenOut, forward);
+    const [tokenIn, tokenOut] = Workflow.direction(this.tokenIn, this.tokenOut, forward);
 
     const registry = ExchangeUnderlying.sdk.contracts.curve.registries.metaFactory;
     const [i, j] = await registry.get_coin_indices(this.pool, tokenIn.address, tokenOut.address, { gasLimit: 1000000 });

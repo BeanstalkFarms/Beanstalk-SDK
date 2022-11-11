@@ -1,10 +1,10 @@
 import { ethers } from "ethers";
-import { CurveMetaPool__factory, CurvePlainPool__factory } from "../../../constants/generated";
-import { assert } from "../../../utils";
+import { StepClass } from "src/classes/Workflow";
+import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
+import { assert } from "src/utils";
 import { FarmFromMode, FarmToMode } from "../types";
-import { Action, ActionResult, BaseAction } from "../types";
 
-export class AddLiquidity extends BaseAction implements Action {
+export class AddLiquidity extends StepClass {
   public name: string = "addLiquidity";
 
   constructor(

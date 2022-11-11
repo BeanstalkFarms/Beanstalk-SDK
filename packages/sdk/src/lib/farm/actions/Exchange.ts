@@ -1,10 +1,10 @@
 import { ethers } from "ethers";
-import { Token } from "../../../classes/Token";
-import { CurveMetaPool__factory, CurvePlainPool__factory } from "../../../constants/generated";
+import { StepClass, Workflow } from "src/classes/Workflow";
+import { Token } from "src/classes/Token";
+import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
-import { Action, ActionResult, BaseAction } from "../types";
 
-export class Exchange extends BaseAction implements Action {
+export class Exchange extends StepClass {
   public name: string = "exchange";
 
   constructor(
@@ -29,7 +29,7 @@ export class Exchange extends BaseAction implements Action {
       fromMode: this.fromMode,
       toMode: this.toMode,
     });
-    const [tokenIn, tokenOut] = this.direction(this.tokenIn, this.tokenOut, _forward);
+    const [tokenIn, tokenOut] = Workflow.direction(this.tokenIn, this.tokenOut, _forward);
 
     const registry = Exchange.sdk.contracts.curve.registries[this.registry];
     if (!registry) throw new Error(`Unknown registry: ${this.registry}`);

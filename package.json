@@ -21,7 +21,7 @@
     "sdk:testdev": "jest --selectProjects sdk --watch --runInBand --",
     "sdk:generate": "yarn workspace @beanstalk/sdk generate",
     "sdk:prettier": "yarn prettier packages/sdk -w",
-    "ex": "yarn workspace @beanstalk/examples ts --",
+    "ex": "yarn workspace @beanstalk/examples x",
     "format": "yarn sdk:prettier",
     "test": "yarn sdk:test",
     "generate": "yarn sdk:generate",

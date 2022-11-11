@@ -1,8 +1,8 @@
+import { FarmWorkflow } from "src/lib/farm/farm";
 import { TestUtils } from "src/utils.tests";
 import { setupConnection } from "../../utils.tests/provider";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import { FarmFromMode } from "./types";
-import { Work } from "./Work";
 
 let account: string;
 let sdk: BeanstalkSDK;
@@ -20,7 +20,7 @@ beforeAll(async () => {
 });
 
 describe("Facet: Pipeline", () => {
-  let farm: Work;
+  let farm: FarmWorkflow;
   let snapshot: number;
 
   beforeEach(async () => {
@@ -37,7 +37,7 @@ describe("Facet: Pipeline", () => {
     it.skip("throws", async () => {
       // Setup
       const amount = sdk.tokens.BEAN.amount(100);
-      farm.add(sdk.farm.presets.loadPipeline(sdk.tokens.BEAN, amount.toBlockchain(), FarmFromMode.EXTERNAL));
+      farm.add(sdk.farm.presets.loadPipeline(sdk.tokens.BEAN, FarmFromMode.EXTERNAL));
 
       // Execute
       expect(async () => {
@@ -73,13 +73,15 @@ describe("Facet: Pipeline", () => {
         )
       );
 
-      farm.add(sdk.farm.presets.loadPipeline(sdk.tokens.BEAN, amount.toBlockchain(), FarmFromMode.EXTERNAL, permit));
+      farm.add(sdk.farm.presets.loadPipeline(sdk.tokens.BEAN, FarmFromMode.EXTERNAL, permit));
 
       // Estimate
       await farm.estimate(amount.toBigNumber());
-      const encoded0 = farm.stepResults[0].encode();
-      const encoded1 = farm.stepResults[1].encode();
-      expect(farm.stepResults.length).toBe(2);
+      // @ts-ignore
+      const encoded0 = farm._steps[0].encode();
+      // @ts-ignore
+      const encoded1 = farm._steps[1].encode();
+      expect(farm.length).toBe(2);
       expect(encoded0.slice(0, 10)).toBe(sdk.contracts.beanstalk.interface.getSighash("permitERC20"));
       expect(encoded1.slice(0, 10)).toBe(sdk.contracts.beanstalk.interface.getSighash("transferToken"));
 

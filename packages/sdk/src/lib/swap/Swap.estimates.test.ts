@@ -30,7 +30,7 @@ describe("Estimate", function () {
     [sdk.tokens.BEAN, sdk.tokens.DAI],
     [sdk.tokens.BEAN, sdk.tokens.BEAN],
     [sdk.tokens.BEAN, sdk.tokens.CRV3],
-  ])("BEAN->x", (tokenIn, tokenOut) => {
+  ])("Estimate BEAN->x", (tokenIn, tokenOut) => {
     it(`estimate(${tokenIn.symbol}, ${tokenOut.symbol})`, async () => {
       await estimate(tokenIn, tokenOut);
     });

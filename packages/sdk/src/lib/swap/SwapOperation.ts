@@ -1,9 +1,9 @@
 import { ContractTransaction, ethers, BigNumber } from "ethers";
+import { Workflow } from "src/classes/Workflow";
 import { TokenValue } from "src/TokenValue";
 import { Token } from "../../classes/Token";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import { FarmFromMode, FarmToMode } from "../farm/types";
-import { Work } from "../farm/Work";
 
 type PathSegment = {
   from: string;
@@ -17,14 +17,14 @@ export class SwapOperation {
     sdk: BeanstalkSDK,
     private readonly tokenIn: Token,
     private readonly tokenOut: Token,
-    private readonly workflow: Work,
+    private readonly workflow: Workflow,
     private readonly metadata: PathSegment[]
   ) {
     SwapOperation.sdk = sdk;
   }
 
   public isValid(): boolean {
-    return this.workflow.steps.length > 0;
+    return this.workflow.length > 0;
   }
 
   getPath(): PathSegment[] {

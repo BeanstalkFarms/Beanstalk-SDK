@@ -1,4 +1,4 @@
-import { Overrides } from "ethers";
+import { ethers, Overrides } from "ethers";
 import { DepositTransferStruct } from "../constants/generated/Beanstalk/Root";
 import { BeanstalkSDK } from "./BeanstalkSDK";
 import { FarmToMode } from "./farm/types";
@@ -6,21 +6,21 @@ import { SignedPermit } from "./permit";
 import { DepositTokenPermitMessage, DepositTokensPermitMessage } from "./silo.utils";
 
 export class Root {
-  static sdk : BeanstalkSDK;
+  static sdk: BeanstalkSDK;
 
   /** @DISCUSS this pattern */
-  static address : string;
+  static address: string;
 
-  constructor(sdk : BeanstalkSDK) {
+  constructor(sdk: BeanstalkSDK) {
     Root.sdk = sdk;
     Root.address = sdk.contracts.root.address;
   }
 
   /**
-   * Mint ROOT tokens. The `Root.sol` contract supports Beanstalk's 
+   * Mint ROOT tokens. The `Root.sol` contract supports Beanstalk's
    * Deposit Transfer permits; this function unpacks a provided
    * signed permit into the proper argument slots.
-   * 
+   *
    * @dev Passing _overrides directly as the last parameter
    * of a contract method seems to make ethers treat it like
    * a parameter for the contract call. Instead, we unpack and
@@ -29,6 +29,7 @@ export class Root {
   async mint(
     _depositTransfers: DepositTransferStruct[],
     _destination: FarmToMode,
+    _minAmountOut: ethers.BigNumber, // FIXME
     _permit?: SignedPermit<DepositTokenPermitMessage | DepositTokensPermitMessage>,
     _overrides?: Overrides
   ) {
@@ -38,6 +39,7 @@ export class Root {
         return Root.sdk.contracts.root.mintWithTokenPermit(
           _depositTransfers,
           _destination,
+          _minAmountOut, // FIXME
           permit.typedData.message.token,
           permit.typedData.message.value,
           permit.typedData.message.deadline,
@@ -51,6 +53,7 @@ export class Root {
         return Root.sdk.contracts.root.mintWithTokensPermit(
           _depositTransfers,
           _destination,
+          _minAmountOut, // FIXME
           permit.typedData.message.tokens,
           permit.typedData.message.values,
           permit.typedData.message.deadline,
@@ -60,25 +63,21 @@ export class Root {
           { ..._overrides }
         );
       } else {
-        throw new Error('Malformatted permit')
+        throw new Error("Malformatted permit");
       }
     }
 
-    return Root.sdk.contracts.root.mint(
-      _depositTransfers,
-      _destination,
-      { ..._overrides }
-    );
+    return Root.sdk.contracts.root.mint(_depositTransfers, _destination, _minAmountOut, { ..._overrides });
   }
 
   /**
    * Permit the ROOT contract to transfer the user's Deposits.
-   * 
+   *
    * @fixme typescript strategy to clarify the return type based on
    * passage of n = 1 or n > 1
    */
   // async permit<
-  //   T extends readonly 
+  //   T extends readonly
   //   A extends readonlyBigNumber[],
   // > (
   //   _tokens: T,

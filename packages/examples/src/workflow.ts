@@ -29,7 +29,7 @@ async function main() {
 async function run(sdk: BeanstalkSDK) {
   const work = sdk.farm.create();
 
-  work.addSteps([
+  work.adds([
     new sdk.farm.actions.WrapEth(FarmToMode.INTERNAL),
     new sdk.farm.actions.Exchange(
       sdk.contracts.curve.pools.tricrypto2.address,
@@ -60,7 +60,7 @@ async function run(sdk: BeanstalkSDK) {
 async function runWithPresets(sdk: BeanstalkSDK) {
   const work = sdk.farm.create();
 
-  work.addSteps([
+  work.adds([
     new sdk.farm.actions.WrapEth(FarmToMode.INTERNAL),
     /////// USING presets
 
@@ -84,7 +84,7 @@ async function runWithPresets(sdk: BeanstalkSDK) {
 async function buyAndDeposit(sdk: BeanstalkSDK) {
   const work = sdk.farm.create();
 
-  work.addSteps([
+  work.adds([
     new sdk.farm.actions.WrapEth(FarmToMode.INTERNAL),
     sdk.farm.presets.weth2bean(FarmFromMode.INTERNAL, FarmToMode.INTERNAL),
     async (_amountInStep) => {
@@ -116,7 +116,7 @@ async function buyAndDeposit(sdk: BeanstalkSDK) {
 async function runReverse(sdk: BeanstalkSDK) {
   const work = sdk.farm.create();
 
-  work.addSteps([
+  work.adds([
     new sdk.farm.actions.WrapEth(),
     new sdk.farm.actions.Exchange(
       sdk.contracts.curve.pools.tricrypto2.address,
