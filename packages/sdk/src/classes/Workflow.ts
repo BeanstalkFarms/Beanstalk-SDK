@@ -174,8 +174,11 @@ export abstract class Workflow<EncodedResult extends any = string> {
   }
 
   /**
-   * Estimate the `amountOut` received for executing this Workflow on-chain
-   * by iterating through its StepGenerators.
+   * Estimate what the workflow would output given this amountIn is the input.
+   * For ex, if we are trading ETH -> BEAN, and you want to spend exactly 5 ETH, estimate()
+   * would tell how much BEAN you'd receive for 5 ETH
+   * @param amountIn Amount to send to workflow as input for estimation
+   * @returns Promise of BigNumber
    */
   async estimate(amountIn: ethers.BigNumber | TokenValue): Promise<ethers.BigNumber> {
     let nextAmount = amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn;
@@ -191,10 +194,23 @@ export abstract class Workflow<EncodedResult extends any = string> {
   }
 
   /**
-   *
+   * Estimate the min amount to input to the workflow to receive the desiredAmountOut output
+   * For ex, if we are trading ETH -> Bean, and I want exactly 500 BEAN, estimateReversed()
+   * tell me how much ETH will result in 500 BEAN
+   * @param desiredAmountOut The end amount you want the workflow to output
+   * @returns Promise of BigNumber
    */
-  async estimateReversed() {
-    throw new Error("Not yet implemented");
+  async estimateReversed(amountIn: ethers.BigNumber | TokenValue) {
+    let nextAmount = amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn;
+
+    for (let i = this._steps.length - 1; i >= 0; i -= 1) {
+      const generator = this._generators[i];
+      const step = await this.buildStep(generator, nextAmount, false);
+      nextAmount = step.amountOut;
+      this.sdk.debug(`[Workflow][${this.name}][estimateReversed][${i}/${step.name || "<unknown>"}]`, step);
+    }
+
+    return nextAmount;
   }
 
   /**
@@ -233,12 +249,17 @@ export abstract class Workflow<EncodedResult extends any = string> {
   abstract encode(): string;
 
   /**
-   *
+   * @param amountIn Amount to use as first input to Work
+   * @param slippage A human readable percent value. Ex: 0.1 would mean 0.1% slippage
+   * @returns Promise of a Transaction
    */
   abstract execute(_amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<ethers.ContractTransaction>;
 
   /**
-   *
+   * CallStatic version of the execute method. Allows testing the execution of the workflow.
+   * @param amountIn Amount to use as first input to workflow
+   * @param slippage A human readable percent value. Ex: 0.1 would mean 0.1% slippage
+   * @returns Promise of a Transaction
    */
   abstract callStatic(_amountIn: ethers.BigNumber | TokenValue, _slippage: number): Promise<string[]>;
 
