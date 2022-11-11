@@ -121,7 +121,7 @@ export class TokenValue {
   toBlockchain(): string {
     return this.value.toBigNumber().toString();
   }
-  
+
   /**
    * @deprecated
    * Ambiguous function. This exists only as a safety, otherwise the .toString()
@@ -145,10 +145,10 @@ export class TokenValue {
     if (num instanceof TokenValue) {
       return TokenValue.from(num).value;
     } else if (num instanceof BigNumber) {
-      return TokenValue.fromBlockchain(num, this.decimals).value;
+      return TokenValue.fromBlockchain(num, 0).value;
     } else {
-      // TODO: confirm it's safe to assume the divisor is 'fromHuman()'
-      return TokenValue.fromHuman(num, this.decimals).value;
+      const decimals = num.toString().split(".")[1]?.length || 0;
+      return TokenValue.fromHuman(num, decimals).value;
     }
   }
 
@@ -162,8 +162,8 @@ export class TokenValue {
   mul(num: TokenValue | BigNumber | number) {
     return TokenValue.from(this.value.mul(this.toDBN(num)));
   }
-  div(num: TokenValue | BigNumber | number) {
-    return TokenValue.from(this.value.div(this.toDBN(num)));
+  div(num: TokenValue | BigNumber | number, decimals?: number) {
+    return TokenValue.from(this.value.div(this.toDBN(num), decimals));
   }
   eq(num: TokenValue | BigNumber | number): boolean {
     return this.value.eq(this.toDBN(num));
@@ -187,7 +187,8 @@ export class TokenValue {
     return TokenValue.from(this.value.pow(num));
   }
   pct(num: number): TokenValue {
+    const minDecimals = this.decimals < 2 ? 2 : this.decimals;
     if (num < 0) throw new Error("Percent value must be bigger than 0");
-    return TokenValue.from(this.value.mul(num.toString()).div("100"));
+    return TokenValue.from(this.value.mul(num.toString()).div("100", minDecimals));
   }
 }

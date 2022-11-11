@@ -123,7 +123,7 @@ export class DecimalBigNumber {
   public toString({
     decimals,
     trim = true,
-    format = false,
+    format = false
   }: {
     trim?: boolean;
     format?: boolean;
@@ -152,7 +152,7 @@ export class DecimalBigNumber {
    *
    * Used when performing approximate calculations with
    * the number where precision __is not__ important.
-   * 
+   *
    * Ex: (new DecimalBigNumber("100", 6)).toApproxNumber() => 100
    */
   public toApproxNumber(): number {
@@ -250,12 +250,12 @@ export class DecimalBigNumber {
     return normalisedThis._value.lt(normalisedValue._value);
   }
 
-    /**
+  /**
    * Determines if this value is less than or equal to the provided value
    */
-     public lte(value: DecimalBigNumber | string): boolean {
-      return this.lt(value) || this.eq(value);
-    }
+  public lte(value: DecimalBigNumber | string): boolean {
+    return this.lt(value) || this.eq(value);
+  }
 
   /**
    * Multiplies this value by the provided value
@@ -328,7 +328,7 @@ export class DecimalBigNumber {
     else if (n == 1) return this;
     else if (this.eq("0") && n !== 0) return new DecimalBigNumber("0");
     else {
-      var z = new DecimalBigNumber(this._value, this._decimals); 
+      var z = new DecimalBigNumber(this._value, this._decimals);
       //5300000
       //28090000000000
       //148877000000000000000
