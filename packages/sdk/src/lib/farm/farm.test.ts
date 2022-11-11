@@ -140,5 +140,8 @@ describe("Workflow", () => {
       it.todo("encodes Steps with slippage");
       it.todo("encodes itself into a single hex string");
     });
+    describe("decode", () => {
+      it.todo("decodes");
+    });
   });
 });

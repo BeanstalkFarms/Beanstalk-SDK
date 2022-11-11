@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { ERC20Token, Token } from "src/classes/Token";
+import { ERC20Token } from "src/classes/Token";
 import { StepGenerator } from "src/classes/Workflow";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { FarmFromMode, FarmToMode } from "../farm/types";

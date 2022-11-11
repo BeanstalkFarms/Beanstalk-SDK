@@ -205,7 +205,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
           amountOut: nextAmount, // The result of this Step is the final result of the Workflow.
           encode: () => input.encode() as EncodedResult, // Encode the entire Workflow into one element.
           decode: () => undefined, // fixme
-          decodeResult: () => undefined, // fixme
+          decodeResult: (data: string[]) => input.decodeResult(data), // fixme
         };
       } else if (input instanceof StepClass) {
         // This input is a StepClass.
@@ -325,6 +325,16 @@ export abstract class Workflow<EncodedResult extends any = string> {
     this.sdk.debug(`[Workflow._prep()]`, { amountIn, slippage });
     await this.estimate(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn);
     return this.encodeStepsWithSlippage(slippage / 100);
+  }
+
+  /**
+   * Iteratively decode the result of `.callStatic()`.
+   */
+  decodeResult(callStaticResult: string[]): ethers.utils.Result[] {
+    return callStaticResult.map((result, index) => {
+      const decodedResult = this._steps[index].decodeResult(result) || [];
+      return decodedResult;
+    });
   }
 
   /**
