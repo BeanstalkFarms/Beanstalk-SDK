@@ -243,7 +243,9 @@ export abstract class Workflow<EncodedResult extends any = string> {
     }
 
     this._steps.push(step);
-    if (step.value) this._value.add(step.value);
+    if (step.value) {
+      this._value = this._value.add(step.value);
+    }
 
     this.sdk.debug(`[Workflow][${this.name}][buildStep]`, step);
     return step;

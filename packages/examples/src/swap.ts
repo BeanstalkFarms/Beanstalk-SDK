@@ -15,8 +15,8 @@ async function main() {
   // await swap(sdk, sdk.tokens.USDT, sdk.tokens.USDT, "500", FarmFromMode.INTERNAL, FarmToMode.EXTERNAL);
   // await swap(sdk, sdk.tokens.BEAN, sdk.tokens.ETH, "300");
 
-  await swap(sdk, sdk.tokens.BEAN, sdk.tokens.ETH, "30");
-  // await swap(sdk, sdk.tokens.ETH, sdk.tokens.WETH, "30");
+  // await swap(sdk, sdk.tokens.BEAN, sdk.tokens.ETH, "30");
+  await swap(sdk, sdk.tokens.ETH, sdk.tokens.WETH, "1");
   // await estimate(sdk, sdk.tokens.ETH, sdk.tokens.WETH, "30");
 }
 
