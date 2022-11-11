@@ -21,7 +21,7 @@ export class Swap {
     // Handle Farm Modes
     // For a single step swap (ex, ETH > WETH, or BEAN > BEAN), use the passed modes, if available
     if (route.length === 1) {
-      workflow.addStep(route[0].step(account, _from || FarmFromMode.EXTERNAL, _to || FarmToMode.EXTERNAL));
+      workflow.add(route[0].step(account, _from || FarmFromMode.EXTERNAL, _to || FarmToMode.EXTERNAL));
     }
     // for a multi step swap (ex, ETH -> WETH -> USDT -> BEAN), we want the user's choices for
     // FarmFromMode and FarmToMode, if supplied, to only apply to the first and last legs
@@ -46,7 +46,7 @@ export class Swap {
           from = FarmFromMode.INTERNAL_TOLERANT;
           to = FarmToMode.INTERNAL;
         }
-        workflow.addStep(route[i].step(account, from, to));
+        workflow.add(route[i].step(account, from, to));
       }
     }
 

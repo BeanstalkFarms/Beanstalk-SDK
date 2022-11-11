@@ -55,7 +55,7 @@ export class Work {
 
   copy() {
     const copy = new Work(Work.sdk);
-    copy.addSteps([...this._steps]);
+    copy.adds([...this._steps]);
     return copy;
   }
 
@@ -77,10 +77,10 @@ export class Work {
     if (input instanceof BaseAction) {
       input.setSDK(Work.sdk);
       this._steps.push(input);
-      Work.sdk.debug(`Work.addStep(): ${input.name}`);
+      Work.sdk.debug(`Work.add(): ${input.name}`);
     } else if (input instanceof Function) {
       this._steps.push(input);
-      Work.sdk.debug(`Work.addStep(): function ${input.name || "<unknown>"}()`);
+      Work.sdk.debug(`Work.add(): function ${input.name || "<unknown>"}()`);
     } else if (Array.isArray(input)) {
       for (const elem of input) {
         this.add(elem); // recurse
