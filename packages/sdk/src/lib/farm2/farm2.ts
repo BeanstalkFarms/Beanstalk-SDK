@@ -28,14 +28,14 @@ type StepGenerators<EncodedResult extends any = string> = StepGenerator<EncodedR
 
 // Something to which you can .add StepGenerators.
 // Independently encodable.
-// interface WorkflowCls<EncodedResult extends any = any> {
-//   name: string;
-//   _generators: (StepGenerator<EncodedResult> | Workflow<EncodedResult>)[];
-//   _steps: Step<any>[];
-//   _value: ethers.BigNumber;
-//   add(g: StepGenerators<EncodedResult>): void;
-//   encode(): string;
-// }
+interface _Workflow<EncodedResult extends any = any> {
+  name: string;
+  _generators: (StepGenerator<EncodedResult> | Workflow<EncodedResult>)[];
+  _steps: Step<any>[];
+  _value: ethers.BigNumber;
+  add(g: StepGenerators<EncodedResult>): void;
+  encode(): string;
+}
 
 /**
  * A `Workflow` allows for iterative preparation of an Ethereum transaction
@@ -63,16 +63,39 @@ type StepGenerators<EncodedResult extends any = string> = StepGenerator<EncodedR
  *
  */
 export abstract class Workflow<EncodedResult extends any = string> {
-  _generators: (StepGenerator<EncodedResult> | Workflow<EncodedResult>)[] = [];
-  _steps: Step<EncodedResult>[] = [];
-  _value = ethers.BigNumber.from(0);
+  protected _generators: (StepGenerator<EncodedResult> | Workflow<EncodedResult>)[] = [];
+  protected _steps: Step<EncodedResult>[] = [];
+  protected _value = ethers.BigNumber.from(0);
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "Workflow") {}
 
   //
   static SLIPPAGE_PRECISION = 10 ** 6;
-  private static slip(_amount: ethers.BigNumber, _slippage: number) {
+  protected static slip(_amount: ethers.BigNumber, _slippage: number) {
     return _amount.mul(Math.floor(Workflow.SLIPPAGE_PRECISION * (1 - _slippage))).div(Workflow.SLIPPAGE_PRECISION);
+  }
+
+  clearEstimate() {
+    this._steps = [];
+    this._value = ethers.BigNumber.from(0);
+  }
+
+  protected _copy<T extends Workflow<EncodedResult>>(WorkflowInh: new (...args: ConstructorParameters<typeof Workflow>) => T) {
+    const copy = new WorkflowInh(this.sdk);
+    copy.add(this._generators);
+    return copy;
+  }
+
+  get generators(): Readonly<(StepGenerator<EncodedResult> | Workflow<EncodedResult>)[]> {
+    return Object.freeze(this._generators);
+  }
+
+  get steps(): Readonly<Step<EncodedResult>[]> {
+    return Object.freeze(this._steps);
+  }
+
+  get value(): Readonly<ethers.BigNumber> {
+    return Object.freeze(this._value);
   }
 
   /**
@@ -185,6 +208,10 @@ export class Farm extends Workflow<string> {
     super(sdk, name);
   }
 
+  copy() {
+    return this._copy(Farm);
+  }
+
   encode() {
     return this.sdk.contracts.beanstalk.interface.encodeFunctionData("farm", [this._steps.map((step) => step.encode())]);
   }
@@ -194,8 +221,12 @@ export class Farm extends Workflow<string> {
  * The "AdvancedPipe" is a Workflow that encodes a call to `beanstalk.advancedPipe()`.
  */
 export class AdvancedPipe extends Workflow<AdvancedPipeStruct> {
-  constructor(protected sdk: BeanstalkSDK, public name: string = "Pipe") {
+  constructor(protected sdk: BeanstalkSDK, public name: string = "AdvancedPipe") {
     super(sdk, name);
+  }
+
+  copy() {
+    return this._copy(AdvancedPipe);
   }
 
   encode() {

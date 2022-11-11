@@ -68,15 +68,15 @@ describe("farm2", () => {
 
     farm.add(() => "0xCALLDATA");
 
-    console.log("generators", farm._generators);
-    console.log("steps", farm._steps);
-    console.log("value", farm._value);
+    console.log("generators", farm.generators);
+    console.log("steps", farm.steps);
+    console.log("value", farm.value);
 
     await farm.estimate(ethers.BigNumber.from(1));
 
-    console.log("generators", farm._generators);
-    console.log("steps", farm._steps);
-    console.log("value", farm._value);
+    console.log("generators", farm.generators);
+    console.log("steps", farm.steps);
+    console.log("value", farm.value);
 
     console.log(await farm.encode());
   });
