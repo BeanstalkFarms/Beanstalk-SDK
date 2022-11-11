@@ -8,7 +8,7 @@ import { TokenValue } from "src/TokenValue";
 /**
  * The "AdvancedPipe" is a Workflow that encodes a call to `beanstalk.advancedPipe()`.
  */
-export class AdvancedPipe extends Workflow<AdvancedPipeStruct> {
+export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
   private contract: Beanstalk;
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "AdvancedPipe") {
@@ -17,7 +17,7 @@ export class AdvancedPipe extends Workflow<AdvancedPipeStruct> {
   }
 
   copy() {
-    return this._copy(AdvancedPipe);
+    return this._copy(AdvancedPipeWorkflow);
   }
 
   encode() {

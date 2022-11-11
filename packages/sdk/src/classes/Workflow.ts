@@ -1,11 +1,56 @@
 import { ethers } from "ethers";
 import { Token } from "src/classes/Token";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
-import { StepClass } from "src/lib/farm/types";
 import { TokenValue } from "src/TokenValue";
 
+/**
+ * A StepGenerator is responsible for building a Step.
+ *
+ * It:
+ * 1. accepts an `amountIn` from a previous Step;
+ * 2. [optionally] uses this to perform some lookup on-chain, for
+ *    example calculating the `amountOut` received from a swap;
+ * 3. Returns a Step, which:
+ *    a. passes `amountOut` to the next StepGenerator;
+ *    b. provides functions to encode & decode the Step when
+ *       preparing it within a transaction like `farm()`.
+ */
 export type StepGenerator<EncodedResult extends any = string> = StepClass<EncodedResult> | StepFunction<EncodedResult>;
 
+/**
+ * A StepClass is a type of StepGenerator. It wraps a `run()` function
+ * which returns a Step. The class can maintain its own internal state
+ * or helpers if necessary. For example, you might instantiate an instance
+ * of an ethers contract in the constructor and save that for repeated use
+ * during `run()`.
+ *
+ * Unlke StepFunction, the `run()` function must return a Step and not
+ * raw encoded data.
+ */
+export abstract class StepClass<EncodedResult extends any = string> {
+  static sdk: BeanstalkSDK;
+  name: string;
+
+  public setSDK(sdk: BeanstalkSDK) {
+    StepClass.sdk = sdk;
+  }
+
+  abstract run(_amountInStep: ethers.BigNumber, _forward: boolean): Promise<Step<EncodedResult>>;
+}
+
+/**
+ * A StepFunction is a type of StepGenerator. It can return a Step or an
+ * EncodedResult. The Workflow engine will parse this; if you provide just
+ * the EncodedResult, the engine will wrap it into a Step for you.
+ *
+ * StepFunctions can be synchronous or asynchronous. If you already know
+ * the calldata you want to pass to the workflow (perhaps you gathered
+ * this calldata through some other method), you can just add it directly:
+ *
+ * ```
+ * () => '0xCALLDATA' // in this case, EncodedResult = string.
+ * ```
+ */
 export type StepFunction<EncodedResult extends any = string> = (
   amountIn: ethers.BigNumber,
   forward?: boolean
@@ -13,6 +58,10 @@ export type StepFunction<EncodedResult extends any = string> = (
   | (EncodedResult | Step<EncodedResult>) // synchronous
   | Promise<EncodedResult | Step<EncodedResult>>; // asynchronous
 
+/**
+ * A Step represents one pre-estimated Ethereum function call
+ * which can be encoded and executed on-chain.
+ */
 export type Step<EncodedResult extends any> = {
   name: string;
   amountOut: ethers.BigNumber;
@@ -24,10 +73,14 @@ export type Step<EncodedResult extends any> = {
   print?: (result: any) => string;
 };
 
-// Something that generates steps. Either:
-// a. A function that returns a Step
-// b. A class that contains Steps
-type StepGenerators<EncodedResult extends any = string> = StepGenerator<EncodedResult> | Workflow<any> | StepGenerators<EncodedResult>[];
+/**
+ * StepGenerators contains all types that are can be passed
+ * to a Workflow via `.add()`.
+ */
+type StepGenerators<EncodedResult extends any = string> =
+  | StepGenerator<EncodedResult> // Add a StepGenerator.
+  | Workflow<any> // Add another Workflow.
+  | StepGenerators<EncodedResult>[]; // Recurse (allows nesting & arrays).
 
 /**
  * A `Workflow` allows for iterative preparation of an Ethereum transaction
@@ -53,6 +106,17 @@ type StepGenerators<EncodedResult extends any = string> = StepGenerator<EncodedR
  * 3. The `encode()` function, which condenses each Step encoded within `.steps` into
  *    a single hex-encoded string for submission to Ethereum.
  *
+ * ## NESTING
+ *
+ * `_generators` is a flat list of:
+ *  a. StepFunction [a type of StepGenerator]
+ *  b. StepClass    [a type of StepGenerator]
+ *  c. Workflow
+ *
+ * Since a Workflow is a valid generator, you can nest Workflows within each other
+ * and continue the chain of passing `amountOut` between StepGenerators.
+ *
+ * See `.buildStep()` for a description of how Workflows are handled.
  */
 export abstract class Workflow<EncodedResult extends any = string> {
   protected _generators: (StepGenerator<EncodedResult> | Workflow<EncodedResult>)[] = [];
@@ -76,22 +140,22 @@ export abstract class Workflow<EncodedResult extends any = string> {
     this._value = ethers.BigNumber.from(0);
   }
 
-  protected _copy<T extends Workflow<EncodedResult>>(WorkflowInh: new (...args: ConstructorParameters<typeof Workflow>) => T) {
-    const copy = new WorkflowInh(this.sdk, this.name);
+  protected _copy<T extends Workflow<EncodedResult>>(WorkflowConstructor: new (...args: ConstructorParameters<typeof Workflow>) => T) {
+    const copy = new WorkflowConstructor(this.sdk, this.name);
     copy.add(this._generators);
     return copy;
   }
 
   get generators(): Readonly<(StepGenerator<EncodedResult> | Workflow<EncodedResult>)[]> {
-    return Object.freeze(this._generators);
+    return Object.freeze([...this._generators]);
   }
 
   get steps(): Readonly<Step<EncodedResult>[]> {
-    return Object.freeze(this._steps);
+    return Object.freeze([...this._steps]);
   }
 
   get value(): Readonly<ethers.BigNumber> {
-    return Object.freeze(this._value);
+    return Object.freeze(ethers.BigNumber.from(this._value));
   }
 
   /**
@@ -100,16 +164,20 @@ export abstract class Workflow<EncodedResult extends any = string> {
    */
   add(input: StepGenerators<EncodedResult>) {
     if (Array.isArray(input)) {
-      for (const elem of input) this.add(elem); // recurse
+      for (const elem of input) {
+        this.add(elem); // recurse
+      }
     } else {
       this.sdk.debug(`[Workflow][${this.name}][add] ${input.name}`);
       this._generators.push(input);
     }
-    return this;
+
+    return this; // allows chaining
   }
 
   /**
    * Run a StepGenerator to produce a Step.
+   * @fixme "runGenerator"? i'm ok with buildStep personally
    */
   async buildStep(
     input: StepGenerator<EncodedResult> | Workflow<EncodedResult>,
@@ -122,6 +190,9 @@ export abstract class Workflow<EncodedResult extends any = string> {
       if (input instanceof Workflow) {
         // This input is a Workflow.
         // Let's reduce this Workflow to a single Step.
+        // First, we call the Workflow's `.estimate()` and pass
+        // in the current amountInStep. This effectively continues
+        // the chain of estimation.
         const nextAmount = await input.estimate(amountInStep);
 
         // Create a Step which encodes the steps
@@ -134,22 +205,24 @@ export abstract class Workflow<EncodedResult extends any = string> {
           decodeResult: () => undefined, // fixme
         };
       } else if (input instanceof StepClass) {
+        // This input is a StepClass.
+        // We call its `run()` function to produce a Step.
+        // StepClass.run must return a Step, so nothing to parse here.
         step = await input.run(amountInStep, forward);
       } else {
-        // This input is a Function.
-        // We call the function and investigate the shape of its return value.
+        // This input is a StepFunction.
+        // We call the function directly and investigate the shape of its return value.
         const fnResult = (await input.call(this, amountInStep, forward)) as Step<EncodedResult> | EncodedResult;
 
-        // If the StepGenerator returns an object with `.encode()` function,
-        // the object itself is a Step. Otherwise, it's the EncodedResult
-        // itself (could be a string or a struct), for which we manually compose
-        // an appropriate step.
+        // If the StepFunction returns an object with `.encode()` function,
+        // we assume the object itself is a Step.
         if (typeof (fnResult as Step<EncodedResult>)?.encode === "function") {
           step = fnResult as Step<EncodedResult>;
         }
 
-        // `fnResult` is of type `EncodedResult`. This might be something
-        // like `string`, `AdvancedPipeStruct`, etc.
+        // Otherwise, it's the EncodedResult (could be a string or a struct),
+        // for which we manually compose an appropriate step.
+        // `fnResult` is something like `string`, `AdvancedPipeStruct`, etc.
         else {
           step = {
             name: input.name || "<unknown>",
@@ -214,20 +287,20 @@ export abstract class Workflow<EncodedResult extends any = string> {
   }
 
   /**
-   * Loop over a sequence of pre-estimated steps and encode their
-   * calldata with a slippage value applied to amountOut.
+   * Loop over a sequence of pre-estimated Steps and encode their
+   * calldata with a slippage value applied to `amountOut`.
    */
   protected encodeStepsWithSlippage(_slippage: number) {
     if (this._steps.length === 0) throw new Error("Work: must run estimate() before encoding");
 
     const fnData: EncodedResult[] = [];
     for (let i = 0; i < this._steps.length; i += 1) {
-      // Convert `amountOut` -> `minAmountOut` via slippage param
+      // Convert `amountOut` -> `minAmountOut` via slippage param.
       const amountOut = this._steps[i].amountOut;
       const minAmountOut = Workflow.slip(amountOut, _slippage);
 
       // If the step doesn't have slippage (for ex, wrapping ETH),
-      // then `encode` should ignore minAmountOut
+      // then `encode` should ignore minAmountOut.
       const encoded = this._steps[i].encode(minAmountOut);
 
       fnData.push(encoded);
@@ -236,6 +309,9 @@ export abstract class Workflow<EncodedResult extends any = string> {
     return fnData;
   }
 
+  /**
+   * Run `.estimate()` and encode all resulting Steps with a slippage value.
+   */
   protected async _prep(amountIn: ethers.BigNumber | TokenValue, slippage: number) {
     this.sdk.debug(`[Workflow._prep()]`, { amountIn, slippage });
     await this.estimate(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn);
@@ -267,6 +343,4 @@ export abstract class Workflow<EncodedResult extends any = string> {
    *
    */
   abstract estimateGas(_amountIn: ethers.BigNumber | TokenValue, _slippage: number): Promise<ethers.BigNumber>;
-
-  // _make(c: ethers.Contract) {}
 }

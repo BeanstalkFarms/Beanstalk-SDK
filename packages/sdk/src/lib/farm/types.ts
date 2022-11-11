@@ -31,17 +31,6 @@ export class BaseAction {
   }
 }
 
-export abstract class StepClass<EncodedResult extends any = string> {
-  static sdk: BeanstalkSDK;
-  name: string;
-
-  public setSDK(sdk: BeanstalkSDK) {
-    BaseAction.sdk = sdk;
-  }
-
-  abstract run(_amountInStep: ethers.BigNumber, _forward: boolean): Promise<Step<EncodedResult>>;
-}
-
 export type ActionFunction = (
   amountIn: BigNumber,
   forward?: boolean
