@@ -28,6 +28,15 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
     ]);
   }
 
+  /**
+   * Wrap a call to a contract into a Step<AdvancedPipeStruct>.
+   * @param contract The contract to call.
+   * @param method The contract method to call.
+   * @param args The arguments to pass to `method`.
+   * @param amountOut The expected amountOut from this Step.
+   * @param advancedData Clipboard data used by Pipeline to copy any requisite calldata from prev steps.
+   * @returns
+   */
   wrap<C extends ethers.Contract, M extends keyof C["functions"], A extends Parameters<C["functions"][M]>>(
     contract: C,
     method: M,

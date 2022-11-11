@@ -120,14 +120,15 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
           sdk.contracts.beanstalk,
           "transferToken",
           [
-            sdk.tokens.ROOT.address,
-            account,
-            "0", // Will be overwritten by advancedData
-            FarmFromMode.EXTERNAL, // use PIPELINE's external balance
-            FarmToMode.EXTERNAL, // TOOD: make this a parameter
+            /*  36 */ sdk.tokens.ROOT.address,
+            /*  68 */ account,
+            /* 100 */ "0", // Will be overwritten by advancedData
+            /* 132 */ FarmFromMode.EXTERNAL, // use PIPELINE's external balance
+            /* 164 */ FarmToMode.EXTERNAL, // TOOD: make this a parameter
           ],
           amountInStep,
-          Clipboard.encode([4, 32, 100]) // packet 4, slot 32 -> packet 5, slot 100
+          // Copy the first return
+          Clipboard.encode([4, 32, 100])
         ),
     ])
   );
