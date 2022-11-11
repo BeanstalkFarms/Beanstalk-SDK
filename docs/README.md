@@ -16,7 +16,7 @@ import {
   NativeToken,
   ERC20Token,
   BeanstalkToken,
-  Address,
+  Address
 } from "@beanstalk/sdk";
 ```
 
@@ -46,7 +46,7 @@ const options = {
   rpcUrl,
 
   // bool, print debug output. default `false`
-  DEBUG,
+  DEBUG
 };
 ```
 
@@ -61,12 +61,12 @@ const options = {
 - `sdk.contracts` - all [Contracts](#contracts) used by Beanstalk
 - `sdk.tokens` - all [Tokens](#tokens) used by Beanstalk
 - `sdk.swap` - all functionality needed to perform [Swaps](#Swap)
+- `sdk.farm` - Handle `farm()` mechanics in a nice way [Farm](#farm)
+- `sdk.balances` - retrieve various [Balances](#balances)
 
 TODO:
 
-- `sdk.balances` - retrieve various [Balances](#balances)
 - `sdk.silo` - all funtionality needed to interact with the [Silo](#silo)
-- `sdk.farm` - Handle `farm()` mechanics in a nice way [Farm](#farm)
 
 TBD:
 
@@ -162,26 +162,71 @@ await sdk.tokens.BEAN.getBalance(account);
 
 ## Swaps
 
-Peform token swaps.
+Peform token swaps. You must create a SwapOperation first, then you can run `.estimate()`, `.estimateReversed()`, or `.execute()` on it.
 
-- `sdk.swap.estimate()` - get an estimate for a swap
-- `sdk.swap.execute()` - execute an estimate
+`const operation = sdk.swap.buildSwap(tokenIn, tokenOut, account, fromMode?, toMode?)`
+
+- tokenIn: Token object you want to swap from
+- tokenOut: Token object you want to convert to
+- account: Where to send the tokens after the swap
+- fromMode: Which balance to use, farm (INTERNAL) or circulating (EXTERNAL). optional, defaults to EXTERNAL
+- toMode: To which balance to send the results, farm (INTERNAL) or circulating (EXTERNAL). optional, defaults to EXTERNAL
+- returns: SwapOperation // TODO: link
+
+`const est = operation.estimate(amount)`
+Estimate how much 'tokenOut' you will receive given an 'amount' of 'tokenIn'.
+
+- amount: The amount of tokens to get an estimate for
+- returns: TokenValue // TODO: link
+
+`const est = operation.estimateReversed(amount)`
+Estimate how much 'tokenIn' you need that will result in an `amount` of 'tokenOut'.
+For ex, if swapping from ETH to BEAN, `estimateReversed(5000)` will tell you how much ETH you need to execute the swap operation with.
+
+- amount: The amount of "tokenOut" to get an estimate for
+- returns: TokenValue // TODO: link
+
+### Swap ETH to BEAN
 
 ```javascript
-// TODO - we should be able to get this from Token obj
-// sdk.tokeks.ETH.parseHuman('90')
-const amountIn = ethers.utils.parseUnits("90", 18);
+import { BeanstalkSDK, FarmFromMode, FarmToMode } from "@beanstalk/sdk";
+
 const tokenIn = sdk.tokens.ETH;
 const tokenOut = sdk.tokens.BEAN;
-const fromMode = "0";
-const toMode = "0";
+const account = await sdk.getAccount();
+const fromMode = FarmFromMode.EXTERNAL;
+const toMode = FarmToMode.INTERNAL;
+const amountIn = tokenIn.fromHuman("3.14");
 
-const est = await sdk.swap.estimate(true, amountIn, account, tokenIn, tokenOut, fromMode, toMode);
+const swap = sdk.swap.buildSwap(tokenIn, tokenOut, account, fromMode, toMode);
+const est = await swap.estimate(amountIn);
 
-// this is ugly. TODO
-console.log(`Est $BEAN: ${tokenOut.stringifyToDecimal(est.amountOut).toString()}`);
+console.log(`Est $BEAN: ${est.toHuman()}`);
 
-await sdk.swap.execute(est, 0.1);
+const txReceipt = await swap.execute(est, 0.1);
+await txReceipt.wait();
+```
+
+### Swap ETH to BEAN with reversed estimate
+
+```javascript
+import { BeanstalkSDK, FarmFromMode, FarmToMode } from "@beanstalk/sdk";
+
+const tokenIn = sdk.tokens.ETH;
+const tokenOut = sdk.tokens.BEAN;
+const account = await sdk.getAccount();
+const fromMode = FarmFromMode.EXTERNAL;
+const toMode = FarmToMode.INTERNAL;
+
+const desiredAmountOut = tokenOut.fromHuman("5000");
+
+const swap = sdk.swap.buildSwap(tokenIn, tokenOut, account, fromMode, toMode);
+const est = await swap.estimateReversed(desiredAmountOut);
+
+console.log(`Est $BEAN: ${est.toHuman()}`);
+
+const txReceipt = await swap.execute(est, 0.1);
+await txReceipt.wait();
 ```
 
 ## Balances
@@ -231,17 +276,17 @@ TODO
 
 ```javascript
   const workflow =  new sdk.farm.WorkflowBuilder()
-  workflow.add(workflow.library.swapETH_TO_BEAN(...))
+  workflow.addStep(workflow.library.swapETH_TO_BEAN(...))
 
   // or more manuall
-  workflow.add(workflow.library.swapWETH_TO_USDT(...))
-  workflow.add(workflow.library.swapUSDT_TO_BEAN(...))
+  workflow.addStep(workflow.library.swapWETH_TO_USDT(...))
+  workflow.addStep(workflow.library.swapUSDT_TO_BEAN(...))
 
   // or lowest level
-  workflow.add(workflow.library.exchange(...))
-  workflow.add(workflow.library.exchangeUnderlying(...))
+  workflow.addStep(workflow.library.exchange(...))
+  workflow.addStep(workflow.library.exchangeUnderlying(...))
 
-  workflow.add(workflow.library.deposit(...))
+  workflow.addStep(workflow.library.deposit(...))
 
   const estimate = await workflow.estimate()
   const tx = await workflow.execute();
