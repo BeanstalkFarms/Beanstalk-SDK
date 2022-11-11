@@ -3,7 +3,6 @@ import { Workflow } from "src/classes/Workflow";
 import { TokenValue } from "src/TokenValue";
 import { Token } from "src/classes/Token";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
-import { Work } from "src/lib/farm/Work";
 
 type PathSegment = {
   from: string;

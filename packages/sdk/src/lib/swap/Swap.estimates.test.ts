@@ -1,4 +1,4 @@
-import { ERC20Token, Token } from "src/classes/Token";
+import { Token } from "src/classes/Token";
 import { getTestUtils } from "src/utils.tests/provider";
 
 const { sdk, account, utils } = getTestUtils();
