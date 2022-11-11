@@ -1,16 +1,16 @@
-import { BigNumber } from 'ethers';
-import { FarmToMode } from '../farm/types';
+import { BigNumber } from "ethers";
+import { FarmToMode } from "src/lib/farm/types";
 
 // FIXME - this normally comes from generated/graphql
 //    tho there is a comment in UI to make it an enum. need to verify
 //    this is ok
 export enum MarketStatus {
-  Active = 'ACTIVE',
-  Cancelled = 'CANCELLED',
-  CancelledPartial = 'CANCELLED_PARTIAL',
-  Expired = 'EXPIRED',
-  Filled = 'FILLED',
-  FilledPartial = 'FILLED_PARTIAL'
+  Active = "ACTIVE",
+  Cancelled = "CANCELLED",
+  CancelledPartial = "CANCELLED_PARTIAL",
+  Expired = "EXPIRED",
+  Filled = "FILLED",
+  FilledPartial = "FILLED_PARTIAL"
 }
 
 export type PodListing = {
@@ -18,7 +18,7 @@ export type PodListing = {
    * The ID of the Pod Listing. Equivalent to the `index` with no decimals.
    * @decimals 0
    */
-  id: string
+  id: string;
 
   /**
    * The address of the Farmer that owns the Listing.
@@ -36,7 +36,7 @@ export type PodListing = {
    *    0         the first Pod issued
    *    100,000   harvestableIndex
    *    150,000   index
-   * 
+   *
    * @decimals 6
    */
   index: BigNumber;
@@ -101,7 +101,7 @@ export type PodListing = {
   status: MarketStatus;
 
   /**
-   * 
+   *
    */
   placeInLine: BigNumber;
 };
@@ -169,5 +169,5 @@ export type FarmerMarket = {
   };
   orders: {
     [id: string]: PodOrder;
-  }
-}
+  };
+};

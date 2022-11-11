@@ -1,11 +1,10 @@
-import { ContractTransaction } from "ethers";
-import { ERC20__factory } from "../../constants/generated";
-import { PromiseOrValue } from "../../constants/generated/common";
-import { ERC20Permit } from "../../constants/generated/ERC20Permit";
-import { ERC20Permit__factory } from "../../constants/generated/factories/ERC20Permit__factory";
-import { BigNumber } from "ethers";
+import { BigNumber, ContractTransaction } from "ethers";
+import { ERC20__factory } from "src/constants/generated";
+import { PromiseOrValue } from "src/constants/generated/common";
+import { ERC20Permit } from "src/constants/generated/ERC20Permit";
+import { ERC20Permit__factory } from "src/constants/generated/factories/ERC20Permit__factory";
 import { Token } from "./Token";
-import { TokenValue } from "../TokenValue";
+import { TokenValue } from "src/classes/TokenValue";
 
 export class ERC20Token extends Token {
   public contract: ERC20Permit;

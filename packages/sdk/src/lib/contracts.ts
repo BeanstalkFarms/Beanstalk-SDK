@@ -1,6 +1,4 @@
-// import { BaseContract } from 'ethers';
-import type { BeanstalkSDK } from './BeanstalkSDK';
-// import { addresses, ChainID } from '../constants';
+import type { BeanstalkSDK } from "./BeanstalkSDK";
 import {
   Curve3Pool__factory,
   CurveTriCrypto2Pool__factory,
@@ -19,14 +17,13 @@ import {
   CurveTriCrypto2Pool,
   CurveZap,
   BeanstalkFertilizer__factory,
-  CurvePlainPool__factory,
   Root,
   Root__factory,
   Pipeline,
   Pipeline__factory,
-
-} from '../constants/generated';
-import { BaseContract } from 'ethers';
+  BeanstalkFertilizer
+} from "src/constants/generated";
+import { BaseContract } from "ethers";
 
 type CurveContracts = {
   pools: {
@@ -50,7 +47,7 @@ export class Contracts {
   public readonly beanstalk: Beanstalk;
   public readonly root: Root;
   public readonly pipeline: Pipeline;
-  public readonly fertilizer: import("../constants/generated/index").BeanstalkFertilizer;
+  public readonly fertilizer: BeanstalkFertilizer;
 
   public readonly curve: CurveContracts;
 
@@ -102,7 +99,7 @@ export class Contracts {
         metaFactory,
         [metaFactoryAddress]: metaFactory,
         cryptoFactory,
-        [cryptoFactoryAddress]: cryptoFactory,
+        [cryptoFactoryAddress]: cryptoFactory
       },
       zap
     };

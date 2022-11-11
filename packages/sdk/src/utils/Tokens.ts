@@ -1,5 +1,5 @@
 import { BigNumber, utils } from "ethers";
-import { TokenValue } from "../classes/TokenValue";
+import { TokenValue } from "src/classes/TokenValue";
 
 export const fromHuman = function fromHuman(value: string, decimals: number): TokenValue {
   return TokenValue.fromHuman(value, decimals);

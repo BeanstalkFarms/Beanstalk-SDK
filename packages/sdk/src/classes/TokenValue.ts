@@ -1,7 +1,5 @@
-import { BigNumber, utils } from "ethers";
-import { Token } from "graphql";
-import { DecimalBigNumber } from "../DecimalBigNumber";
-import { constants } from "ethers";
+import { BigNumber, utils, constants } from "ethers";
+import { DecimalBigNumber } from "src/utils/DecimalBigNumber";
 
 const blocker = {};
 

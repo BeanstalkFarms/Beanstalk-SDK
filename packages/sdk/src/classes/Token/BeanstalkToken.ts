@@ -1,8 +1,5 @@
-import { ethers } from 'ethers';
-import { NEW_BN } from '../../constants';
-import { BigNumber } from "ethers";
-import { Token } from './Token';
-import { TokenValue } from '../TokenValue';
+import { Token } from "./Token";
+import { TokenValue } from "src/classes/TokenValue";
 
 export class BeanstalkToken extends Token {
   // eslint-disable-next-line class-methods-use-this

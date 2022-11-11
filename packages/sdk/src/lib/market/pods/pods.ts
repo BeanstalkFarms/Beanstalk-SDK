@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
-import { DataSource } from "../../../types";
-import { BeanstalkSDK } from "../../BeanstalkSDK";
+import { DataSource } from "src/types";
+import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 
 class BaseError extends Error {
   constructor(message: string) {
@@ -11,13 +11,13 @@ class BaseError extends Error {
 
 class NotFoundError extends BaseError {
   constructor(entity?: string, id?: string) {
-    const message = `${entity ? `${entity} not found` : `Not found`}${id ? `: ${id}` : ''}`;
+    const message = `${entity ? `${entity} not found` : `Not found`}${id ? `: ${id}` : ""}`;
     super(message);
   }
 }
 
 export class PodsMarket {
-  static sdk : BeanstalkSDK;
+  static sdk: BeanstalkSDK;
 
   constructor(sdk: BeanstalkSDK) {
     PodsMarket.sdk = sdk;
@@ -25,27 +25,26 @@ export class PodsMarket {
 
   /**
    * Get a listing by ID.
-   * 
-   * @param id 
-   * @param options 
+   *
+   * @param id
+   * @param options
    */
   public async getListing(
     id: string,
     options?: {
-      source: DataSource.SUBGRAPH,
-      validate: boolean,
-    },
+      source: DataSource.SUBGRAPH;
+      validate: boolean;
+    }
   ) {
     const [isValid, query] = await Promise.all([
-      options?.validate 
-        ? PodsMarket.sdk.contracts.beanstalk.podListing(id)
-            .then((r) => ethers.BigNumber.from(r).gt(0))
+      options?.validate
+        ? PodsMarket.sdk.contracts.beanstalk.podListing(id).then((r) => ethers.BigNumber.from(r).gt(0))
         : Promise.resolve(true),
       PodsMarket.sdk.queries.getListingByIndex({ index: id })
     ]);
 
     if (!isValid || !query.podListings[0]) {
-      throw new NotFoundError('Listing', id);
+      throw new NotFoundError("Listing", id);
     }
 
     return query.podListings[0]; // FIXME: cast
@@ -53,14 +52,13 @@ export class PodsMarket {
 
   /**
    * TODO:
-   * 
+   *
    * Casting into final form
    * MarketStatus enum
-   * 
+   *
    * getOrder
-   * 
+   *
    * getListings
    * getOrders
    */
-
 }

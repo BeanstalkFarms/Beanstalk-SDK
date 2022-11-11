@@ -1,7 +1,6 @@
 import { expect } from "@jest/globals";
-import { BigNumber, BigNumberish } from "ethers";
+import { BigNumber } from "ethers";
 import { parseUnits } from "ethers/lib/utils";
-import { Token } from "graphql";
 import { TokenValue } from "./TokenValue";
 
 describe("TokenValues", function () {

@@ -26,10 +26,5 @@ export type StringMap<T> = { [address: string]: T };
 // FIXME: add tests to ensure the proper DataSource is used. Setting a value to 0 causes issues rn
 export enum DataSource {
   LEDGER = 1,
-  SUBGRAPH = 2,
+  SUBGRAPH = 2
 }
-
-// export function excludeHead<T extends any[]>(arr: readonly [any, ...T]) {
-//   const [_, ...rest] = arr;
-//   return rest;
-// }

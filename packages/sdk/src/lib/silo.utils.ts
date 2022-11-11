@@ -1,10 +1,10 @@
-import { Token } from "../classes/Token";
-import { MapValueType } from "../types";
 import { BigNumber } from "ethers";
+import { Token } from "src/classes/Token";
+import { MapValueType } from "src/types";
 import { EventProcessorData } from "./events/processor";
 import { EIP712PermitMessage } from "./permit";
 import { Crate, DepositCrate, TokenSiloBalance, WithdrawalCrate } from "./silo";
-import { TokenValue } from "../classes/TokenValue";
+import { TokenValue } from "src/classes/TokenValue";
 
 // FIXME: resolve with EIP712PermitMessage
 export type DepositTokenPermitMessage = EIP712PermitMessage<{
@@ -42,7 +42,7 @@ export const _parseWithdrawalCrates = (
   let claimableBalance = TokenValue.ZERO; // aka "receivable"
   const withdrawn: WithdrawalCrate[] = []; // aka "transit"
   const claimable: WithdrawalCrate[] = []; // aka "receivable"
-  
+
   // Split each withdrawal between `receivable` and `transit`.
   Object.keys(withdrawals).forEach((season) => {
     const amt = TokenValue.fromBlockchain(withdrawals[season].amount, token.decimals);
@@ -51,13 +51,13 @@ export const _parseWithdrawalCrates = (
       claimableBalance = claimableBalance.add(amt);
       claimable.push({
         amount: amt,
-        season: szn,
+        season: szn
       });
     } else {
       withdrawnBalance = withdrawnBalance.add(amt);
       withdrawn.push({
         amount: amt,
-        season: szn,
+        season: szn
       });
     }
   });
@@ -65,12 +65,12 @@ export const _parseWithdrawalCrates = (
   return {
     withdrawn: {
       amount: withdrawnBalance,
-      crates: withdrawn,
+      crates: withdrawn
     },
     claimable: {
       amount: claimableBalance,
-      crates: claimable,
-    },
+      crates: claimable
+    }
   };
 };
 
