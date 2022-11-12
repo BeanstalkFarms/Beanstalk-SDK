@@ -46,7 +46,7 @@ export abstract class Token {
   public readonly isUnripe: boolean;
 
   /** The Beanstalk STALK/SEED rewards per BDV of this token. */
-  public readonly rewards?: { stalk: number; seeds: number };
+  public readonly rewards?: { stalk: TokenValue; seeds: TokenValue };
 
   /**
    * @param chainId the chain ID on which this currency resides
@@ -71,8 +71,8 @@ export abstract class Token {
       isUnripe?: boolean;
     },
     rewards?: {
-      stalk: number;
-      seeds: number;
+      stalk: TokenValue;
+      seeds: TokenValue;
     }
   ) {
     Token.sdk = sdk;
@@ -99,7 +99,7 @@ export abstract class Token {
   /** Get the amount of Stalk rewarded per deposited BDV of this Token. */
   public getStalk(bdv?: TokenValue): TokenValue {
     if (!this.rewards?.stalk) return Token.sdk.tokens.STALK.amount(0);
-    if (!bdv) return Token.sdk.tokens.STALK.amount(this.rewards.stalk);
+    if (!bdv) return this.rewards.stalk;
 
     return TokenValue.fromBlockchain(bdv.mul(this.rewards?.stalk).toBigNumber(), Token.sdk.tokens.STALK.decimals);
   }
@@ -107,7 +107,7 @@ export abstract class Token {
   /** Get the amount of Seeds rewarded per deposited BDV of this Token. */
   public getSeeds(bdv?: TokenValue): TokenValue {
     if (!this.rewards?.seeds) return Token.sdk.tokens.SEEDS.amount(0);
-    if (!bdv) return Token.sdk.tokens.SEEDS.amount(this.rewards.seeds);
+    if (!bdv) return this.rewards.seeds;
 
     return TokenValue.fromBlockchain(bdv.mul(this.rewards.seeds).toBigNumber(), Token.sdk.tokens.SEEDS.decimals);
   }
