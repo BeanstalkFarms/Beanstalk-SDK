@@ -1,5 +1,5 @@
 import { FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Clipboard, DataSource, Token } from "@beanstalk/sdk";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { sdk, test, account } from "../setup";
 
 /**
@@ -38,10 +38,31 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
 
   // Swap from `token` -> `tokenOut` (BEAN)
   const tokenOut = sdk.tokens.BEAN;
-  const swap = sdk.swap.buildSwap(token, tokenOut, account, FarmFromMode.EXTERNAL, FarmToMode.EXTERNAL);
+  const swap = sdk.swap.buildSwap(token, tokenOut, account, FarmFromMode.EXTERNAL, FarmToMode.INTERNAL);
 
   const estBean = await swap.estimate(amount);
   console.log(`Swap Estimate: ${amount.toHuman()} ${token.symbol} --> ${estBean.toHuman()} BEAN`);
+
+  // MOCK:
+  // let permit = {
+  //   owner: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+  //   typedData: {
+  //     message: {
+  //       owner: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+  //       spender: '0xc1e088fc1323b20bcbee9bd1b9fc9546db5624c5',
+  //       value: '3977430962',
+  //       nonce: '3',
+  //       deadline: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+  //     }
+  //   },
+  //   rawSignature: '',
+  //   split: {
+  //     r: '0x070a8b7261b7d39330a456759fd055875617689a71aaf52624b47522e5de5fd7',
+  //     s: '0x7f19c0a1786faf45f060996d9fd1750f8334df7b9b7782bcd50c0cb4b1b520db',
+  //     v: 27,
+  //   }
+  // };
+
   // sign permit to send `token` to Pipeline
   const permit = await sdk.permit.sign(
     account,
@@ -52,7 +73,6 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
       estBean.toBlockchain() // amount of beans
     )
   );
-
   console.log("Signed a permit: ", permit);
 
   // farm
@@ -61,7 +81,10 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
 
   console.log("\n\nBuilding...");
 
-  farm.add(sdk.farm.presets.loadPipeline(tokenOut, FarmFromMode.EXTERNAL, permit));
+  farm.add(
+    // returns an array with 2 StepGenerators if no permit, 2 StepGenerators if permit
+    sdk.farm.presets.loadPipeline(tokenOut, FarmFromMode.INTERNAL)
+  );
   farm.add(
     pipe.add([
       (amountInStep) =>

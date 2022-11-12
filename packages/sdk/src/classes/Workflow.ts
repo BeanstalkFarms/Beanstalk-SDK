@@ -272,7 +272,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
       const step = await this.buildStep(generator, nextAmount, true);
       nextAmount = step.amountOut;
       this.sdk.debug(
-        `[Workflow][${this.name}][estimate][${i} / ${step.name || "<unknown>"}]`,
+        `[Workflow][${this.name}][estimate][${i}: ${step.name || "<unknown>"}]`,
         step.amountOut.toString(),
         step.value?.toString() || 0
       );
@@ -298,7 +298,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
       const step = await this.buildStep(generator, nextAmount, false);
       nextAmount = step.amountOut;
       this.sdk.debug(
-        `[Workflow][${this.name}][estimateReversed][${i}/${step.name || "<unknown>"}]`,
+        `[Workflow][${this.name}][estimateReversed][${i}: ${step.name || "<unknown>"}]`,
         step.amountOut.toString(),
         step.value?.toNumber() || 0
       );
