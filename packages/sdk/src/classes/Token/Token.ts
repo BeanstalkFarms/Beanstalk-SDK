@@ -99,7 +99,7 @@ export abstract class Token {
   /** Get the amount of Stalk rewarded per deposited BDV of this Token. */
   public getStalk(bdv?: TokenValue): TokenValue {
     if (!this.rewards?.stalk) return Token.sdk.tokens.STALK.amount(0);
-    if (!bdv) return Token.sdk.tokens.STALK.amount(this.rewards?.stalk);
+    if (!bdv) return Token.sdk.tokens.STALK.amount(this.rewards.stalk);
 
     return TokenValue.fromBlockchain(bdv.mul(this.rewards?.stalk).toBigNumber(), Token.sdk.tokens.STALK.decimals);
   }
