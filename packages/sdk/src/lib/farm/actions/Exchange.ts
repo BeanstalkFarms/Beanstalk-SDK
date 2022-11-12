@@ -76,16 +76,18 @@ export class Exchange extends StepClass {
         toMode: this.toMode
       },
       encode: (context) => {
-        const minAmountOut = Workflow.slip(_amountInStep, context.slippage);
+        const minAmountOut = Workflow.slip(amountOut!, context.slippage);
         Exchange.sdk.debug(`[${this.name}.encode()]`, {
           pool: this.pool,
           registry: this.registry,
           tokenIn: this.tokenIn.symbol,
           tokenOut: this.tokenOut.symbol,
           amountInStep: _amountInStep,
+          amountOut,
           minAmountOut,
           fromMode: this.fromMode,
-          toMode: this.toMode
+          toMode: this.toMode,
+          context
         });
         if (!minAmountOut) throw new Error("Exhange: missing minAmountOut");
         return Exchange.sdk.contracts.beanstalk.interface.encodeFunctionData("exchange", [

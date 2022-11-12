@@ -57,15 +57,17 @@ export class ExchangeUnderlying extends StepClass {
         toMode: this.toMode
       },
       encode: (context) => {
-        const minAmountOut = Workflow.slip(_amountInStep, context.slippage);
+        const minAmountOut = Workflow.slip(amountOut!, context.slippage);
         ExchangeUnderlying.sdk.debug(`[${this.name}.encode()]`, {
           pool: this.pool,
           tokenIn: tokenIn.symbol,
           tokenOut: tokenOut.symbol,
           amountInStep: _amountInStep,
+          amountOut,
           minAmountOut,
           fromMode: this.fromMode,
-          toMode: this.toMode
+          toMode: this.toMode,
+          context
         });
         if (!minAmountOut) throw new Error("ExchangeUnderlying: Missing minAmountOut");
         return ExchangeUnderlying.sdk.contracts.beanstalk.interface.encodeFunctionData("exchangeUnderlying", [

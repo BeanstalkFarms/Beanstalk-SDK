@@ -2,6 +2,7 @@ import { ethers } from "ethers";
 import { Token } from "src/classes/Token";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { TokenValue } from "src/TokenValue";
+import { assert } from "src/utils";
 
 /**
  * A StepGenerator is responsible for building a Step.
@@ -207,7 +208,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
         step = {
           name: input.name, // Match the Workflow's name
           amountOut: nextAmount, // The result of this Step is the final result of the Workflow.
-          encode: input.encode as () => EncodedResult, // Encode the entire Workflow into one element.
+          encode: (context) => input.encode(context) as EncodedResult, // Encode the entire Workflow into one element.
           decode: () => undefined, // fixme
           decodeResult: (data: string[]) => input.decodeResult(data) // fixme
         };
@@ -327,8 +328,9 @@ export abstract class Workflow<EncodedResult extends any = string> {
   /**
    * Run `.estimate()` and encode all resulting Steps with a slippage value.
    */
-  protected async _prep(amountIn: ethers.BigNumber | TokenValue, slippage: number) {
-    this.sdk.debug(`[Workflow._prep()]`, { amountIn, slippage });
+  protected async _estimateAndEncodeSteps(amountIn: ethers.BigNumber | TokenValue, slippage: number) {
+    assert(slippage >= 0 && slippage <= 100, "Slippage must be between (0, 100).");
+    this.sdk.debug(`[Workflow._estimateAndEncodeSteps()]`, { amountIn, slippage });
     await this.estimate(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn);
     return this.encodeSteps(slippage / 100);
   }

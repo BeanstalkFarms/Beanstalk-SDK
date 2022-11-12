@@ -35,7 +35,7 @@ export class RemoveLiquidityOneToken extends StepClass<string> {
     const poolAddr = this._pool.toLowerCase();
     const pools = RemoveLiquidityOneToken.sdk.contracts.curve.pools;
 
-    let amountOut;
+    let amountOut: ethers.BigNumber | undefined;
     if (poolAddr === pools.tricrypto2.address.toLowerCase()) {
       amountOut = await pools.tricrypto2.callStatic.calc_withdraw_one_coin(_amountInStep, i, { gasLimit: 10000000 });
     } else if (poolAddr === pools.pool3.address.toLowerCase()) {
@@ -62,16 +62,18 @@ export class RemoveLiquidityOneToken extends StepClass<string> {
       amountOut,
       data: {},
       encode: (context: EncodeContext) => {
-        const minAmountOut = Workflow.slip(_amountInStep, context.slippage);
+        const minAmountOut = Workflow.slip(amountOut!, context.slippage);
         RemoveLiquidityOneToken.sdk.debug(`[${this.name}.encode()]`, {
           pool: this._pool,
           registry: this._registry,
           tokenOut: this._tokenOut,
           amountInStep: _amountInStep,
+          amountOut,
           minAmountOut,
           forward: _forward,
           fromMode: this._fromMode,
-          toMode: this._toMode
+          toMode: this._toMode,
+          context
         });
         if (!minAmountOut) throw new Error("RemoveLiquidityOneToken: missing minAmountOut");
         return RemoveLiquidityOneToken.sdk.contracts.beanstalk.interface.encodeFunctionData("removeLiquidityOneToken", [

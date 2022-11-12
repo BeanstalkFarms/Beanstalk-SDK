@@ -34,17 +34,18 @@ export class FarmWorkflow extends Workflow<string> {
   }
 
   async execute(amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<ethers.ContractTransaction> {
-    const data = await this._prep(amountIn, slippage);
+    const data = await this._estimateAndEncodeSteps(amountIn, slippage);
+    this.sdk.debug("Execute data", data);
     return this.contract.farm(data, { value: this.value });
   }
 
   async callStatic(amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<string[]> {
-    const data = await this._prep(amountIn, slippage);
+    const data = await this._estimateAndEncodeSteps(amountIn, slippage);
     return this.contract.callStatic.farm(data, { value: this.value });
   }
 
   async estimateGas(amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<ethers.BigNumber> {
-    const data = await this._prep(amountIn, slippage);
+    const data = await this._estimateAndEncodeSteps(amountIn, slippage);
     return this.contract.estimateGas.farm(data, { value: this.value });
   }
 }
