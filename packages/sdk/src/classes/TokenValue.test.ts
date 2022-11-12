@@ -119,6 +119,11 @@ describe("TokenValues", function () {
     expect(TokenValue.fromHuman("100.5", 6).div(2.5, 6)).toMatchTokenValue(6, "40.2", BigNumber.from("40200000"));
   });
 
+  it("mod", () => {
+    expect(TokenValue.fromHuman("100.5", 6).mod(TokenValue.fromHuman(2, 6))).toMatchTokenValue(6, "0.5", BigNumber.from("500000"));
+    expect(() => TokenValue.fromHuman("100.5", 6).mod(TokenValue.fromHuman(2, 5))).toThrow();
+  });
+
   it("eq", () => {
     const n1 = TokenValue.fromHuman("100", 6);
 
