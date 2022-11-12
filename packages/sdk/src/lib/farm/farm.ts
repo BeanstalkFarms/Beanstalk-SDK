@@ -28,7 +28,7 @@ export class FarmWorkflow extends Workflow<string> {
     // TODO: we need to do somethign here with minAmountOut I think
     // and also the same in pipe.ts:encode()
     return this.contract.interface.encodeFunctionData("farm", [
-      this.encodeStepsWithSlippage(context.slippage)
+      this.encodeSteps(context.slippage)
       // this._steps.map((step) => step.encode())
     ]);
   }

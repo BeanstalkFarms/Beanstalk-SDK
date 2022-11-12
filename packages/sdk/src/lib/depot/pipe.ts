@@ -23,7 +23,7 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
 
   encode(context: EncodeContext) {
     return this.contract.interface.encodeFunctionData("advancedPipe", [
-      this.encodeStepsWithSlippage(context.slippage),
+      this.encodeSteps(context.slippage),
       // this._steps.map((step) => step.encode()),
       "0" // fixme
     ]);

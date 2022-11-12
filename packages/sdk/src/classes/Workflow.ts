@@ -310,7 +310,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
    * Loop over a sequence of pre-estimated Steps and encode their
    * calldata with context (like slippage) available for access.
    */
-  protected encodeStepsWithSlippage(_slippage: number) {
+  protected encodeSteps(_slippage: number) {
     if (this._steps.length === 0) throw new Error("Work: must run estimate() before encoding");
 
     const fnData: EncodedResult[] = [];
@@ -330,7 +330,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
   protected async _prep(amountIn: ethers.BigNumber | TokenValue, slippage: number) {
     this.sdk.debug(`[Workflow._prep()]`, { amountIn, slippage });
     await this.estimate(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn);
-    return this.encodeStepsWithSlippage(slippage / 100);
+    return this.encodeSteps(slippage / 100);
   }
 
   /**
