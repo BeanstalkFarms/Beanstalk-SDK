@@ -36,11 +36,19 @@ beforeAll(async () => {
 describe("Token Library", function () {
   describe("returns correct STALK and SEED amounts for whitelisted tokens", () => {
     it("works: BEAN", () => {
+      // No BDV provided, assume 1 BDV
       expect(sdk.tokens.BEAN.getStalk().toHuman()).toBe("1");
       expect(sdk.tokens.BEAN.getStalk().toBlockchain()).toBe((1_0000000000).toString());
       expect(sdk.tokens.BEAN.getSeeds().toHuman()).toBe("2");
       expect(sdk.tokens.BEAN.getSeeds().toBlockchain()).toBe((2_000000).toString());
 
+      // BDV < 1
+      expect(sdk.tokens.BEAN.getStalk(sdk.tokens.BEAN.amount(0.5)).toHuman()).toBe("0.5");
+      expect(sdk.tokens.BEAN.getStalk(sdk.tokens.BEAN.amount(0.5)).toBlockchain()).toBe((5_000000000).toString());
+      expect(sdk.tokens.BEAN.getSeeds(sdk.tokens.BEAN.amount(0.5)).toHuman()).toBe("1");
+      expect(sdk.tokens.BEAN.getSeeds(sdk.tokens.BEAN.amount(0.5)).toBlockchain()).toBe((1_000000).toString());
+
+      // BDV > 1
       // 100 BEAN (1E6) => 100 STALK (1E10)       decimal notation
       // 100_000000 BEAN => 100_0000000000 STALK  integer notation
       // therefore: 100E10 / 100E6 = 10_000 = 1E4 STALK per BEAN
