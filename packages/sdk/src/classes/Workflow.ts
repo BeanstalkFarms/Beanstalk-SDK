@@ -205,7 +205,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
           amountOut: nextAmount, // The result of this Step is the final result of the Workflow.
           encode: () => input.encode() as EncodedResult, // Encode the entire Workflow into one element.
           decode: () => undefined, // fixme
-          decodeResult: (data: string[]) => input.decodeResult(data), // fixme
+          decodeResult: (data: string[]) => input.decodeResult(data) // fixme
         };
       } else if (input instanceof StepClass) {
         // This input is a StepClass.
@@ -232,7 +232,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
             amountOut: amountInStep, // propagate amountOut
             encode: () => fnResult as EncodedResult, //
             decode: () => undefined, //
-            decodeResult: () => undefined, //
+            decodeResult: () => undefined //
           };
         }
       }
@@ -269,7 +269,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
       this.sdk.debug(
         `[Workflow][${this.name}][estimate][${i} / ${step.name || "<unknown>"}]`,
         step.amountOut.toString(),
-        step.value?.toNumber() || 0
+        step.value?.toString() || 0
       );
     }
 
