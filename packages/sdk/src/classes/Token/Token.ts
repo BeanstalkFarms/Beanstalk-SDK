@@ -100,8 +100,9 @@ export abstract class Token {
   public getStalk(bdv?: TokenValue): TokenValue {
     if (!this.rewards?.stalk) return Token.sdk.tokens.STALK.amount(0);
     if (!bdv) return this.rewards.stalk;
+    // check if bdv.decimals is 6?
 
-    return TokenValue.fromBlockchain(bdv.mul(this.rewards?.stalk).toBigNumber(), Token.sdk.tokens.STALK.decimals);
+    return bdv.mul(this.rewards.stalk).div(1, Token.sdk.tokens.STALK.decimals);
   }
 
   /** Get the amount of Seeds rewarded per deposited BDV of this Token. */
@@ -109,7 +110,7 @@ export abstract class Token {
     if (!this.rewards?.seeds) return Token.sdk.tokens.SEEDS.amount(0);
     if (!bdv) return this.rewards.seeds;
 
-    return TokenValue.fromBlockchain(bdv.mul(this.rewards.seeds).toBigNumber(), Token.sdk.tokens.SEEDS.decimals);
+    return bdv.mul(this.rewards.seeds).div(1, Token.sdk.tokens.SEEDS.decimals);
   }
 
   abstract getContract(): BaseContract | null;
