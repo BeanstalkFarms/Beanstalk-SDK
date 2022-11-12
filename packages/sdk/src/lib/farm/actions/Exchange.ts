@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { StepClass, Workflow } from "src/classes/Workflow";
+import { Step, StepClass, Workflow } from "src/classes/Workflow";
 import { Token } from "src/classes/Token";
 import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
@@ -18,7 +18,7 @@ export class Exchange extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true) {
+  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<Step<string>> {
     Exchange.sdk.debug(`[${this.name}.run()]`, {
       pool: this.pool,
       registry: this.registry,
@@ -27,7 +27,7 @@ export class Exchange extends StepClass {
       amountInStep: _amountInStep,
       forward: _forward,
       fromMode: this.fromMode,
-      toMode: this.toMode,
+      toMode: this.toMode
     });
     const [tokenIn, tokenOut] = Workflow.direction(this.tokenIn, this.tokenOut, _forward);
 
@@ -35,7 +35,7 @@ export class Exchange extends StepClass {
     if (!registry) throw new Error(`Unknown registry: ${this.registry}`);
 
     const [i, j] = await registry.callStatic.get_coin_indices(this.pool, tokenIn.address, tokenOut.address, {
-      gasLimit: 10000000,
+      gasLimit: 10000000
     });
 
     /// Get amount out based on the selected pool
@@ -56,7 +56,7 @@ export class Exchange extends StepClass {
       );
     } else if (this.registry === Exchange.sdk.contracts.curve.registries.cryptoFactory.address) {
       amountOut = await CurvePlainPool__factory.connect(this.pool, Exchange.sdk.provider).callStatic.get_dy(i, j, _amountInStep, {
-        gasLimit: 10000000,
+        gasLimit: 10000000
       });
     }
 
@@ -73,9 +73,10 @@ export class Exchange extends StepClass {
         tokenIn: tokenIn.address,
         tokenOut: tokenOut.address,
         fromMode: this.fromMode,
-        toMode: this.toMode,
+        toMode: this.toMode
       },
-      encode: (minAmountOut?: ethers.BigNumber) => {
+      encode: (context) => {
+        const minAmountOut = Workflow.slip(_amountInStep, context.slippage);
         Exchange.sdk.debug(`[${this.name}.encode()]`, {
           pool: this.pool,
           registry: this.registry,
@@ -84,7 +85,7 @@ export class Exchange extends StepClass {
           amountInStep: _amountInStep,
           minAmountOut,
           fromMode: this.fromMode,
-          toMode: this.toMode,
+          toMode: this.toMode
         });
         if (!minAmountOut) throw new Error("Exhange: missing minAmountOut");
         return Exchange.sdk.contracts.beanstalk.interface.encodeFunctionData("exchange", [
@@ -95,11 +96,11 @@ export class Exchange extends StepClass {
           _amountInStep,
           minAmountOut,
           this.fromMode,
-          this.toMode,
+          this.toMode
         ]);
       },
       decode: (data: string) => Exchange.sdk.contracts.beanstalk.interface.decodeFunctionData("exchange", data),
-      decodeResult: (result: string) => Exchange.sdk.contracts.beanstalk.interface.decodeFunctionResult("exchange", result),
+      decodeResult: (result: string) => Exchange.sdk.contracts.beanstalk.interface.decodeFunctionResult("exchange", result)
     };
   }
 }

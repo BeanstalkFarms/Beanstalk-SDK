@@ -58,6 +58,10 @@ export type StepFunction<EncodedResult extends any = string> = (
   | (EncodedResult | Step<EncodedResult>) // synchronous
   | Promise<EncodedResult | Step<EncodedResult>>; // asynchronous
 
+export type EncodeContext = {
+  slippage: number;
+};
+
 /**
  * A Step represents one pre-estimated Ethereum function call
  * which can be encoded and executed on-chain.
@@ -67,7 +71,7 @@ export type Step<EncodedResult extends any> = {
   amountOut: ethers.BigNumber;
   value?: ethers.BigNumber;
   data?: any;
-  encode: (minAmountOut?: ethers.BigNumber) => EncodedResult;
+  encode: (context: EncodeContext) => EncodedResult;
   decode: (data: string) => undefined | Record<string, any>;
   decodeResult: (result: any) => undefined | ethers.utils.Result;
   print?: (result: any) => string;
@@ -127,7 +131,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
 
   //
   static SLIPPAGE_PRECISION = 10 ** 6;
-  protected static slip(_amount: ethers.BigNumber, _slippage: number) {
+  static slip(_amount: ethers.BigNumber, _slippage: number) {
     return _amount.mul(Math.floor(Workflow.SLIPPAGE_PRECISION * (1 - _slippage))).div(Workflow.SLIPPAGE_PRECISION);
   }
 
@@ -203,7 +207,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
         step = {
           name: input.name, // Match the Workflow's name
           amountOut: nextAmount, // The result of this Step is the final result of the Workflow.
-          encode: () => input.encode() as EncodedResult, // Encode the entire Workflow into one element.
+          encode: input.encode as () => EncodedResult, // Encode the entire Workflow into one element.
           decode: () => undefined, // fixme
           decodeResult: (data: string[]) => input.decodeResult(data) // fixme
         };
@@ -304,21 +308,16 @@ export abstract class Workflow<EncodedResult extends any = string> {
 
   /**
    * Loop over a sequence of pre-estimated Steps and encode their
-   * calldata with a slippage value applied to `amountOut`.
+   * calldata with context (like slippage) available for access.
    */
   protected encodeStepsWithSlippage(_slippage: number) {
     if (this._steps.length === 0) throw new Error("Work: must run estimate() before encoding");
 
     const fnData: EncodedResult[] = [];
+    const context = Object.freeze({ slippage: _slippage }); // share context object across encode steps
+
     for (let i = 0; i < this._steps.length; i += 1) {
-      // Convert `amountOut` -> `minAmountOut` via slippage param.
-      const amountOut = this._steps[i].amountOut;
-      const minAmountOut = Workflow.slip(amountOut, _slippage);
-
-      // If the step doesn't have slippage (for ex, wrapping ETH),
-      // then `encode` should ignore minAmountOut.
-      const encoded = this._steps[i].encode(minAmountOut);
-
+      const encoded = this._steps[i].encode(context);
       fnData.push(encoded);
     }
 
@@ -348,7 +347,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
    * Encode this Workflow into a single hex string for submission to Ethereum.
    * This must be implemented by extensions of Workflow.
    */
-  abstract encode(): string;
+  abstract encode(context: EncodeContext): string;
 
   /**
    * @param amountIn Amount to use as first input to Work

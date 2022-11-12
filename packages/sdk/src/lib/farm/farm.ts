@@ -1,7 +1,7 @@
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import * as ActionLibrary from "./actions";
 import { LibraryPresets } from "./LibraryPresets";
-import { Step, Workflow } from "src/classes/Workflow";
+import { EncodeContext, Step, Workflow } from "src/classes/Workflow";
 import { Beanstalk } from "src/constants/generated";
 import { TokenValue } from "src/TokenValue";
 import { ethers } from "ethers";
@@ -24,10 +24,13 @@ export class FarmWorkflow extends Workflow<string> {
     return this._copy(FarmWorkflow);
   }
 
-  encode(minAmountOut?: ethers.BigNumber | undefined) {
+  encode(context: EncodeContext) {
     // TODO: we need to do somethign here with minAmountOut I think
     // and also the same in pipe.ts:encode()
-    return this.contract.interface.encodeFunctionData("farm", [this._steps.map((step) => step.encode())]);
+    return this.contract.interface.encodeFunctionData("farm", [
+      this.encodeStepsWithSlippage(context.slippage)
+      // this._steps.map((step) => step.encode())
+    ]);
   }
 
   async execute(amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<ethers.ContractTransaction> {

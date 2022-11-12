@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { StepClass, Workflow } from "src/classes/Workflow";
+import { Step, StepClass, Workflow } from "src/classes/Workflow";
 import { Token } from "src/classes/Token";
 import { CurveMetaPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
@@ -17,7 +17,7 @@ export class ExchangeUnderlying extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, forward: boolean = true) {
+  async run(_amountInStep: ethers.BigNumber, forward: boolean = true): Promise<Step<string>> {
     ExchangeUnderlying.sdk.debug(`[${this.name}.run()]`, {
       pool: this.pool,
       tokenIn: this.tokenIn.symbol,
@@ -25,7 +25,7 @@ export class ExchangeUnderlying extends StepClass {
       amountInStep: _amountInStep,
       forward,
       fromMode: this.fromMode,
-      toMode: this.toMode,
+      toMode: this.toMode
     });
     const [tokenIn, tokenOut] = Workflow.direction(this.tokenIn, this.tokenOut, forward);
 
@@ -54,9 +54,10 @@ export class ExchangeUnderlying extends StepClass {
         tokenIn: this.tokenIn.address,
         tokenOut: this.tokenOut.address,
         fromMode: this.fromMode,
-        toMode: this.toMode,
+        toMode: this.toMode
       },
-      encode: (minAmountOut?: ethers.BigNumber) => {
+      encode: (context) => {
+        const minAmountOut = Workflow.slip(_amountInStep, context.slippage);
         ExchangeUnderlying.sdk.debug(`[${this.name}.encode()]`, {
           pool: this.pool,
           tokenIn: tokenIn.symbol,
@@ -64,7 +65,7 @@ export class ExchangeUnderlying extends StepClass {
           amountInStep: _amountInStep,
           minAmountOut,
           fromMode: this.fromMode,
-          toMode: this.toMode,
+          toMode: this.toMode
         });
         if (!minAmountOut) throw new Error("ExchangeUnderlying: Missing minAmountOut");
         return ExchangeUnderlying.sdk.contracts.beanstalk.interface.encodeFunctionData("exchangeUnderlying", [
@@ -74,12 +75,12 @@ export class ExchangeUnderlying extends StepClass {
           _amountInStep,
           minAmountOut,
           this.fromMode,
-          this.toMode,
+          this.toMode
         ]);
       },
       decode: (data: string) => ExchangeUnderlying.sdk.contracts.beanstalk.interface.decodeFunctionData("exchangeUnderlying", data),
       decodeResult: (result: string) =>
-        ExchangeUnderlying.sdk.contracts.beanstalk.interface.decodeFunctionResult("exchangeUnderlying", result),
+        ExchangeUnderlying.sdk.contracts.beanstalk.interface.decodeFunctionResult("exchangeUnderlying", result)
     };
   }
 }

@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { Step, Workflow } from "src/classes/Workflow";
+import { EncodeContext, Step, Workflow } from "src/classes/Workflow";
 import { Beanstalk } from "src/constants/generated";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { Clipboard } from "src/lib/depot/clipboard";
@@ -21,10 +21,11 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
     return this._copy(AdvancedPipeWorkflow);
   }
 
-  encode() {
+  encode(context: EncodeContext) {
     return this.contract.interface.encodeFunctionData("advancedPipe", [
-      this._steps.map((step) => step.encode()),
-      "0", // fixme
+      this.encodeStepsWithSlippage(context.slippage),
+      // this._steps.map((step) => step.encode()),
+      "0" // fixme
     ]);
   }
 
@@ -50,10 +51,10 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
       encode: () => ({
         target: contract.address,
         callData: contract.interface.encodeFunctionData(method.toString(), args),
-        advancedData,
+        advancedData
       }),
       decode: () => undefined,
-      decodeResult: () => undefined,
+      decodeResult: () => undefined
     };
   }
 

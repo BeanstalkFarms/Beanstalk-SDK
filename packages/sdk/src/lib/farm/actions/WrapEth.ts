@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { StepClass } from "src/classes/Workflow";
+import { Step, StepClass } from "src/classes/Workflow";
 import { FarmToMode } from "../types";
 
 export class WrapEth extends StepClass {
@@ -9,7 +9,7 @@ export class WrapEth extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true) {
+  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<Step<string>> {
     WrapEth.sdk.debug(`[${this.name}.run()]`, { toMode: this.toMode, _amountInStep, _forward });
     return {
       name: this.name,
@@ -19,11 +19,11 @@ export class WrapEth extends StepClass {
         WrapEth.sdk.debug(`[${this.name}.encode()]`, { toMode: this.toMode, _amountInStep, _forward });
         return WrapEth.sdk.contracts.beanstalk.interface.encodeFunctionData("wrapEth", [
           _amountInStep, // ignore minAmountOut since there is no slippage
-          this.toMode,
+          this.toMode
         ]);
       },
       decode: (data: string) => WrapEth.sdk.contracts.beanstalk.interface.decodeFunctionData("wrapEth", data),
-      decodeResult: (result: string) => WrapEth.sdk.contracts.beanstalk.interface.decodeFunctionResult("wrapEth", result),
+      decodeResult: (result: string) => WrapEth.sdk.contracts.beanstalk.interface.decodeFunctionResult("wrapEth", result)
     };
   }
 }
