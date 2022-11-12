@@ -24,7 +24,9 @@ export class FarmWorkflow extends Workflow<string> {
     return this._copy(FarmWorkflow);
   }
 
-  encode() {
+  encode(minAmountOut?: ethers.BigNumber | undefined) {
+    // TODO: we need to do somethign here with minAmountOut I think
+    // and also the same in pipe.ts:encode()
     return this.contract.interface.encodeFunctionData("farm", [this._steps.map((step) => step.encode())]);
   }
 

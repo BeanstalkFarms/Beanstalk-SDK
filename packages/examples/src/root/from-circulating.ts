@@ -21,7 +21,7 @@ import { sdk, test, account } from "../setup";
  *
  * 3. Make sure the SDK is built: `yarn sdk:build` from root of this monorepo.
  * 4. `cd ./packages/examples`
- * 5. `yarn ts ./src/roots-via-circulating.ts`
+ * 5. `yarn x ./src/root/from-circulating.ts`
  *
  */
 export async function roots_from_circulating(token: ERC20Token, amount: TokenValue): Promise<TokenBalance> {
@@ -106,11 +106,11 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
               {
                 token: token.address,
                 seasons: [season], // FIXME: will fail if season flips during execution
-                amounts: [amountInStep], //
-              },
+                amounts: [amountInStep] //
+              }
             ],
             FarmToMode.EXTERNAL, // send tokens to PIPELINE's external balance
-            minAmountOut,
+            minAmountOut
           ],
           amountOut // pass this to next element
         );
@@ -124,12 +124,12 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
             /*  68 */ account,
             /* 100 */ "0", // Will be overwritten by advancedData
             /* 132 */ FarmFromMode.EXTERNAL, // use PIPELINE's external balance
-            /* 164 */ FarmToMode.EXTERNAL, // TOOD: make this a parameter
+            /* 164 */ FarmToMode.EXTERNAL // TOOD: make this a parameter
           ],
           amountInStep,
           // Copy the first return
           Clipboard.encode([4, 32, 100])
-        ),
+        )
     ])
   );
 

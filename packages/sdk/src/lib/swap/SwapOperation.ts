@@ -20,6 +20,7 @@ export class SwapOperation {
     private readonly metadata: PathSegment[]
   ) {
     SwapOperation.sdk = sdk;
+    sdk.debug(`new SwapOperation(): ${this.getDisplay()}`);
   }
 
   public isValid(): boolean {
