@@ -208,7 +208,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
         step = {
           name: input.name, // Match the Workflow's name
           amountOut: nextAmount, // The result of this Step is the final result of the Workflow.
-          encode: (context) => input.encode(context) as EncodedResult, // Encode the entire Workflow into one element.
+          encode: (context) => input.encode.bind(input)(context) as EncodedResult, // Encode the entire Workflow into one element.
           decode: () => undefined, // fixme
           decodeResult: (data: string[]) => input.decodeResult(data) // fixme
         };
