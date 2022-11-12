@@ -63,6 +63,16 @@ export class Tokens {
 
     ////////// Beanstalk //////////
 
+    this.STALK = new BeanstalkToken(this.sdk, null, 10, {
+      name: "Stalk",
+      symbol: "STALK"
+    });
+
+    this.SEEDS = new BeanstalkToken(this.sdk, null, 6, {
+      name: "Seeds",
+      symbol: "SEED"
+    });
+
     this.BEAN = new ERC20Token(
       this.sdk,
       addresses.BEAN.get(this.sdk.chainId),
@@ -73,8 +83,8 @@ export class Tokens {
         symbol: "BEAN"
       },
       {
-        stalk: 1,
-        seeds: 2
+        stalk: this.STALK.amount(1),
+        seeds: this.SEEDS.amount(2)
       }
     );
 
@@ -90,8 +100,8 @@ export class Tokens {
         color: "#DFB385"
       },
       {
-        stalk: 1,
-        seeds: 4
+        stalk: this.STALK.amount(1),
+        seeds: this.SEEDS.amount(4)
       }
     );
 
@@ -107,8 +117,8 @@ export class Tokens {
         isUnripe: true
       },
       {
-        stalk: 1,
-        seeds: 2
+        stalk: this.STALK.amount(1),
+        seeds: this.SEEDS.amount(2)
       }
     );
 
@@ -124,8 +134,8 @@ export class Tokens {
         isUnripe: true
       },
       {
-        stalk: 1,
-        seeds: 4
+        stalk: this.STALK.amount(1),
+        seeds: this.SEEDS.amount(4)
       }
     );
 
@@ -135,16 +145,6 @@ export class Tokens {
     this.map.set(addresses.UNRIPE_BEAN_CRV3.get(this.sdk.chainId), this.UNRIPE_BEAN_CRV3);
 
     ////////// Beanstalk "Tokens" (non ERC-20) //////////
-
-    this.STALK = new BeanstalkToken(this.sdk, null, 10, {
-      name: "Stalk",
-      symbol: "STALK"
-    });
-
-    this.SEEDS = new BeanstalkToken(this.sdk, null, 6, {
-      name: "Seeds",
-      symbol: "SEED"
-    });
 
     this.PODS = new BeanstalkToken(this.sdk, null, 6, {
       name: "Pods",
@@ -226,8 +226,8 @@ export class Tokens {
         isLP: true
       },
       {
-        stalk: 1,
-        seeds: 4
+        stalk: this.STALK.amount(1),
+        seeds: this.SEEDS.amount(4)
       }
     );
 

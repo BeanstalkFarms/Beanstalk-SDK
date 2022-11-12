@@ -272,9 +272,9 @@ export abstract class Workflow<EncodedResult extends any = string> {
       const step = await this.buildStep(generator, nextAmount, true);
       nextAmount = step.amountOut;
       this.sdk.debug(
-        `[Workflow][${this.name}][estimate][${i}: ${step.name || "<unknown>"}]> amountOut: ${step.amountOut.toString()}, value: ${
-          step.value?.toString() || 0
-        }`
+        `[Workflow][${this.name}][estimate][${i} / ${step.name || "<unknown>"}]`,
+        step.amountOut.toString(),
+        step.value?.toString() || 0
       );
     }
 
