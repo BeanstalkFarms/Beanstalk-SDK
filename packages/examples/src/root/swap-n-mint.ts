@@ -56,77 +56,76 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
   console.log("Signed a permit: ", permit);
 
   // farm
-  // const farm = sdk.farm.create();
-  // const pipe = sdk.farm.createAdvancedPipe();
+  const farm = swap.getFarm();
+  const pipe = sdk.farm.createAdvancedPipe();
 
   console.log("\n\nBuilding...");
-  const farm = swap.getFarm();
-  // farm.add(swap.getFarm());
-  // farm.add(sdk.farm.presets.loadPipeline(tokenOut, FarmFromMode.EXTERNAL, permit));
-  // farm.add(
-  //   pipe.add([
-  //     (amountInStep) =>
-  //       pipe.wrap(
-  //         sdk.tokens.BEAN.getContract(),
-  //         "approve",
-  //         [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
-  //         amountInStep // pass-thru
-  //       ),
-  //     (amountInStep) =>
-  //       pipe.wrap(
-  //         sdk.contracts.beanstalk,
-  //         "approveDeposit",
-  //         [sdk.contracts.root.address, token.address, ethers.constants.MaxUint256],
-  //         amountInStep // pass-thru
-  //       ),
-  //     (amountInStep) =>
-  //       pipe.wrap(
-  //         sdk.tokens.ROOT.getContract(),
-  //         "approve",
-  //         [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
-  //         amountInStep // pass-thru
-  //       ),
-  //     async (amountInStep) => {
-  //       return pipe.wrap(sdk.contracts.beanstalk, "deposit", [token.address, amountInStep, FarmFromMode.EXTERNAL], amountInStep);
-  //     },
-  //     async (amountInStep) => {
-  //       const season = await sdk.sun.getSeason();
-  //       const amountOut = amountInStep; // FIXME
-  //       const minAmountOut = amountInStep; // FIXME
-  //       return pipe.wrap(
-  //         sdk.contracts.root,
-  //         "mint",
-  //         [
-  //           [
-  //             {
-  //               token: token.address,
-  //               seasons: [season], // FIXME: will fail if season flips during execution
-  //               amounts: [amountInStep] //
-  //             }
-  //           ],
-  //           FarmToMode.EXTERNAL, // send tokens to PIPELINE's external balance
-  //           minAmountOut
-  //         ],
-  //         amountOut // pass this to next element
-  //       );
-  //     },
-  //     (amountInStep) =>
-  //       pipe.wrap(
-  //         sdk.contracts.beanstalk,
-  //         "transferToken",
-  //         [
-  //           /*  36 */ sdk.tokens.ROOT.address,
-  //           /*  68 */ account,
-  //           /* 100 */ "0", // Will be overwritten by advancedData
-  //           /* 132 */ FarmFromMode.EXTERNAL, // use PIPELINE's external balance
-  //           /* 164 */ FarmToMode.EXTERNAL // TOOD: make this a parameter
-  //         ],
-  //         amountInStep,
-  //         // Copy the first return
-  //         Clipboard.encode([4, 32, 100])
-  //       )
-  //   ])
-  // );
+
+  farm.add(sdk.farm.presets.loadPipeline(tokenOut, FarmFromMode.EXTERNAL, permit));
+  farm.add(
+    pipe.add([
+      (amountInStep) =>
+        pipe.wrap(
+          sdk.tokens.BEAN.getContract(),
+          "approve",
+          [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
+          amountInStep // pass-thru
+        ),
+      (amountInStep) =>
+        pipe.wrap(
+          sdk.contracts.beanstalk,
+          "approveDeposit",
+          [sdk.contracts.root.address, tokenOut.address, ethers.constants.MaxUint256],
+          amountInStep // pass-thru
+        ),
+      (amountInStep) =>
+        pipe.wrap(
+          sdk.tokens.ROOT.getContract(),
+          "approve",
+          [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
+          amountInStep // pass-thru
+        ),
+      async (amountInStep) => {
+        return pipe.wrap(sdk.contracts.beanstalk, "deposit", [tokenOut.address, amountInStep, FarmFromMode.EXTERNAL], amountInStep);
+      },
+      async (amountInStep) => {
+        const season = await sdk.sun.getSeason();
+        const amountOut = amountInStep; // FIXME
+        const minAmountOut = amountInStep; // FIXME
+        return pipe.wrap(
+          sdk.contracts.root,
+          "mint",
+          [
+            [
+              {
+                token: tokenOut.address,
+                seasons: [season], // FIXME: will fail if season flips during execution
+                amounts: [amountInStep] //
+              }
+            ],
+            FarmToMode.EXTERNAL, // send tokens to PIPELINE's external balance
+            minAmountOut
+          ],
+          amountOut // pass this to next element
+        );
+      },
+      (amountInStep) =>
+        pipe.wrap(
+          sdk.contracts.beanstalk,
+          "transferToken",
+          [
+            /*  36 */ sdk.tokens.ROOT.address,
+            /*  68 */ account,
+            /* 100 */ "0", // Will be overwritten by advancedData
+            /* 132 */ FarmFromMode.EXTERNAL, // use PIPELINE's external balance
+            /* 164 */ FarmToMode.EXTERNAL // TOOD: make this a parameter
+          ],
+          amountInStep,
+          // Copy the first return
+          Clipboard.encode([4, 32, 100])
+        )
+    ])
+  );
 
   console.log("\n\nEstimating...");
   const amountIn = amount.toBigNumber();
