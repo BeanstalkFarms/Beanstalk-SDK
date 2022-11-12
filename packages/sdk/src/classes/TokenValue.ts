@@ -163,6 +163,12 @@ export class TokenValue {
   div(num: TokenValue | BigNumber | number, decimals?: number) {
     return TokenValue.from(this.value.div(this.toDBN(num), decimals));
   }
+  mod(num: TokenValue) {
+    if (num.decimals !== this.decimals) throw new Error("Must mod() by a value with same number of decimal places");
+    const mod = this.toBigNumber().mod(num.toBigNumber());
+
+    return TokenValue.fromBigNumber(mod, this.decimals);
+  }
   eq(num: TokenValue | BigNumber | number): boolean {
     return this.value.eq(this.toDBN(num));
   }
