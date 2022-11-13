@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { StepClass } from "src/classes/Workflow";
+import { Step, StepClass } from "src/classes/Workflow";
 import { FarmFromMode, FarmToMode } from "../types";
 
 export class TransferToken extends StepClass {
@@ -14,14 +14,14 @@ export class TransferToken extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true) {
+  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<Step<string>> {
     TransferToken.sdk.debug(`[${this.name}.run()]`, {
       tokenIn: this._tokenIn,
       recipient: this._recipient,
       amountInStep: _amountInStep,
       forward: _forward,
       fromMode: this._fromMode,
-      toMode: this._toMode,
+      toMode: this._toMode
     });
     return {
       name: this.name,
@@ -33,18 +33,18 @@ export class TransferToken extends StepClass {
           amountInStep: _amountInStep,
           forward: _forward,
           fromMode: this._fromMode,
-          toMode: this._toMode,
+          toMode: this._toMode
         });
         return TransferToken.sdk.contracts.beanstalk.interface.encodeFunctionData("transferToken", [
           this._tokenIn, //
           this._recipient, //
           _amountInStep, // ignore minAmountOut since there is no slippage
           this._fromMode, //
-          this._toMode, //
+          this._toMode //
         ]);
       },
       decode: (data: string) => TransferToken.sdk.contracts.beanstalk.interface.decodeFunctionData("transferToken", data),
-      decodeResult: (result: string) => TransferToken.sdk.contracts.beanstalk.interface.decodeFunctionResult("transferToken", result),
+      decodeResult: (result: string) => TransferToken.sdk.contracts.beanstalk.interface.decodeFunctionResult("transferToken", result)
     };
   }
 }

@@ -65,14 +65,13 @@ export class ERC20Token extends Token {
       });
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  public getAllowance(account: string, spender: string): Promise<TokenValue | undefined> {
+  public getAllowance(account: string, spender: string): Promise<TokenValue> {
     return this.getContract()
       .allowance(account, spender)
       .then((result) => TokenValue.fromBlockchain(result, this.decimals));
   }
 
-  public getTotalSupply(): Promise<TokenValue> | undefined {
+  public getTotalSupply(): Promise<TokenValue> {
     return this.getContract()
       .totalSupply()
       .then((result) => TokenValue.fromBlockchain(result, this.decimals));

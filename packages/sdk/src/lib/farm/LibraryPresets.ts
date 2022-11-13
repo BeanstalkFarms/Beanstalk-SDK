@@ -29,7 +29,7 @@ export class LibraryPresets {
     let generators: StepGenerator[] = [];
 
     // FIXME
-    if (_from !== FarmFromMode.EXTERNAL) throw new Error("Not implemented");
+    // if (_from !== FarmFromMode.EXTERNAL) throw new Error("Not implemented");
 
     // give beanstalk permission to send this ERC-20 token from my balance -> pipeline
     if (_permit) {
@@ -42,7 +42,7 @@ export class LibraryPresets {
           _permit.typedData.message.deadline, // deadline
           _permit.split.v,
           _permit.split.r,
-          _permit.split.s,
+          _permit.split.s
         ]);
       });
     }
@@ -54,7 +54,7 @@ export class LibraryPresets {
         LibraryPresets.sdk.contracts.pipeline.address, // recipient
         _amountInStep.toString(), // amount
         _from, // from
-        FarmToMode.EXTERNAL, // to
+        FarmToMode.EXTERNAL // to
       ]);
     });
 
@@ -95,11 +95,11 @@ export class LibraryPresets {
     //////// WETH <> BEAN
     this.weth2bean = (fromMode?: FarmFromMode, toMode?: FarmToMode) => [
       this.weth2usdt(fromMode, FarmToMode.INTERNAL) as StepGenerator,
-      this.usdt2bean(FarmFromMode.INTERNAL, toMode) as StepGenerator,
+      this.usdt2bean(FarmFromMode.INTERNAL, toMode) as StepGenerator
     ];
     this.bean2weth = (fromMode?: FarmFromMode, toMode?: FarmToMode) => [
       this.bean2usdt(fromMode, FarmToMode.INTERNAL) as StepGenerator,
-      this.usdt2weth(FarmFromMode.INTERNAL, toMode) as StepGenerator,
+      this.usdt2weth(FarmFromMode.INTERNAL, toMode) as StepGenerator
     ];
   }
 }

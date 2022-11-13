@@ -1,6 +1,6 @@
 import { ethers, BigNumber } from "ethers";
 import _ from "lodash";
-import { Token } from "src/classes/Token";
+import { ERC20Token, Token } from "src/classes/Token";
 import { DataSource, StringMap } from "src/types";
 import { BeanstalkSDK } from "./BeanstalkSDK";
 import EventProcessor from "./events/processor";
@@ -451,6 +451,43 @@ export class Silo {
     });
     if (!remaining.eq(0)) throw new Error("Not enough amount in crates");
     return { seasons, amounts };
+  }
+
+  sumDeposits(token: ERC20Token, crates: DepositCrate[]) {
+    return crates.reduce(
+      (prev, curr) => {
+        prev.amount = prev.amount.add(curr.amount);
+        prev.stalk = prev.stalk.add(curr.stalk);
+        prev.seeds = prev.seeds.add(curr.seeds);
+        prev.bdv = prev.bdv.add(curr.bdv);
+        return prev;
+      },
+      {
+        amount: token.amount(0),
+        stalk: Silo.sdk.tokens.STALK.amount(0),
+        seeds: Silo.sdk.tokens.SEEDS.amount(0),
+        bdv: Silo.sdk.tokens.BEAN.amount(0)
+      }
+    );
+  }
+
+  async balanceOfStalk(_account?: string, includeGrown: boolean = false) {
+    const account = await Silo.sdk.getAccount(_account);
+    const [active, grown] = await Promise.all([
+      // includes active stalk & earned stalk
+      Silo.sdk.contracts.beanstalk.balanceOfStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v)),
+      includeGrown
+        ? Silo.sdk.contracts.beanstalk.balanceOfGrownStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v))
+        : Promise.resolve(null)
+    ]);
+
+    if (!includeGrown) return active;
+    return active.add(grown as TokenValue);
+  }
+
+  async balanceOfSeeds(_account?: string) {
+    const account = await Silo.sdk.getAccount(_account);
+    return Silo.sdk.contracts.beanstalk.balanceOfSeeds(account).then((v) => Silo.sdk.tokens.SEEDS.fromBlockchain(v));
   }
 
   //////////////////////// ACTION: Deposit ////////////////////////

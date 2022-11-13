@@ -2,6 +2,7 @@ import { ethers } from "ethers";
 import { Token } from "src/classes/Token";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { TokenValue } from "src/TokenValue";
+import { assert } from "src/utils";
 
 /**
  * A StepGenerator is responsible for building a Step.
@@ -58,6 +59,10 @@ export type StepFunction<EncodedResult extends any = string> = (
   | (EncodedResult | Step<EncodedResult>) // synchronous
   | Promise<EncodedResult | Step<EncodedResult>>; // asynchronous
 
+export type EncodeContext = {
+  slippage: number;
+};
+
 /**
  * A Step represents one pre-estimated Ethereum function call
  * which can be encoded and executed on-chain.
@@ -67,7 +72,7 @@ export type Step<EncodedResult extends any> = {
   amountOut: ethers.BigNumber;
   value?: ethers.BigNumber;
   data?: any;
-  encode: (minAmountOut?: ethers.BigNumber) => EncodedResult;
+  encode: (context: EncodeContext) => EncodedResult;
   decode: (data: string) => undefined | Record<string, any>;
   decodeResult: (result: any) => undefined | ethers.utils.Result;
   print?: (result: any) => string;
@@ -127,7 +132,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
 
   //
   static SLIPPAGE_PRECISION = 10 ** 6;
-  protected static slip(_amount: ethers.BigNumber, _slippage: number) {
+  static slip(_amount: ethers.BigNumber, _slippage: number) {
     return _amount.mul(Math.floor(Workflow.SLIPPAGE_PRECISION * (1 - _slippage))).div(Workflow.SLIPPAGE_PRECISION);
   }
 
@@ -203,7 +208,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
         step = {
           name: input.name, // Match the Workflow's name
           amountOut: nextAmount, // The result of this Step is the final result of the Workflow.
-          encode: () => input.encode() as EncodedResult, // Encode the entire Workflow into one element.
+          encode: (context) => input.encode.bind(input)(context) as EncodedResult, // Encode the entire Workflow into one element.
           decode: () => undefined, // fixme
           decodeResult: (data: string[]) => input.decodeResult(data) // fixme
         };
@@ -267,7 +272,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
       const step = await this.buildStep(generator, nextAmount, true);
       nextAmount = step.amountOut;
       this.sdk.debug(
-        `[Workflow][${this.name}][estimate][${i} / ${step.name || "<unknown>"}]`,
+        `[Workflow][${this.name}][estimate][${i}: ${step.name || "<unknown>"}]`,
         step.amountOut.toString(),
         step.value?.toString() || 0
       );
@@ -293,7 +298,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
       const step = await this.buildStep(generator, nextAmount, false);
       nextAmount = step.amountOut;
       this.sdk.debug(
-        `[Workflow][${this.name}][estimateReversed][${i}/${step.name || "<unknown>"}]`,
+        `[Workflow][${this.name}][estimateReversed][${i}: ${step.name || "<unknown>"}]`,
         step.amountOut.toString(),
         step.value?.toNumber() || 0
       );
@@ -304,21 +309,16 @@ export abstract class Workflow<EncodedResult extends any = string> {
 
   /**
    * Loop over a sequence of pre-estimated Steps and encode their
-   * calldata with a slippage value applied to `amountOut`.
+   * calldata with context (like slippage) available for access.
    */
-  protected encodeStepsWithSlippage(_slippage: number) {
+  protected encodeSteps(_slippage: number) {
     if (this._steps.length === 0) throw new Error("Work: must run estimate() before encoding");
 
     const fnData: EncodedResult[] = [];
+    const context = Object.freeze({ slippage: _slippage }); // share context object across encode steps
+
     for (let i = 0; i < this._steps.length; i += 1) {
-      // Convert `amountOut` -> `minAmountOut` via slippage param.
-      const amountOut = this._steps[i].amountOut;
-      const minAmountOut = Workflow.slip(amountOut, _slippage);
-
-      // If the step doesn't have slippage (for ex, wrapping ETH),
-      // then `encode` should ignore minAmountOut.
-      const encoded = this._steps[i].encode(minAmountOut);
-
+      const encoded = this._steps[i].encode(context);
       fnData.push(encoded);
     }
 
@@ -328,10 +328,11 @@ export abstract class Workflow<EncodedResult extends any = string> {
   /**
    * Run `.estimate()` and encode all resulting Steps with a slippage value.
    */
-  protected async _prep(amountIn: ethers.BigNumber | TokenValue, slippage: number) {
-    this.sdk.debug(`[Workflow._prep()]`, { amountIn, slippage });
+  protected async _estimateAndEncodeSteps(amountIn: ethers.BigNumber | TokenValue, slippage: number) {
+    assert(slippage >= 0 && slippage <= 100, "Slippage must be between (0, 100).");
+    this.sdk.debug(`[Workflow._estimateAndEncodeSteps()]`, { amountIn, slippage });
     await this.estimate(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn);
-    return this.encodeStepsWithSlippage(slippage / 100);
+    return this.encodeSteps(slippage / 100);
   }
 
   /**
@@ -348,7 +349,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
    * Encode this Workflow into a single hex string for submission to Ethereum.
    * This must be implemented by extensions of Workflow.
    */
-  abstract encode(): string;
+  abstract encode(context: EncodeContext): string;
 
   /**
    * @param amountIn Amount to use as first input to Work

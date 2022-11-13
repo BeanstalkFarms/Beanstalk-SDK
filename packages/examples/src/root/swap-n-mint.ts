@@ -1,5 +1,5 @@
-import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Clipboard, DataSource } from "@beanstalk/sdk";
-import { ethers } from "ethers";
+import { FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Clipboard, DataSource, Token } from "@beanstalk/sdk";
+import { BigNumber, ethers } from "ethers";
 import { sdk, test, account } from "../setup";
 
 /**
@@ -24,31 +24,44 @@ import { sdk, test, account } from "../setup";
  * 5. `yarn x ./src/root/from-circulating.ts`
  *
  */
-export async function roots_from_circulating(token: ERC20Token, amount: TokenValue): Promise<TokenBalance> {
+export async function roots_via_swap(token: Token, amount: TokenValue): Promise<TokenBalance> {
   // setup
   const account = await sdk.getAccount();
   console.log("Using account:", account);
-
-  // verify whitelisted in silo
-  // fixme: sdk.silo.isWhitelisted(token) method
-  if (!sdk.tokens.siloWhitelist.has(token)) {
-    throw new Error(`Token not whitelisted in the Silo: ${token.name}`);
-  }
-
-  // verify whitelisted in root
-  const isRootWhitelisted = await sdk.contracts.root.whitelisted(token.address);
-  if (!isRootWhitelisted) {
-    throw new Error(`Token not whitelisted in Root: ${token.name}`);
-  }
 
   // get balance and validate amount
   const balance = await sdk.tokens.getBalance(token);
   console.log(`Account ${account} has balance ${balance.total.toHuman()} ${token.symbol}`);
   if (amount.gt(balance.total)) {
-    throw new Error(`Not enough ${token.symbol}. Balance: ${balance.total.toHuman()} / Input: ${amount.toHuman()}`); // .toFixed?
+    throw new Error(`Not enough ${token.symbol}. Balance: ${balance.total.toHuman()} / Input: ${amount.toHuman()}`);
   }
 
-  const amountStr = amount.toBlockchain();
+  // Swap from `token` -> `tokenOut` (BEAN)
+  const tokenOut = sdk.tokens.BEAN;
+  const swap = sdk.swap.buildSwap(token, tokenOut, account, FarmFromMode.EXTERNAL, FarmToMode.INTERNAL);
+
+  const estBean = await swap.estimate(amount);
+  console.log(`Swap Estimate: ${amount.toHuman()} ${token.symbol} --> ${estBean.toHuman()} BEAN`);
+
+  // MOCK:
+  // let permit = {
+  //   owner: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+  //   typedData: {
+  //     message: {
+  //       owner: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+  //       spender: '0xc1e088fc1323b20bcbee9bd1b9fc9546db5624c5',
+  //       value: '3977430962',
+  //       nonce: '3',
+  //       deadline: '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+  //     }
+  //   },
+  //   rawSignature: '',
+  //   split: {
+  //     r: '0x070a8b7261b7d39330a456759fd055875617689a71aaf52624b47522e5de5fd7',
+  //     s: '0x7f19c0a1786faf45f060996d9fd1750f8334df7b9b7782bcd50c0cb4b1b520db',
+  //     v: 27,
+  //   }
+  // };
 
   // sign permit to send `token` to Pipeline
   const permit = await sdk.permit.sign(
@@ -56,18 +69,22 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
     sdk.tokens.permitERC2612(
       account, // owner
       sdk.contracts.beanstalk.address, // spender
-      token, // token
-      amountStr // amount
+      tokenOut, // bean
+      estBean.toBlockchain() // amount of beans
     )
   );
-
   console.log("Signed a permit: ", permit);
 
   // farm
-  const farm = sdk.farm.create();
+  const farm = swap.getFarm();
   const pipe = sdk.farm.createAdvancedPipe();
 
-  farm.add(sdk.farm.presets.loadPipeline(token, FarmFromMode.EXTERNAL, permit));
+  console.log("\n\nBuilding...");
+
+  farm.add(
+    // returns an array with 2 StepGenerators if no permit, 2 StepGenerators if permit
+    sdk.farm.presets.loadPipeline(tokenOut, FarmFromMode.INTERNAL)
+  );
   farm.add(
     pipe.add([
       (amountInStep) =>
@@ -81,7 +98,7 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
         pipe.wrap(
           sdk.contracts.beanstalk,
           "approveDeposit",
-          [sdk.contracts.root.address, token.address, ethers.constants.MaxUint256],
+          [sdk.contracts.root.address, tokenOut.address, ethers.constants.MaxUint256],
           amountInStep // pass-thru
         ),
       (amountInStep) =>
@@ -92,7 +109,7 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
           amountInStep // pass-thru
         ),
       async (amountInStep) => {
-        return pipe.wrap(sdk.contracts.beanstalk, "deposit", [token.address, amountInStep, FarmFromMode.EXTERNAL], amountInStep);
+        return pipe.wrap(sdk.contracts.beanstalk, "deposit", [tokenOut.address, amountInStep, FarmFromMode.EXTERNAL], amountInStep);
       },
       async (amountInStep) => {
         const season = await sdk.sun.getSeason();
@@ -104,7 +121,7 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
           [
             [
               {
-                token: token.address,
+                token: tokenOut.address,
                 seasons: [season], // FIXME: will fail if season flips during execution
                 amounts: [amountInStep] //
               }
@@ -133,6 +150,7 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
     ])
   );
 
+  console.log("\n\nEstimating...");
   const amountIn = amount.toBigNumber();
   const amountOut = await farm.estimate(amountIn);
   console.log("Estimated amountOut:", amountOut.toString());
@@ -150,7 +168,7 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
 
   // console.log("Executing this transaction is expected to mint", mintResult.toString(), "ROOT");
 
-  console.log("Executing...");
+  console.log("\n\nExecuting...");
   const txn = await farm.execute(amountIn, 0.1);
   console.log("Transaction submitted...", txn.hash);
 
@@ -163,20 +181,18 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
   const accountBalanceOfROOT = await sdk.tokens.getBalance(sdk.tokens.ROOT);
   const pipelineBalanceOfBEAN = await sdk.tokens.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address);
   const pipelineBalanceOfROOT = await sdk.tokens.getBalance(sdk.tokens.ROOT, sdk.contracts.pipeline.address);
+  const pipelineSiloBalance = await sdk.silo.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address, { source: DataSource.LEDGER });
 
   console.log(`(1) BEAN balance for Account :`, accountBalanceOfBEAN.total.toHuman());
   console.log(`(2) ROOT balance for Account :`, accountBalanceOfROOT.total.toHuman());
   console.log(`(3) BEAN balance for Pipeline:`, pipelineBalanceOfBEAN.total.toHuman());
   console.log(`(4) ROOT balance for Pipeline:`, pipelineBalanceOfROOT.total.toHuman());
-  console.log(` ^ 3 and 4 should be 0 if Pipeline was properly unloaded.`);
-
-  const siloBalance = await sdk.silo.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address, { source: DataSource.LEDGER });
-  console.log(siloBalance.deposited.crates);
+  console.log("(5) BEAN deposits in Pipeline:", pipelineSiloBalance.deposited.crates.length);
+  console.log(` ^ 3-5 should be 0 if Pipeline was properly unloaded.`);
 
   return accountBalanceOfROOT;
 }
 
 (async () => {
-  await test.setBEANBalance(account, sdk.tokens.BEAN.amount(150));
-  await roots_from_circulating(sdk.tokens.BEAN, sdk.tokens.BEAN.amount(124));
+  await roots_via_swap(sdk.tokens.ETH, sdk.tokens.ETH.amount(3.14));
 })();

@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { StepClass } from "src/classes/Workflow";
+import { Step, StepClass } from "src/classes/Workflow";
 import { FarmFromMode } from "../types";
 
 export class UnwrapEth extends StepClass {
@@ -9,7 +9,7 @@ export class UnwrapEth extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true) {
+  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<Step<string>> {
     UnwrapEth.sdk.debug(`[${this.name}.run()]`, { fromMode: this.fromMode, _amountInStep, _forward });
     return {
       name: this.name,
@@ -19,11 +19,11 @@ export class UnwrapEth extends StepClass {
         UnwrapEth.sdk.debug(`[${this.name}.encode()]`, { fromMode: this.fromMode, _amountInStep, _forward });
         return UnwrapEth.sdk.contracts.beanstalk.interface.encodeFunctionData("unwrapEth", [
           _amountInStep, // ignore minAmountOut since there is no slippage
-          this.fromMode,
+          this.fromMode
         ]);
       },
       decode: (data: string) => UnwrapEth.sdk.contracts.beanstalk.interface.decodeFunctionData("unwrapEth", data),
-      decodeResult: (result: string) => UnwrapEth.sdk.contracts.beanstalk.interface.decodeFunctionResult("unwrapEth", result),
+      decodeResult: (result: string) => UnwrapEth.sdk.contracts.beanstalk.interface.decodeFunctionResult("unwrapEth", result)
     };
   }
 }

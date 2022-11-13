@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { StepClass } from "src/classes/Workflow";
+import { EncodeContext, Step, StepClass, Workflow } from "src/classes/Workflow";
 import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { assert } from "src/utils";
 import { FarmFromMode, FarmToMode } from "../types";
@@ -17,14 +17,14 @@ export class AddLiquidity extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true) {
+  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<Step<string>> {
     AddLiquidity.sdk.debug(`[${this.name}.run()]`, {
       pool: this._pool,
       registry: this._registry,
       amounts: this._amounts,
       amountInStep: _amountInStep,
       fromMode: this._fromMode,
-      toMode: this._toMode,
+      toMode: this._toMode
     });
 
     /// [0, 0, 1] => [0, 0, amountIn]
@@ -77,7 +77,7 @@ export class AddLiquidity extends StepClass {
     if (!amountOut) throw new Error("No supported pool found");
     AddLiquidity.sdk.debug("[step@addLiquidity] finish: ", {
       amountInStep: amountInStep.toString(),
-      amountOut: amountOut.toString(),
+      amountOut: amountOut.toString()
     });
 
     return {
@@ -88,16 +88,17 @@ export class AddLiquidity extends StepClass {
         pool: this._pool,
         registry: this._registry,
         fromMode: this._fromMode,
-        toMode: this._toMode,
+        toMode: this._toMode
       },
-      encode: (minAmountOut?: ethers.BigNumber) => {
+      encode: (context) => {
+        const minAmountOut = Workflow.slip(_amountInStep, context.slippage);
         AddLiquidity.sdk.debug(`[${this.name}.encode()]`, {
           pool: this._pool,
           registry: this._registry,
           amountInStep: _amountInStep,
           minAmountOut,
           fromMode: this._fromMode,
-          toMode: this._toMode,
+          toMode: this._toMode
         });
         if (!minAmountOut) throw new Error("AddLiquidity: missing minAmountOut");
         return AddLiquidity.sdk.contracts.beanstalk.interface.encodeFunctionData("addLiquidity", [
@@ -106,11 +107,11 @@ export class AddLiquidity extends StepClass {
           amountInStep as any[], // could be 2 or 3 elems
           minAmountOut,
           this._fromMode,
-          this._toMode,
+          this._toMode
         ]);
       },
       decode: (data: string) => AddLiquidity.sdk.contracts.beanstalk.interface.decodeFunctionData("addLiquidity", data),
-      decodeResult: (result: string) => AddLiquidity.sdk.contracts.beanstalk.interface.decodeFunctionResult("addLiquidity", result),
+      decodeResult: (result: string) => AddLiquidity.sdk.contracts.beanstalk.interface.decodeFunctionResult("addLiquidity", result)
     };
   }
 }
