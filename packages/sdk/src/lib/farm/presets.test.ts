@@ -14,7 +14,7 @@ beforeAll(async () => {
   sdk = new BeanstalkSDK({
     provider,
     signer,
-    subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing",
+    subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing"
   });
   test = new TestUtils(sdk);
 });
@@ -41,7 +41,7 @@ describe("Facet: Pipeline", () => {
 
       // Execute
       expect(async () => {
-        await farm.execute(amount.toBigNumber(), 0.1).then((r) => r.wait());
+        await farm.execute(amount.toBigNumber(), { slippage: 0.1 }).then((r) => r.wait());
       }).toThrow();
 
       // Estimate
@@ -88,7 +88,7 @@ describe("Facet: Pipeline", () => {
       console.log("Permit", permit, permit.typedData.types);
 
       // Execute
-      await farm.execute(amount.toBigNumber(), 0.1).then((r) => r.wait());
+      await farm.execute(amount.toBigNumber(), { slippage: 0.1 }).then((r) => r.wait());
 
       const pipelineBalance = await sdk.tokens.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address);
       expect(pipelineBalance.total.eq(amount)).toBe(true);

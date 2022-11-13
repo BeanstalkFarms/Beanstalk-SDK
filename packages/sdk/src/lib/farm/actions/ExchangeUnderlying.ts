@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { Step, StepClass, Workflow } from "src/classes/Workflow";
+import { BuildContext, Step, StepClass, Workflow } from "src/classes/Workflow";
 import { Token } from "src/classes/Token";
 import { CurveMetaPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
@@ -17,17 +17,21 @@ export class ExchangeUnderlying extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, forward: boolean = true): Promise<Step<string>> {
+  async run(_amountInStep: ethers.BigNumber, context: BuildContext): Promise<Step<string>> {
     ExchangeUnderlying.sdk.debug(`[${this.name}.run()]`, {
       pool: this.pool,
       tokenIn: this.tokenIn.symbol,
       tokenOut: this.tokenOut.symbol,
       amountInStep: _amountInStep,
-      forward,
       fromMode: this.fromMode,
-      toMode: this.toMode
+      toMode: this.toMode,
+      context
     });
-    const [tokenIn, tokenOut] = Workflow.direction(this.tokenIn, this.tokenOut, forward);
+    const [tokenIn, tokenOut] = Workflow.direction(
+      this.tokenIn,
+      this.tokenOut,
+      context.runMode !== "estimateReversed" // _forward
+    );
 
     const registry = ExchangeUnderlying.sdk.contracts.curve.registries.metaFactory;
     const [i, j] = await registry.get_coin_indices(this.pool, tokenIn.address, tokenOut.address, { gasLimit: 1000000 });
@@ -57,8 +61,8 @@ export class ExchangeUnderlying extends StepClass {
         fromMode: this.fromMode,
         toMode: this.toMode
       },
-      encode: (context) => {
-        const minAmountOut = Workflow.slip(amountOut!, context.slippage);
+      encode: () => {
+        const minAmountOut = Workflow.slip(amountOut!, context.data.slippage || 0);
         ExchangeUnderlying.sdk.debug(`[${this.name}.encode()]`, {
           pool: this.pool,
           tokenIn: tokenIn.symbol,

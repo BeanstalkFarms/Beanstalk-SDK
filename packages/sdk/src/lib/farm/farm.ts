@@ -1,7 +1,7 @@
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import * as ActionLibrary from "./actions";
 import { LibraryPresets } from "./LibraryPresets";
-import { EncodeContext, Step, Workflow } from "src/classes/Workflow";
+import { Step, Workflow } from "src/classes/Workflow";
 import { Beanstalk } from "src/constants/generated";
 import { TokenValue } from "src/TokenValue";
 import { ethers } from "ethers";
@@ -12,7 +12,7 @@ export type FarmStep = Step<string>;
 /**
  * The "Farm" is a Workflow that encodes a call to `beanstalk.farm()`.
  */
-export class FarmWorkflow extends Workflow<string> {
+export class FarmWorkflow<ExecuteData extends { slippage: number } = { slippage: number }> extends Workflow<string, ExecuteData> {
   private contract: Beanstalk;
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "Farm") {
@@ -21,32 +21,29 @@ export class FarmWorkflow extends Workflow<string> {
   }
 
   copy() {
-    return this._copy(FarmWorkflow);
+    return this._copy(FarmWorkflow<ExecuteData>);
   }
 
-  encode(context: EncodeContext) {
+  encode() {
     // TODO: we need to do somethign here with minAmountOut I think
     // and also the same in pipe.ts:encode()
-    return this.contract.interface.encodeFunctionData("farm", [
-      this.encodeSteps(context.slippage)
-      // this._steps.map((step) => step.encode())
-    ]);
+    return this.contract.interface.encodeFunctionData("farm", [this.encodeSteps()]);
   }
 
-  async execute(amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<ethers.ContractTransaction> {
-    const data = await this._estimateAndEncodeSteps(amountIn, slippage);
-    this.sdk.debug("Execute data", data);
-    return this.contract.farm(data, { value: this.value });
+  async execute(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.ContractTransaction> {
+    const encoded = await this.estimateAndEncodeSteps(amountIn, "execute", data);
+    this.sdk.debug("Execute data", encoded);
+    return this.contract.farm(encoded, { value: this.value });
   }
 
-  async callStatic(amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<string[]> {
-    const data = await this._estimateAndEncodeSteps(amountIn, slippage);
-    return this.contract.callStatic.farm(data, { value: this.value });
+  async callStatic(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<string[]> {
+    const encoded = await this.estimateAndEncodeSteps(amountIn, "callStatic", data);
+    return this.contract.callStatic.farm(encoded, { value: this.value });
   }
 
-  async estimateGas(amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<ethers.BigNumber> {
-    const data = await this._estimateAndEncodeSteps(amountIn, slippage);
-    return this.contract.estimateGas.farm(data, { value: this.value });
+  async estimateGas(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.BigNumber> {
+    const encoded = await this.estimateAndEncodeSteps(amountIn, "estimateGas", data);
+    return this.contract.estimateGas.farm(encoded, { value: this.value });
   }
 }
 

@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { ERC20Token } from "src/classes/Token";
-import { StepGenerator } from "src/classes/Workflow";
+import { BuildContext, StepGenerator } from "src/classes/Workflow";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { FarmFromMode, FarmToMode } from "../farm/types";
 import { EIP2612PermitMessage, SignedPermit } from "../permit";
@@ -19,30 +19,34 @@ export class LibraryPresets {
 
   /**
    * Load the Pipeline in preparation for a set Pipe actions.
+   * @
+   */
+
+  /**
+   * @param _permit provide a permit directly, or provide a function to extract it from `context`.
    */
   public loadPipeline(
     _token: ERC20Token,
-    // _amount: string, // ??
     _from: FarmFromMode,
-    _permit?: SignedPermit<EIP2612PermitMessage>
+    _permit?: SignedPermit<EIP2612PermitMessage> | ((context: BuildContext) => SignedPermit<EIP2612PermitMessage>)
   ) {
     let generators: StepGenerator[] = [];
 
-    // FIXME
-    // if (_from !== FarmFromMode.EXTERNAL) throw new Error("Not implemented");
-
     // give beanstalk permission to send this ERC-20 token from my balance -> pipeline
     if (_permit) {
-      generators.push(async function permitERC20(_amountInStep: ethers.BigNumber) {
+      generators.push(async function permitERC20(_amountInStep: ethers.BigNumber, context: BuildContext) {
+        const permit = typeof _permit === "function" ? _permit(context) : _permit;
+        const owner = await LibraryPresets.sdk.getAccount();
+
         return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [
           _token.address, // token address
-          await LibraryPresets.sdk.getAccount(), // owner
+          owner, // owner
           LibraryPresets.sdk.contracts.beanstalk.address, // spender
           _amountInStep.toString(), // value
-          _permit.typedData.message.deadline, // deadline
-          _permit.split.v,
-          _permit.split.r,
-          _permit.split.s
+          permit.typedData.message.deadline, // deadline
+          permit.split.v,
+          permit.split.r,
+          permit.split.s
         ]);
       });
     }

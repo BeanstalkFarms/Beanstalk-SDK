@@ -1,4 +1,17 @@
-import { FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Clipboard, DataSource, Token, Workflow } from "@beanstalk/sdk";
+import {
+  FarmFromMode,
+  FarmToMode,
+  TokenValue,
+  TokenBalance,
+  Test,
+  Clipboard,
+  DataSource,
+  Token,
+  Workflow,
+  FarmWorkflow
+} from "@beanstalk/sdk";
+import { BuildContext } from "@beanstalk/sdk/dist/types/classes/Workflow";
+import { SignedPermit } from "@beanstalk/sdk/dist/types/lib/permit";
 import { BigNumber, ethers } from "ethers";
 import { sdk, test, account } from "../setup";
 
@@ -64,26 +77,20 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
   // };
 
   // sign permit to send `token` to Pipeline
-  const permit = await sdk.permit.sign(
-    account,
-    sdk.tokens.permitERC2612(
-      account, // owner
-      sdk.contracts.beanstalk.address, // spender
-      depositToken, // bean
-      estBean.toBlockchain() // amount of beans
-    )
-  );
-  console.log("Signed a permit: ", permit);
 
   // farm
-  const farm = swap.getFarm();
+  type Data = {
+    slippage: number;
+    permit: any;
+  };
+  const farm = swap.getFarm() as FarmWorkflow<Data>;
   const pipe = sdk.farm.createAdvancedPipe();
 
   console.log("\n\nBuilding...");
 
   farm.add(
     // returns an array with 2 StepGenerators if no permit, 2 StepGenerators if permit
-    sdk.farm.presets.loadPipeline(depositToken, FarmFromMode.INTERNAL)
+    sdk.farm.presets.loadPipeline(depositToken, FarmFromMode.INTERNAL, (context) => context.data.permit)
   );
   farm.add(
     pipe.add([
@@ -108,7 +115,7 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
           [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
           amountInStep // pass-thru
         ),
-      async function deposit(amountInStep) {
+      async function deposit(amountInStep, test) {
         return pipe.wrap(sdk.contracts.beanstalk, "deposit", [depositToken.address, amountInStep, FarmFromMode.EXTERNAL], amountInStep);
       },
       // Notes:
@@ -124,7 +131,7 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
       //    function uses Clipboard to copy the return value from `mint` directly
       //    into its own calldata; if our `amountOutRoot` estimate is incorrect, the user
       //    won't accidentally leave funds behind in PIPEPINE.
-      async function mintRoots(amountInStep) {
+      async function mintRoots(amountInStep, context) {
         const [currentSeason, estimatedDepositBDV] = await Promise.all([
           sdk.sun.getSeason(),
           sdk.silo.bdv(depositToken, depositToken.fromBlockchain(amountInStep))
@@ -153,20 +160,19 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
         return pipe.wrap(
           sdk.contracts.root,
           "mint",
-          (context) =>
+          [
             [
-              [
-                // ROOT accepts multiple DepositTransferStruct for minting.
-                // However in this case we only made one deposit.
-                {
-                  token: depositToken.address,
-                  seasons: [currentSeason],
-                  amounts: [amountInStep]
-                }
-              ],
-              FarmToMode.EXTERNAL,
-              Workflow.slip(amountOutRoot, context.slippage)
-            ] as Parameters<typeof sdk.contracts.root["mint"]>,
+              // ROOT accepts multiple DepositTransferStruct for minting.
+              // However in this case we only made one deposit.
+              {
+                token: depositToken.address,
+                seasons: [currentSeason],
+                amounts: [amountInStep]
+              }
+            ],
+            FarmToMode.EXTERNAL,
+            Workflow.slip(amountOutRoot, context.data.slippage || 0)
+          ] as Parameters<typeof sdk.contracts.root["mint"]>,
           amountOutRoot // pass to next step
         );
       },
@@ -207,14 +213,27 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
 
   // console.log("Executing this transaction is expected to mint", mintResult.toString(), "ROOT");
 
-  console.log("\n\nExecuting...");
-  const txn = await farm.execute(amountIn, 0.1);
-  console.log("Transaction submitted...", txn.hash);
+  // console.log("\n\nExecuting...");
+  // const permit = await sdk.permit.sign(
+  //   account,
+  //   sdk.tokens.permitERC2612(
+  //     account, // owner
+  //     sdk.contracts.beanstalk.address, // spender
+  //     depositToken, // bean
+  //     estBean.toBlockchain() // amount of beans
+  //   )
+  // );
+  // console.log("Signed a permit: ", permit);
+  // const txn = await farm.execute(amountIn, {
+  //   slippage: 0.1,
+  //   permit,
+  // });
+  // console.log("Transaction submitted...", txn.hash);
 
-  const receipt = await txn.wait();
-  console.log("Transaction executed");
+  // const receipt = await txn.wait();
+  // console.log("Transaction executed");
 
-  Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
+  // Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
 
   const accountBalanceOfBEAN = await sdk.tokens.getBalance(sdk.tokens.BEAN);
   const accountBalanceOfROOT = await sdk.tokens.getBalance(sdk.tokens.ROOT);

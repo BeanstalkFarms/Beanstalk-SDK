@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { EncodeContext, Step, StepClass, Workflow } from "src/classes/Workflow";
+import { BuildContext, Step, StepClass, Workflow } from "src/classes/Workflow";
 import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
 
@@ -16,15 +16,15 @@ export class RemoveLiquidityOneToken extends StepClass<string> {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<Step<string>> {
+  async run(_amountInStep: ethers.BigNumber, context: BuildContext): Promise<Step<string>> {
     RemoveLiquidityOneToken.sdk.debug(`[${this.name}.run()]`, {
       pool: this._pool,
       registry: this._registry,
       tokenOut: this._tokenOut,
       amountInStep: _amountInStep,
-      forward: _forward,
       fromMode: this._fromMode,
-      toMode: this._toMode
+      toMode: this._toMode,
+      context
     });
     const registry = RemoveLiquidityOneToken.sdk.contracts.curve.registries.metaFactory;
     const coins = await registry.callStatic.get_coins(this._pool, { gasLimit: 10000000 });
@@ -61,8 +61,8 @@ export class RemoveLiquidityOneToken extends StepClass<string> {
       name: this.name,
       amountOut,
       data: {},
-      encode: (context: EncodeContext) => {
-        const minAmountOut = Workflow.slip(amountOut!, context.slippage);
+      encode: () => {
+        const minAmountOut = Workflow.slip(amountOut!, context.data.slippage || 0);
         RemoveLiquidityOneToken.sdk.debug(`[${this.name}.encode()]`, {
           pool: this._pool,
           registry: this._registry,
@@ -70,7 +70,6 @@ export class RemoveLiquidityOneToken extends StepClass<string> {
           amountInStep: _amountInStep,
           amountOut,
           minAmountOut,
-          forward: _forward,
           fromMode: this._fromMode,
           toMode: this._toMode,
           context

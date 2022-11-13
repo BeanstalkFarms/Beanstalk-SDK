@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { Step, StepClass, Workflow } from "src/classes/Workflow";
+import { BuildContext, Step, StepClass, Workflow } from "src/classes/Workflow";
 import { Token } from "src/classes/Token";
 import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
@@ -18,18 +18,22 @@ export class Exchange extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<Step<string>> {
+  async run(_amountInStep: ethers.BigNumber, context: BuildContext): Promise<Step<string>> {
     Exchange.sdk.debug(`[${this.name}.run()]`, {
       pool: this.pool,
       registry: this.registry,
       tokenIn: this.tokenIn.symbol,
       tokenOut: this.tokenOut.symbol,
       amountInStep: _amountInStep,
-      forward: _forward,
       fromMode: this.fromMode,
-      toMode: this.toMode
+      toMode: this.toMode,
+      context
     });
-    const [tokenIn, tokenOut] = Workflow.direction(this.tokenIn, this.tokenOut, _forward);
+    const [tokenIn, tokenOut] = Workflow.direction(
+      this.tokenIn,
+      this.tokenOut,
+      context.runMode !== "estimateReversed" // _forward
+    );
 
     const registry = Exchange.sdk.contracts.curve.registries[this.registry];
     if (!registry) throw new Error(`Unknown registry: ${this.registry}`);
@@ -75,8 +79,8 @@ export class Exchange extends StepClass {
         fromMode: this.fromMode,
         toMode: this.toMode
       },
-      encode: (context) => {
-        const minAmountOut = Workflow.slip(amountOut!, context.slippage);
+      encode: () => {
+        const minAmountOut = Workflow.slip(amountOut!, context.data.slippage || 0);
         Exchange.sdk.debug(`[${this.name}.encode()]`, {
           pool: this.pool,
           registry: this.registry,

@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { Step, StepClass } from "src/classes/Workflow";
+import { BuildContext, Step, StepClass } from "src/classes/Workflow";
 import { FarmFromMode } from "../types";
 
 export class UnwrapEth extends StepClass {
@@ -9,14 +9,14 @@ export class UnwrapEth extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<Step<string>> {
-    UnwrapEth.sdk.debug(`[${this.name}.run()]`, { fromMode: this.fromMode, _amountInStep, _forward });
+  async run(_amountInStep: ethers.BigNumber, context: BuildContext): Promise<Step<string>> {
+    UnwrapEth.sdk.debug(`[${this.name}.run()]`, { fromMode: this.fromMode, _amountInStep, context });
     return {
       name: this.name,
       amountOut: _amountInStep, // amountInStep should be an amount of ETH.
       value: _amountInStep, // need to use this amount in the txn.
       encode: () => {
-        UnwrapEth.sdk.debug(`[${this.name}.encode()]`, { fromMode: this.fromMode, _amountInStep, _forward });
+        UnwrapEth.sdk.debug(`[${this.name}.encode()]`, { fromMode: this.fromMode, _amountInStep, context });
         return UnwrapEth.sdk.contracts.beanstalk.interface.encodeFunctionData("unwrapEth", [
           _amountInStep, // ignore minAmountOut since there is no slippage
           this.fromMode

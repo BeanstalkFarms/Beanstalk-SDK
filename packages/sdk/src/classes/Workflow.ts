@@ -36,8 +36,19 @@ export abstract class StepClass<EncodedResult extends any = string> {
     StepClass.sdk = sdk;
   }
 
-  abstract run(_amountInStep: ethers.BigNumber, _forward: boolean): Promise<Step<EncodedResult>>;
+  abstract run(_amountInStep: ethers.BigNumber, context: BuildContext): Promise<Step<EncodedResult>>;
+  // abstract run(_amountInStep: ethers.BigNumber, _forward: boolean): Promise<Step<EncodedResult>>;
 }
+
+export type RunMode = "estimate" | "estimateReversed" | "execute" | "callStatic" | "estimateGas";
+
+/**
+ *
+ */
+export type BuildContext<ExecuteData extends Record<string, any> = any & { slippage?: number }> = {
+  runMode: RunMode;
+  data: ExecuteData;
+};
 
 /**
  * A StepFunction is a type of StepGenerator. It can return a Step or an
@@ -54,14 +65,10 @@ export abstract class StepClass<EncodedResult extends any = string> {
  */
 export type StepFunction<EncodedResult extends any = string> = (
   amountIn: ethers.BigNumber,
-  forward?: boolean
+  context: BuildContext
 ) =>
   | (EncodedResult | Step<EncodedResult>) // synchronous
   | Promise<EncodedResult | Step<EncodedResult>>; // asynchronous
-
-export type EncodeContext = {
-  slippage: number;
-};
 
 /**
  * A Step represents one pre-estimated Ethereum function call
@@ -72,7 +79,8 @@ export type Step<EncodedResult extends any> = {
   amountOut: ethers.BigNumber;
   value?: ethers.BigNumber;
   data?: any;
-  encode: (context: EncodeContext) => EncodedResult;
+  encode: () => EncodedResult;
+  // encode: (context: EncodeContext) => EncodedResult;
   decode: (data: string) => undefined | Record<string, any>;
   decodeResult: (result: any) => undefined | ethers.utils.Result;
   print?: (result: any) => string;
@@ -86,6 +94,11 @@ type StepGenerators<EncodedResult extends any = string> =
   | StepGenerator<EncodedResult> // Add a StepGenerator.
   | Workflow<any> // Add another Workflow.
   | StepGenerators<EncodedResult>[]; // Recurse (allows nesting & arrays).
+
+/**
+ *
+ */
+type InputOptions = {};
 
 /**
  * A `Workflow` allows for iterative preparation of an Ethereum transaction
@@ -123,7 +136,7 @@ type StepGenerators<EncodedResult extends any = string> =
  *
  * See `.buildStep()` for a description of how Workflows are handled.
  */
-export abstract class Workflow<EncodedResult extends any = string> {
+export abstract class Workflow<EncodedResult extends any = string, ExecuteData extends Record<string, any> = {}> {
   protected _generators: (StepGenerator<EncodedResult> | Workflow<EncodedResult>)[] = [];
   protected _steps: Step<EncodedResult>[] = [];
   protected _value = ethers.BigNumber.from(0);
@@ -167,7 +180,7 @@ export abstract class Workflow<EncodedResult extends any = string> {
    * Add a new StepGenerator to the list of generators.
    * Each StepGenerator is called during `.estimate()`.
    */
-  add(input: StepGenerators<EncodedResult>) {
+  add(input: StepGenerators<EncodedResult>, options?: InputOptions) {
     if (Array.isArray(input)) {
       for (const elem of input) {
         this.add(elem); // recurse
@@ -187,12 +200,14 @@ export abstract class Workflow<EncodedResult extends any = string> {
    * Run a StepGenerator to produce a Step.
    * @fixme "runGenerator"? i'm ok with buildStep personally
    */
-  async buildStep(
+  protected async buildStep(
     input: StepGenerator<EncodedResult> | Workflow<EncodedResult>,
     amountInStep: ethers.BigNumber,
-    forward: boolean
+    context: BuildContext
   ): Promise<typeof this._steps[number]> {
     let step: typeof this._steps[number];
+
+    console.log("build with context", context);
 
     try {
       if (input instanceof Workflow) {
@@ -201,14 +216,15 @@ export abstract class Workflow<EncodedResult extends any = string> {
         // First, we call the Workflow's `.estimate()` and pass
         // in the current amountInStep. This effectively continues
         // the chain of estimation.
-        const nextAmount = await input.estimate(amountInStep);
+        const nextAmount = await input.estimate(amountInStep, context);
 
         // Create a Step which encodes the steps
         // inside the underlying Workflow class.
         step = {
           name: input.name, // Match the Workflow's name
           amountOut: nextAmount, // The result of this Step is the final result of the Workflow.
-          encode: (context) => input.encode.bind(input)(context) as EncodedResult, // Encode the entire Workflow into one element.
+          encode: () => input.encode.bind(input)() as EncodedResult, // Encode the entire Workflow into one element.
+          // encode: (context) => input.encode.bind(input)(context) as EncodedResult, // Encode the entire Workflow into one element.
           decode: () => undefined, // fixme
           decodeResult: (data: string[]) => input.decodeResult(data) // fixme
         };
@@ -216,11 +232,11 @@ export abstract class Workflow<EncodedResult extends any = string> {
         // This input is a StepClass.
         // We call its `run()` function to produce a Step.
         // StepClass.run must return a Step, so nothing to parse here.
-        step = await input.run(amountInStep, forward);
+        step = await input.run(amountInStep, context);
       } else {
         // This input is a StepFunction.
         // We call the function directly and investigate the shape of its return value.
-        const fnResult = (await input.call(this, amountInStep, forward)) as Step<EncodedResult> | EncodedResult;
+        const fnResult = (await input.call(this, amountInStep, context)) as Step<EncodedResult> | EncodedResult;
 
         // If the StepFunction returns an object with `.encode()` function,
         // we assume the object itself is a Step.
@@ -255,6 +271,39 @@ export abstract class Workflow<EncodedResult extends any = string> {
     return step;
   }
 
+  protected async buildSteps(amountIn: ethers.BigNumber, context: BuildContext) {
+    this.clearSteps();
+    let nextAmount = amountIn;
+
+    // Run generator at index i
+    const run = async (i: number, label: "estimate" | "estimateReversed") => {
+      const generator = this._generators[i];
+      const step = await this.buildStep(generator, nextAmount, context);
+      nextAmount = step.amountOut;
+      this.sdk.debug(
+        `[Workflow][${this.name}][${label}][${i}: ${step.name || "<unknown>"}]`,
+        step.amountOut.toString(),
+        step.value?.toString() || 0
+      );
+    };
+
+    // Run reverse
+    if (context.runMode === "estimateReversed") {
+      for (let i = this._generators.length - 1; i >= 0; i -= 1) {
+        await run(i, "estimateReversed");
+      }
+    }
+
+    // Run forward
+    else {
+      for (let i = 0; i < this._generators.length; i += 1) {
+        await run(i, "estimate");
+      }
+    }
+
+    return nextAmount;
+  }
+
   /**
    * Estimate what the workflow would output given this amountIn is the input.
    * For ex, if we are trading ETH -> BEAN, and you want to spend exactly 5 ETH, estimate()
@@ -262,23 +311,13 @@ export abstract class Workflow<EncodedResult extends any = string> {
    * @param amountIn Amount to send to workflow as input for estimation
    * @returns Promise of BigNumber
    */
-  async estimate(amountIn: ethers.BigNumber | TokenValue): Promise<ethers.BigNumber> {
-    this.clearSteps();
-
-    let nextAmount = amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn;
-
-    for (let i = 0; i < this._generators.length; i += 1) {
-      const generator = this._generators[i];
-      const step = await this.buildStep(generator, nextAmount, true);
-      nextAmount = step.amountOut;
-      this.sdk.debug(
-        `[Workflow][${this.name}][estimate][${i}: ${step.name || "<unknown>"}]`,
-        step.amountOut.toString(),
-        step.value?.toString() || 0
-      );
-    }
-
-    return nextAmount;
+  async estimate(amountIn: ethers.BigNumber | TokenValue, context?: BuildContext): Promise<ethers.BigNumber> {
+    return this.buildSteps(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn, {
+      // if we're propagating from Workflow -> Workflow, inherit the run mode
+      // and propagate data; otherwise, this is a top-level estimate().
+      runMode: context?.runMode || "estimate",
+      data: context?.data || {}
+    });
   }
 
   /**
@@ -288,51 +327,43 @@ export abstract class Workflow<EncodedResult extends any = string> {
    * @param desiredAmountOut The end amount you want the workflow to output
    * @returns Promise of BigNumber
    */
-  async estimateReversed(amountIn: ethers.BigNumber | TokenValue) {
-    this.clearSteps();
+  async estimateReversed(desiredAmountOut: ethers.BigNumber | TokenValue) {
+    return this.buildSteps(
+      desiredAmountOut instanceof TokenValue ? desiredAmountOut.toBigNumber() : desiredAmountOut,
+      {
+        runMode: "estimateReversed",
+        data: {}
+      } // FIXME
+    );
+  }
 
-    let nextAmount = amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn;
-
-    for (let i = this._steps.length - 1; i >= 0; i -= 1) {
-      const generator = this._generators[i];
-      const step = await this.buildStep(generator, nextAmount, false);
-      nextAmount = step.amountOut;
-      this.sdk.debug(
-        `[Workflow][${this.name}][estimateReversed][${i}: ${step.name || "<unknown>"}]`,
-        step.amountOut.toString(),
-        step.value?.toNumber() || 0
-      );
-    }
-
-    return nextAmount;
+  /**
+   * Run `.estimate()` and encode all resulting Steps in preparation for execute().
+   * Embed the requested runMode in context.
+   */
+  protected async estimateAndEncodeSteps(amountIn: ethers.BigNumber | TokenValue, runMode: RunMode, data: ExecuteData) {
+    // assert(slippage >= 0 && slippage <= 100, "Slippage must be between (0, 100).");
+    this.sdk.debug(`[Workflow._estimateAndEncodeSteps()]`, { amountIn, runMode, data }); // , slippage
+    await this.buildSteps(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn, { runMode, data });
+    return this.encodeSteps(); // slippage / 100);
   }
 
   /**
    * Loop over a sequence of pre-estimated Steps and encode their
    * calldata with context (like slippage) available for access.
    */
-  protected encodeSteps(_slippage: number) {
+  protected encodeSteps() {
     if (this._steps.length === 0) throw new Error("Work: must run estimate() before encoding");
 
-    const fnData: EncodedResult[] = [];
-    const context = Object.freeze({ slippage: _slippage }); // share context object across encode steps
+    // const context = Object.freeze({ slippage: _slippage }); // share context object across encode steps
 
+    // fixme: switch to map
+    const encoded: EncodedResult[] = [];
     for (let i = 0; i < this._steps.length; i += 1) {
-      const encoded = this._steps[i].encode(context);
-      fnData.push(encoded);
+      encoded.push(this._steps[i].encode());
     }
 
-    return fnData;
-  }
-
-  /**
-   * Run `.estimate()` and encode all resulting Steps with a slippage value.
-   */
-  protected async _estimateAndEncodeSteps(amountIn: ethers.BigNumber | TokenValue, slippage: number) {
-    assert(slippage >= 0 && slippage <= 100, "Slippage must be between (0, 100).");
-    this.sdk.debug(`[Workflow._estimateAndEncodeSteps()]`, { amountIn, slippage });
-    await this.estimate(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn);
-    return this.encodeSteps(slippage / 100);
+    return encoded;
   }
 
   /**
@@ -349,14 +380,15 @@ export abstract class Workflow<EncodedResult extends any = string> {
    * Encode this Workflow into a single hex string for submission to Ethereum.
    * This must be implemented by extensions of Workflow.
    */
-  abstract encode(context: EncodeContext): string;
+  abstract encode(): string;
+  // abstract encode(context: EncodeContext): string;
 
   /**
    * @param amountIn Amount to use as first input to Work
    * @param slippage A human readable percent value. Ex: 0.1 would mean 0.1% slippage
    * @returns Promise of a Transaction
    */
-  abstract execute(_amountIn: ethers.BigNumber | TokenValue, slippage: number): Promise<ethers.ContractTransaction>;
+  abstract execute(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.ContractTransaction>;
 
   /**
    * CallStatic version of the execute method. Allows testing the execution of the workflow.
@@ -364,10 +396,10 @@ export abstract class Workflow<EncodedResult extends any = string> {
    * @param slippage A human readable percent value. Ex: 0.1 would mean 0.1% slippage
    * @returns Promise of a Transaction
    */
-  abstract callStatic(_amountIn: ethers.BigNumber | TokenValue, _slippage: number): Promise<string[]>;
+  abstract callStatic(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<string[]>;
 
   /**
    *
    */
-  abstract estimateGas(_amountIn: ethers.BigNumber | TokenValue, _slippage: number): Promise<ethers.BigNumber>;
+  abstract estimateGas(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.BigNumber>;
 }

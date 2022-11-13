@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { EncodeContext, Step, Workflow } from "src/classes/Workflow";
+import { Step, Workflow } from "src/classes/Workflow";
 import { Beanstalk } from "src/constants/generated";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { Clipboard } from "src/lib/depot/clipboard";
@@ -21,9 +21,10 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
     return this._copy(AdvancedPipeWorkflow);
   }
 
-  encode(context: EncodeContext) {
+  encode() {
     return this.contract.interface.encodeFunctionData("advancedPipe", [
-      this.encodeSteps(context.slippage),
+      this.encodeSteps(),
+      // this.encodeSteps(context.slippage),
       // this._steps.map((step) => step.encode()),
       "0" // fixme
     ]);
@@ -41,16 +42,18 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
   wrap<C extends ethers.Contract, M extends keyof C["functions"], A extends Parameters<C["functions"][M]>>(
     contract: C,
     method: M,
-    args: A | ((context: EncodeContext) => A),
+    args: A, // | ((context: EncodeContext) => A),
     amountOut: ethers.BigNumber,
     advancedData: string = Clipboard.encode([])
   ): Step<AdvancedPipeStruct> {
     return {
       name: method.toString(),
       amountOut,
-      encode: (context) => ({
+      encode: () => ({
+        // context
         target: contract.address,
-        callData: contract.interface.encodeFunctionData(method.toString(), typeof args === "function" ? args(context) : args),
+        callData: contract.interface.encodeFunctionData(method.toString()),
+        // callData: contract.interface.encodeFunctionData(method.toString(), typeof args === "function" ? args(context) : args),
         advancedData
       }),
       decode: () => undefined,

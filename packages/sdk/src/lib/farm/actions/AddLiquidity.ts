@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { EncodeContext, Step, StepClass, Workflow } from "src/classes/Workflow";
+import { BuildContext, Step, StepClass, Workflow } from "src/classes/Workflow";
 import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { assert } from "src/utils";
 import { FarmFromMode, FarmToMode } from "../types";
@@ -17,7 +17,7 @@ export class AddLiquidity extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<Step<string>> {
+  async run(_amountInStep: ethers.BigNumber, context: BuildContext): Promise<Step<string>> {
     AddLiquidity.sdk.debug(`[${this.name}.run()]`, {
       pool: this._pool,
       registry: this._registry,
@@ -90,8 +90,8 @@ export class AddLiquidity extends StepClass {
         fromMode: this._fromMode,
         toMode: this._toMode
       },
-      encode: (context) => {
-        const minAmountOut = Workflow.slip(_amountInStep, context.slippage);
+      encode: () => {
+        const minAmountOut = Workflow.slip(_amountInStep, context.data.slippage || 0);
         AddLiquidity.sdk.debug(`[${this.name}.encode()]`, {
           pool: this._pool,
           registry: this._registry,
