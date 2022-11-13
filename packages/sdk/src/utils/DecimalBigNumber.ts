@@ -33,7 +33,9 @@ export class DecimalBigNumber {
    *
    * Given these design decisions, there are some recommended approaches:
    * - Obtain user input with type text, instead of a number, in order to retain precision. e.g. `<input type="text" />`
-   * - Where a `number` value is present, convert it to a `DecimalBigNumber` in the manner the developer deems appropriate. This will most commonly be `new DecimalBigNumber((1000222000.2222).toString(), 4)`. While a convenience method could be offered, it could lead to unexpected behaviour around precision.
+   * - Where a `number` value is present, convert it to a `DecimalBigNumber` in the manner the developer deems appropriate.
+   *   This will most commonly be `new DecimalBigNumber((1000222000.2222).toString(), 4)`. While a convenience method could be offered,
+   *   it could lead to unexpected behaviour around precision.
    *
    * @param value the BigNumber or string used to initialize the object
    * @param decimals the number of decimal places supported by the number. If `number` is a string, this parameter is optional.
@@ -103,6 +105,12 @@ export class DecimalBigNumber {
    */
   public toBigNumber(decimals?: number): BigNumber {
     return decimals === undefined ? this._value : new DecimalBigNumber(this.toString(), decimals)._value;
+  }
+  /**
+   * Converts to a different decimal
+   */
+  public reDecimal(decimals: number): DecimalBigNumber {
+    return decimals === this._decimals ? this : new DecimalBigNumber(this.toString(), decimals);
   }
 
   /**
@@ -268,6 +276,32 @@ export class DecimalBigNumber {
     // Multiplying two BigNumbers produces a product with a decimal
     // amount equal to the sum of the decimal amounts of the two input numbers
     return new DecimalBigNumber(product, this._decimals + valueAsDBN._decimals);
+  }
+
+  public mod(value: DecimalBigNumber | string): DecimalBigNumber {
+    const valueAsDBN = value instanceof DecimalBigNumber ? value : new DecimalBigNumber(value);
+
+    return new DecimalBigNumber(this._value.mod(valueAsDBN._value), this._decimals);
+  }
+
+  public mulMod(value: DecimalBigNumber | string, denominator: DecimalBigNumber | string): DecimalBigNumber {
+    const valueAsDBN = value instanceof DecimalBigNumber ? value : new DecimalBigNumber(value);
+    const denominatorAsDBN = denominator instanceof DecimalBigNumber ? denominator : new DecimalBigNumber(denominator);
+
+    const result = this._value.mul(valueAsDBN._value).mod(denominatorAsDBN._value);
+    return new DecimalBigNumber(result, this._decimals);
+  }
+
+  public mulDiv(value: DecimalBigNumber | string, denominator: DecimalBigNumber | string, rounding?: "up" | "down"): DecimalBigNumber {
+    const valueAsDBN = value instanceof DecimalBigNumber ? value : new DecimalBigNumber(value);
+    const denominatorAsDBN = denominator instanceof DecimalBigNumber ? denominator : new DecimalBigNumber(denominator);
+
+    let result = this._value.mul(valueAsDBN._value).div(denominatorAsDBN._value);
+    if (rounding === "up" && this.mulMod(value, denominator).gt("0")) {
+      result = result.add(1);
+    }
+
+    return new DecimalBigNumber(result, this._decimals);
   }
 
   /**

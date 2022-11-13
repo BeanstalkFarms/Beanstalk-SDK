@@ -1,4 +1,6 @@
 import { BigNumber, utils, constants } from "ethers";
+import { parseUnits } from "ethers/lib/utils";
+import { round } from "lodash";
 import { DecimalBigNumber } from "src/utils/DecimalBigNumber";
 
 const blocker = {};
@@ -150,6 +152,14 @@ export class TokenValue {
     }
   }
 
+  /**
+   * Returns a new TokenValue with the number of decimals set to the new value
+   * @param decimals
+   */
+  public changeDecimals(decimals: number) {
+    return TokenValue.fromBigNumber(this.value.toBigNumber(decimals), decimals);
+  }
+
   ////// Math Functions //////
   add(num: TokenValue | BigNumber | number): TokenValue {
     return TokenValue.from(this.value.add(this.toDBN(num)));
@@ -157,17 +167,22 @@ export class TokenValue {
   sub(num: TokenValue | BigNumber | number): TokenValue {
     return TokenValue.from(this.value.sub(this.toDBN(num)));
   }
-  mul(num: TokenValue | BigNumber | number) {
-    return TokenValue.from(this.value.mul(this.toDBN(num)));
+  mod(num: TokenValue | number) {
+    // num needs to have the same number of decimals as THIS
+    let n = this.toDBN(num).reDecimal(this.decimals);
+    return TokenValue.from(this.value.mod(n));
+  }
+  mul(num: TokenValue | number) {
+    return TokenValue.from(this.value.mul(this.toDBN(num)).reDecimal(this.decimals));
+  }
+  mulMod(num: TokenValue | number, denominator: TokenValue | number): TokenValue {
+    return TokenValue.from(this.value.mul(this.toDBN(num)).mod(this.toDBN(denominator).reDecimal(this.decimals)));
+  }
+  mulDiv(num: TokenValue | BigNumber | number, denominator: TokenValue | number, rounding?: "down" | "up") {
+    return TokenValue.from(this.value.mulDiv(this.toDBN(num), this.toDBN(denominator), rounding).reDecimal(this.decimals));
   }
   div(num: TokenValue | BigNumber | number, decimals?: number) {
     return TokenValue.from(this.value.div(this.toDBN(num), decimals));
-  }
-  mod(num: TokenValue) {
-    if (num.decimals !== this.decimals) throw new Error("Must mod() by a value with same number of decimal places");
-    const mod = this.toBigNumber().mod(num.toBigNumber());
-
-    return TokenValue.fromBigNumber(mod, this.decimals);
   }
   eq(num: TokenValue | BigNumber | number): boolean {
     return this.value.eq(this.toDBN(num));
@@ -183,6 +198,12 @@ export class TokenValue {
   }
   lte(num: TokenValue | BigNumber | number): boolean {
     return this.value.lte(this.toDBN(num));
+  }
+  static min(...values: TokenValue[]): TokenValue {
+    return values.reduce((acc, num) => (acc.lt(num) ? acc : num));
+  }
+  static max(...values: TokenValue[]): TokenValue {
+    return values.reduce((acc, num) => (acc.gt(num) ? acc : num));
   }
   abs(): TokenValue {
     return TokenValue.from(this.value.abs());
