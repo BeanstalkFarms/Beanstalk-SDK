@@ -1,21 +1,9 @@
-import { setupConnection } from '../utils.tests/provider'
-import { BeanstalkSDK } from './BeanstalkSDK';
+import { getTestUtils } from "../utils.tests/provider";
 
-/// Setup
-let sdk : BeanstalkSDK;
-let account: string;
-beforeAll(async () => {
-  const { signer, provider, account: _account } = await setupConnection();
-  sdk = new BeanstalkSDK({
-    provider: provider,
-    signer: signer,
-    subgraphUrl: 'https://graph.node.bean.money/subgraphs/name/beanstalk-testing'
-  });
-  account = _account;
-});
+const { sdk, account, utils } = getTestUtils();
 
-describe('mint function', () => {
-  it('uses the right function', async () => {
+describe("mint function", () => {
+  it("uses the right function", async () => {
     expect(true).toBe(true);
     // const typedData = await sdk.root.permit(
     //   [sdk.tokens.BEAN],
@@ -25,5 +13,13 @@ describe('mint function', () => {
     //   account,
     //   typedData,
     // )
-  })
-})
+  });
+});
+
+describe("estimateRoots", () => {
+  it("test", async () => {
+    const result = await sdk.root.estimateRoots(sdk.tokens.BEAN, [utils.mockDepositCrate(sdk.tokens.BEAN, 6000, "1000")], true);
+
+    expect(result.estimate.gt(0)).toBe(true);
+  });
+});

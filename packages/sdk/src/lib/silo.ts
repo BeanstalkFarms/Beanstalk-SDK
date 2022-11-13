@@ -174,12 +174,50 @@ export class Silo {
   public calculateGrownStalk(currentSeason: ethers.BigNumberish, depositSeason: ethers.BigNumberish, depositSeeds: TokenValue): TokenValue {
     const deltaSeasons = ethers.BigNumber.from(currentSeason).sub(depositSeason);
     assert(deltaSeasons.gte(0), "Silo: Cannot calculate grown stalk when `currentSeason < depositSeason`.");
-    return Silo.STALK_PER_SEED_PER_SEASON.mul(depositSeeds).mul(deltaSeasons);
+    return Silo.STALK_PER_SEED_PER_SEASON.mul(depositSeeds).mul(deltaSeasons.toNumber());
+  }
+
+  /**
+   * Create a new Deposit Crate object.
+   *
+   * @param token Token contained within the crate
+   * @param _season The season of deposit
+   * @param _amount The amount of deposit
+   * @param _bdv The bdv of deposit
+   * @param currentSeason The current season, for calculation of grownStalk.
+   * @returns DepositCrate<TokenValue>
+   */
+  private makeDepositCrate(
+    token: Token,
+    _season: string | number,
+    _amount: string,
+    _bdv: string,
+    currentSeason: ethers.BigNumberish
+  ): DepositCrate<TokenValue> {
+    // Crate
+    const season = ethers.BigNumber.from(_season);
+    const amount = token.fromBlockchain(_amount);
+
+    // Deposit-specific
+    const bdv = Silo.sdk.tokens.BEAN.fromBlockchain(_bdv);
+    const seeds = token.getSeeds(bdv);
+    const baseStalk = token.getStalk(bdv);
+    const grownStalk = this.calculateGrownStalk(currentSeason, season, seeds);
+    const stalk = baseStalk.add(grownStalk);
+
+    return {
+      season,
+      amount,
+      bdv,
+      stalk,
+      baseStalk,
+      grownStalk,
+      seeds
+    };
   }
 
   /**
    * Apply a Deposit to a TokenSiloBalance.
-   *
    * @note expects inputs to be stringified (no decimals).
    */
   private _applyDeposit(
@@ -192,27 +230,10 @@ export class Silo {
     },
     currentSeason: ethers.BigNumberish
   ) {
-    const season = BigNumber.from(rawCrate.season);
-    const amount = token.fromBlockchain(rawCrate.amount);
+    const crate = this.makeDepositCrate(token, rawCrate.season, rawCrate.amount, rawCrate.bdv, currentSeason);
 
-    const bdv = Silo.sdk.tokens.BEAN.fromBlockchain(rawCrate.bdv);
-    const seeds = token.getSeeds(bdv);
-    const baseStalk = token.getStalk(bdv);
-    const grownStalk = this.calculateGrownStalk(currentSeason, season, seeds);
-    const stalk = baseStalk.add(grownStalk);
-
-    const crate: DepositCrate<TokenValue> = {
-      season,
-      amount,
-      bdv,
-      stalk,
-      baseStalk,
-      grownStalk,
-      seeds
-    };
-
-    state.amount = state.amount.add(amount);
-    state.bdv = state.bdv.add(bdv);
+    state.amount = state.amount.add(crate.amount);
+    state.bdv = state.bdv.add(crate.bdv);
     state.crates.push(crate);
 
     return crate;

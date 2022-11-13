@@ -8,7 +8,11 @@ import { FarmToMode } from "./farm/types";
 import { SignedPermit } from "./permit";
 import { DepositTokenPermitMessage, DepositTokensPermitMessage } from "./silo.utils";
 
-const PRECISION = ethers.utils.parseEther("1");
+// const PRECISION = ethers.utils.parseEther("1");
+const PRECISION = TokenValue.fromBlockchain(ethers.utils.parseEther("1"), 18);
+
+const logtv = (tokv: TokenValue) => [tokv.toBlockchain(), tokv.toHuman(), tokv.decimals];
+
 export class Root {
   static sdk: BeanstalkSDK;
 
@@ -75,7 +79,7 @@ export class Root {
   }
 
   async underlyingBdv() {
-    return Root.sdk.contracts.root.underlyingBdv().then((v) => Root.sdk.tokens.ROOT.fromBlockchain(v));
+    return Root.sdk.contracts.root.underlyingBdv().then((v) => Root.sdk.tokens.BEAN.fromBlockchain(v));
   }
 
   /**
@@ -94,18 +98,30 @@ export class Root {
       Root.sdk.silo.balanceOfSeeds(Root.sdk.contracts.root.address)
     ]);
 
-    // FIXME: this is just base stalk
+    console.log("root total supply", rootTotalSupply.toHuman());
+    console.log("root underlying bdv before", rootUnderlyingBdvBefore.toHuman());
+    console.log("root stalk before", rootStalkBefore.toHuman());
+    console.log("root seeds before", rootSeedsBefore.toHuman());
+
     const {
+      bdv: totalBdvFromDeposits,
       stalk: totalStalkFromDeposits,
-      seeds: totalSeedsFromDeposits,
-      bdv: totalBdvFromDeposits
+      seeds: totalSeedsFromDeposits
     } = Root.sdk.silo.sumDeposits(token, deposits);
 
-    const rootStalkAfter = rootStalkBefore.add(totalStalkFromDeposits);
-    const rootSeedsAfter = rootSeedsBefore.add(totalSeedsFromDeposits);
+    console.log("bdv from deposits", totalBdvFromDeposits.toHuman());
+    console.log("stalk from deposits", totalStalkFromDeposits.toHuman());
+    console.log("seeds from deposits", totalSeedsFromDeposits.toHuman());
+
     const rootUnderlyingBdvAfter = isDeposit
       ? rootUnderlyingBdvBefore.add(totalBdvFromDeposits)
       : rootUnderlyingBdvBefore.sub(totalBdvFromDeposits);
+    const rootStalkAfter = rootStalkBefore.add(totalStalkFromDeposits);
+    const rootSeedsAfter = rootSeedsBefore.add(totalSeedsFromDeposits);
+
+    console.log("root underlying bdv after", rootUnderlyingBdvAfter.toHuman());
+    console.log("root stalk after", rootStalkAfter.toHuman());
+    console.log("root seeds after", rootSeedsAfter.toHuman());
 
     // First-time minting
     if (rootTotalSupply.eq(0)) {
@@ -118,75 +134,55 @@ export class Root {
       };
     }
 
-    throw new Error("unknown");
+    // Deposit
+    else if (isDeposit) {
+      // Calculate ratios
+      const bdvRatio = PRECISION.mulDiv(rootUnderlyingBdvAfter, rootUnderlyingBdvBefore, "down");
+      const stalkRatio = PRECISION.mulDiv(rootStalkAfter, rootStalkBefore, "down");
+      const seedsRatio = PRECISION.mulDiv(rootSeedsAfter, rootSeedsBefore, "down");
 
-    //   // Deposit
-    //   else if (isDeposit) {
+      // Root minting uses the minimum of the increase in bdv/stalk/seeds.
+      const min = TokenValue.min(bdvRatio, stalkRatio, seedsRatio);
+      const estimate = rootTotalSupply.mulDiv(min, PRECISION, "down").sub(rootTotalSupply);
 
-    //     const bdvRatio = mulDiv(
-    //       rootUnderlyingBdvAfter.toBigNumber(),
-    //       PRECISION,
-    //       rootUnderlyingBdvBefore.toBigNumber(),
-    //       "down"
-    //     );
-    //     const stalkRatio = mulDiv(
-    //       rootStalkAfter.toBigNumber(),
-    //       PRECISION,
-    //       rootStalkBefore.toBigNumber(),
-    //       "down"
-    //     );
-    //     const seedsRatio = mulDiv(
-    //       rootSeedsAfter.toBigNumber(),
-    //       PRECISION,
-    //       rootSeedsBefore.toBigNumber(),
-    //       "down"
-    //     );
-    //     const min = _min(bdvRatio, stalkRatio, seedsRatio);
-    //     return {
-    //       estimate: TokenValue.fromBlockchain(
-    //         mulDiv(rootTotalSupply.toBigNumber(), min, PRECISION, "down")
-    //           .sub(rootTotalSupply.toBigNumber())
-    //           .toString(),
-    //         18
-    //       ),
-    //       bdvRatio: TokenValue.fromBlockchain(bdvRatio.toString(), 18),
-    //       stalkRatio: TokenValue.fromBlockchain(stalkRatio.toString(), 18),
-    //       seedsRatio: TokenValue.fromBlockchain(seedsRatio.toString(), 18),
-    //       min: TokenValue.fromBlockchain(min.toString(), 18),
-    //     };
-    //   }
+      console.log({
+        bdvRatio: logtv(bdvRatio),
+        stalkRatio: logtv(stalkRatio),
+        seedsRatio: logtv(seedsRatio)
+      });
 
-    //   // Withdraw
-    //   else {
-    //     const bdvRatio = mulDiv(
-    //       rootUnderlyingBdvAfter.toBigNumber(),
-    //       PRECISION,
-    //       rootUnderlyingBdvBefore.toBigNumber(),
-    //       "up"
-    //     );
-    //     const stalkRatio = mulDiv(
-    //       rootStalkAfter.toBigNumber(),
-    //       PRECISION,
-    //       rootStalkBefore.toBigNumber(),
-    //       "up"
-    //     );
-    //     const seedsRatio = mulDiv(
-    //       rootSeedsAfter.toBigNumber(),
-    //       PRECISION,
-    //       rootSeedsBefore.toBigNumber(),
-    //       "up"
-    //     );
-    //     const max = _max(bdvRatio, stalkRatio, seedsRatio);
+      return {
+        estimate, // 18 (ROOT)
+        bdvRatio, // 18 (PRECISION)
+        stalkRatio, // 18 (PRECISION)
+        seedsRatio, // 18 (PRECISION)
+        min // 18 (PRECISION)
+      };
+    }
 
-    //     return {
-    //       estimate: rootTotalSupply.sub(
-    //         mulDiv(rootTotalSupply.toBigNumber(), max, PRECISION, "up")
-    //       ),
-    //       bdvRatio: TokenValue.fromBlockchain(bdvRatio.toString(), 18),
-    //       stalkRatio: TokenValue.fromBlockchain(stalkRatio.toString(), 18),
-    //       seedsRatio: TokenValue.fromBlockchain(seedsRatio.toString(), 18),
-    //       max: TokenValue.fromBlockchain(max.toString(), 18),
-    //     };
-    //   }
+    // Withdraw
+    else {
+      const bdvRatio = PRECISION.mulDiv(rootUnderlyingBdvAfter, rootUnderlyingBdvBefore, "up");
+      const stalkRatio = PRECISION.mulDiv(rootStalkAfter, rootStalkBefore, "up");
+      const seedsRatio = PRECISION.mulDiv(rootSeedsAfter, rootSeedsBefore, "up");
+
+      console.log({
+        bdvRatio: logtv(bdvRatio),
+        stalkRatio: logtv(stalkRatio),
+        seedsRatio: logtv(seedsRatio)
+      });
+
+      // Root burning uses the maximum of the decrease in bdv/stalk/seeds.
+      const max = TokenValue.max(bdvRatio, stalkRatio, seedsRatio);
+      const estimate = rootTotalSupply.sub(rootTotalSupply.mulDiv(max, PRECISION));
+
+      return {
+        estimate, // 18 (ROOT)
+        bdvRatio, // 18 (PRECISION)
+        stalkRatio, // 18 (PRECISION)
+        seedsRatio, // 18 (PRECISION)
+        max // 18 (PRECISION)
+      };
+    }
   }
 }
