@@ -18,8 +18,8 @@ describe("mint function", () => {
 
 describe("estimateRoots", () => {
   it("test", async () => {
-    const result = await sdk.root.estimateRoots(sdk.tokens.BEAN, [utils.mockDepositCrate(sdk.tokens.BEAN, 6000, "1000")], true);
+    const estimate = await sdk.root.estimateRoots(sdk.tokens.BEAN, [utils.mockDepositCrate(sdk.tokens.BEAN, 6000, "1000")], true);
 
-    expect(result.estimate.gt(0)).toBe(true);
+    expect(estimate.amount.gt(0)).toBe(true);
   });
 });

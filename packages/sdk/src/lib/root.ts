@@ -126,7 +126,7 @@ export class Root {
     // First-time minting
     if (rootTotalSupply.eq(0)) {
       return {
-        estimate: TokenValue.fromBlockchain(totalStalkFromDeposits.mul(1e8).toBlockchain(), 18),
+        amount: TokenValue.fromBlockchain(totalStalkFromDeposits.mul(1e8).toBlockchain(), 18),
         bdvRatio: TokenValue.fromHuman("100", 18),
         stalkRatio: TokenValue.fromHuman("100", 18),
         seedsRatio: TokenValue.fromHuman("100", 18),
@@ -143,7 +143,7 @@ export class Root {
 
       // Root minting uses the minimum of the increase in bdv/stalk/seeds.
       const min = TokenValue.min(bdvRatio, stalkRatio, seedsRatio);
-      const estimate = rootTotalSupply.mulDiv(min, PRECISION, "down").sub(rootTotalSupply);
+      const amount = rootTotalSupply.mulDiv(min, PRECISION, "down").sub(rootTotalSupply);
 
       console.log({
         bdvRatio: logtv(bdvRatio),
@@ -152,7 +152,7 @@ export class Root {
       });
 
       return {
-        estimate, // 18 (ROOT)
+        amount, // 18 (ROOT)
         bdvRatio, // 18 (PRECISION)
         stalkRatio, // 18 (PRECISION)
         seedsRatio, // 18 (PRECISION)
@@ -174,10 +174,10 @@ export class Root {
 
       // Root burning uses the maximum of the decrease in bdv/stalk/seeds.
       const max = TokenValue.max(bdvRatio, stalkRatio, seedsRatio);
-      const estimate = rootTotalSupply.sub(rootTotalSupply.mulDiv(max, PRECISION));
+      const amount = rootTotalSupply.sub(rootTotalSupply.mulDiv(max, PRECISION));
 
       return {
-        estimate, // 18 (ROOT)
+        amount, // 18 (ROOT)
         bdvRatio, // 18 (PRECISION)
         stalkRatio, // 18 (PRECISION)
         seedsRatio, // 18 (PRECISION)

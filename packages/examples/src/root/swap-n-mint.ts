@@ -36,9 +36,9 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
     throw new Error(`Not enough ${token.symbol}. Balance: ${balance.total.toHuman()} / Input: ${amount.toHuman()}`);
   }
 
-  // Swap from `token` -> `tokenOut` (BEAN)
-  const tokenOut = sdk.tokens.BEAN;
-  const swap = sdk.swap.buildSwap(token, tokenOut, account, FarmFromMode.EXTERNAL, FarmToMode.INTERNAL);
+  // Swap from `token` -> `depositToken` (BEAN)
+  const depositToken = sdk.tokens.BEAN;
+  const swap = sdk.swap.buildSwap(token, depositToken, account, FarmFromMode.EXTERNAL, FarmToMode.INTERNAL);
 
   const estBean = await swap.estimate(amount);
   console.log(`Swap Estimate: ${amount.toHuman()} ${token.symbol} --> ${estBean.toHuman()} BEAN`);
@@ -69,7 +69,7 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
     sdk.tokens.permitERC2612(
       account, // owner
       sdk.contracts.beanstalk.address, // spender
-      tokenOut, // bean
+      depositToken, // bean
       estBean.toBlockchain() // amount of beans
     )
   );
@@ -83,7 +83,7 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
 
   farm.add(
     // returns an array with 2 StepGenerators if no permit, 2 StepGenerators if permit
-    sdk.farm.presets.loadPipeline(tokenOut, FarmFromMode.INTERNAL)
+    sdk.farm.presets.loadPipeline(depositToken, FarmFromMode.INTERNAL)
   );
   farm.add(
     pipe.add([
@@ -98,7 +98,7 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
         pipe.wrap(
           sdk.contracts.beanstalk,
           "approveDeposit",
-          [sdk.contracts.root.address, tokenOut.address, ethers.constants.MaxUint256],
+          [sdk.contracts.root.address, depositToken.address, ethers.constants.MaxUint256],
           amountInStep // pass-thru
         ),
       (amountInStep) =>
@@ -109,28 +109,48 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
           amountInStep // pass-thru
         ),
       async (amountInStep) => {
-        return pipe.wrap(sdk.contracts.beanstalk, "deposit", [tokenOut.address, amountInStep, FarmFromMode.EXTERNAL], amountInStep);
+        return pipe.wrap(sdk.contracts.beanstalk, "deposit", [depositToken.address, amountInStep, FarmFromMode.EXTERNAL], amountInStep);
       },
       async (amountInStep) => {
-        const season = await sdk.sun.getSeason();
-        // const amountOut = await
-        const amountOut = amountInStep; // FIXME
-        const minAmountOut = amountInStep; // FIXME
+        const [currentSeason, estimatedDepositBDV] = await Promise.all([
+          sdk.sun.getSeason(),
+          sdk.silo.bdv(depositToken, depositToken.fromBlockchain(amountInStep))
+        ]);
+
+        const estimate = await sdk.root.estimateRoots(
+          depositToken, // The deposit token which ROOT will use to mint.
+          [
+            // The previous step returns the amount of `depositToken` that was deposited.
+            // Here, we mock the Deposit crate by estimating the BDV with `beanstalk.bdv()`.
+            sdk.silo.makeDepositCrate(
+              depositToken, // token of deposit
+              currentSeason, // season of deposit
+              amountInStep.toString(), // amount of deposit
+              estimatedDepositBDV.toBlockchain(), // bdv of deposit
+              currentSeason // current season
+            )
+          ],
+          true // isDeposit
+        );
+
+        // `estimate.amount` contains the expected number of ROOT as a TokenValue.
+        const amountOutRoot = estimate.amount.toBigNumber();
+
         return pipe.wrap(
           sdk.contracts.root,
           "mint",
           [
             [
               {
-                token: tokenOut.address,
-                seasons: [season], // FIXME: will fail if season flips during execution
-                amounts: [amountInStep] //
+                token: depositToken.address,
+                seasons: [currentSeason], // FIXME: will fail if season flips during execution
+                amounts: [amountInStep] // amountInStep = amount deposited in previous step
               }
             ],
             FarmToMode.EXTERNAL, // send tokens to PIPELINE's external balance
-            minAmountOut
+            amountOutRoot // FIXME: should be minAmountOut
           ],
-          amountOut // pass this to next element
+          amountOutRoot // pass ROOT amount to transfer function
         );
       },
       (amountInStep) =>

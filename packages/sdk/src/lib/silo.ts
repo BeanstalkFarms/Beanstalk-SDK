@@ -187,7 +187,7 @@ export class Silo {
    * @param currentSeason The current season, for calculation of grownStalk.
    * @returns DepositCrate<TokenValue>
    */
-  private makeDepositCrate(
+  public makeDepositCrate(
     token: Token,
     _season: string | number,
     _amount: string,
@@ -543,6 +543,12 @@ export class Silo {
   async balanceOfSeeds(_account?: string) {
     const account = await Silo.sdk.getAccount(_account);
     return Silo.sdk.contracts.beanstalk.balanceOfSeeds(account).then((v) => Silo.sdk.tokens.SEEDS.fromBlockchain(v));
+  }
+
+  async bdv(_token: Token, _amount?: TokenValue) {
+    return Silo.sdk.contracts.beanstalk
+      .bdv(_token.address, (_amount || _token.amount(1)).toBlockchain())
+      .then((v) => Silo.sdk.tokens.BEAN.fromBlockchain(v));
   }
 
   //////////////////////// ACTION: Deposit ////////////////////////
