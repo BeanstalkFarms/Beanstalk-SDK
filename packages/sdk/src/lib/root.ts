@@ -1,10 +1,14 @@
 import { ethers, Overrides } from "ethers";
+import { ERC20Token } from "src/classes/Token";
+import { TokenSiloBalance } from "src/lib/silo";
+import { TokenValue } from "src/TokenValue";
 import { DepositTransferStruct } from "../constants/generated/Beanstalk/Root";
 import { BeanstalkSDK } from "./BeanstalkSDK";
 import { FarmToMode } from "./farm/types";
 import { SignedPermit } from "./permit";
 import { DepositTokenPermitMessage, DepositTokensPermitMessage } from "./silo.utils";
 
+const PRECISION = ethers.utils.parseEther("1");
 export class Root {
   static sdk: BeanstalkSDK;
 
@@ -70,39 +74,117 @@ export class Root {
     return Root.sdk.contracts.root.mint(_depositTransfers, _destination, _minAmountOut, { ..._overrides });
   }
 
+  async underlyingBdv() {
+    return Root.sdk.contracts.root.underlyingBdv().then((v) => Root.sdk.tokens.ROOT.fromBlockchain(v));
+  }
+
   /**
-   * Permit the ROOT contract to transfer the user's Deposits.
-   *
-   * @fixme typescript strategy to clarify the return type based on
-   * passage of n = 1 or n > 1
+   * Off-chain estimation for the number of ROOT minted from a set of
+   * `deposits` of `token`.
+   * @param token
+   * @param deposits
+   * @param isDeposit
    */
-  // async permit<
-  //   T extends readonly
-  //   A extends readonlyBigNumber[],
-  // > (
-  //   _tokens: T,
-  //   _amounts: A,
-  // ) : Promise<PermitFromLength<LengthOfArray<T>>> {
-  //   assert(_tokens.length === _amounts.length, "Root: tokens and amounts length mismatch");
+  async estimateRoots(token: ERC20Token, deposits: TokenSiloBalance["deposited"]["crates"], isDeposit: boolean) {
+    // @dev note that sdk.tokens.ROOT.getContract() == sdk.contracts.root.
+    const [rootTotalSupply, rootUnderlyingBdvBefore, rootStalkBefore, rootSeedsBefore] = await Promise.all([
+      Root.sdk.tokens.ROOT.getTotalSupply(), // automaticaly pulls as TokenValue
+      this.underlyingBdv(),
+      Root.sdk.silo.balanceOfStalk(Root.sdk.contracts.root.address, true), // include grown
+      Root.sdk.silo.balanceOfSeeds(Root.sdk.contracts.root.address)
+    ]);
 
-  //   const tokens  = _tokens.map(t => t.address);
-  //   const amounts = _amounts.map((bn, i) => _tokens[i].stringify(bn));
-  //   const account = await Root.sdk.getAccount();
+    // FIXME: this is just base stalk
+    const {
+      stalk: totalStalkFromDeposits,
+      seeds: totalSeedsFromDeposits,
+      bdv: totalBdvFromDeposits
+    } = Root.sdk.silo.sumDeposits(token, deposits);
 
-  //   if (tokens.length === 1) {
-  //     return Root.sdk.silo.permitDepositToken(
-  //       account,
-  //       Root.address,
-  //       tokens[0],
-  //       amounts[0],
-  //     );
-  //   }
+    const rootStalkAfter = rootStalkBefore.add(totalStalkFromDeposits);
+    const rootSeedsAfter = rootSeedsBefore.add(totalSeedsFromDeposits);
+    const rootUnderlyingBdvAfter = isDeposit
+      ? rootUnderlyingBdvBefore.add(totalBdvFromDeposits)
+      : rootUnderlyingBdvBefore.sub(totalBdvFromDeposits);
 
-  //   return Root.sdk.silo.permitDepositTokens(
-  //     account,
-  //     Root.address,
-  //     tokens,
-  //     amounts,
-  //   );
-  // }
+    // First-time minting
+    if (rootTotalSupply.eq(0)) {
+      return {
+        estimate: TokenValue.fromBlockchain(totalStalkFromDeposits.mul(1e8).toBlockchain(), 18),
+        bdvRatio: TokenValue.fromHuman("100", 18),
+        stalkRatio: TokenValue.fromHuman("100", 18),
+        seedsRatio: TokenValue.fromHuman("100", 18),
+        min: TokenValue.fromHuman("100", 18)
+      };
+    }
+
+    //   // Deposit
+    //   else if (isDeposit) {
+
+    //     const bdvRatio = mulDiv(
+    //       rootUnderlyingBdvAfter.toBigNumber(),
+    //       PRECISION,
+    //       rootUnderlyingBdvBefore.toBigNumber(),
+    //       "down"
+    //     );
+    //     const stalkRatio = mulDiv(
+    //       rootStalkAfter.toBigNumber(),
+    //       PRECISION,
+    //       rootStalkBefore.toBigNumber(),
+    //       "down"
+    //     );
+    //     const seedsRatio = mulDiv(
+    //       rootSeedsAfter.toBigNumber(),
+    //       PRECISION,
+    //       rootSeedsBefore.toBigNumber(),
+    //       "down"
+    //     );
+    //     const min = _min(bdvRatio, stalkRatio, seedsRatio);
+    //     return {
+    //       estimate: TokenValue.fromBlockchain(
+    //         mulDiv(rootTotalSupply.toBigNumber(), min, PRECISION, "down")
+    //           .sub(rootTotalSupply.toBigNumber())
+    //           .toString(),
+    //         18
+    //       ),
+    //       bdvRatio: TokenValue.fromBlockchain(bdvRatio.toString(), 18),
+    //       stalkRatio: TokenValue.fromBlockchain(stalkRatio.toString(), 18),
+    //       seedsRatio: TokenValue.fromBlockchain(seedsRatio.toString(), 18),
+    //       min: TokenValue.fromBlockchain(min.toString(), 18),
+    //     };
+    //   }
+
+    //   // Withdraw
+    //   else {
+    //     const bdvRatio = mulDiv(
+    //       rootUnderlyingBdvAfter.toBigNumber(),
+    //       PRECISION,
+    //       rootUnderlyingBdvBefore.toBigNumber(),
+    //       "up"
+    //     );
+    //     const stalkRatio = mulDiv(
+    //       rootStalkAfter.toBigNumber(),
+    //       PRECISION,
+    //       rootStalkBefore.toBigNumber(),
+    //       "up"
+    //     );
+    //     const seedsRatio = mulDiv(
+    //       rootSeedsAfter.toBigNumber(),
+    //       PRECISION,
+    //       rootSeedsBefore.toBigNumber(),
+    //       "up"
+    //     );
+    //     const max = _max(bdvRatio, stalkRatio, seedsRatio);
+
+    //     return {
+    //       estimate: rootTotalSupply.sub(
+    //         mulDiv(rootTotalSupply.toBigNumber(), max, PRECISION, "up")
+    //       ),
+    //       bdvRatio: TokenValue.fromBlockchain(bdvRatio.toString(), 18),
+    //       stalkRatio: TokenValue.fromBlockchain(stalkRatio.toString(), 18),
+    //       seedsRatio: TokenValue.fromBlockchain(seedsRatio.toString(), 18),
+    //       max: TokenValue.fromBlockchain(max.toString(), 18),
+    //     };
+    //   }
+  }
 }
