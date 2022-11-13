@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { DataSource } from "../types";
-import { setupConnection } from "../utils.tests/provider";
+import { getTestUtils, setupConnection } from "../utils.tests/provider";
 
 import { BeanstalkSDK } from "./BeanstalkSDK";
 import { Token } from "../classes/Token";
@@ -8,6 +8,8 @@ import { TokenSiloBalance } from "./silo";
 import { _parseWithdrawalCrates } from "./silo.utils";
 import { BigNumber, ethers } from "ethers";
 import { TokenValue } from "../classes/TokenValue";
+import { BF_MULTISIG } from "src/utils.tests/addresses";
+import { toArray } from "lodash";
 
 /// Utilities
 const RUN_TIMER = false;
@@ -24,21 +26,10 @@ const account2 = "0x0"; // zero addy
 const account3 = "0x21DE18B6A8f78eDe6D16C50A167f6B222DC08DF7"; // BF Multisig
 
 /// Setup
-let sdk: BeanstalkSDK;
-let account: string;
-beforeAll(async () => {
-  const { signer, provider, account: _account } = await setupConnection();
-  sdk = new BeanstalkSDK({
-    provider: provider,
-    signer: signer,
-    subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing",
-  });
-  account = _account;
-});
+const { sdk, account, utils } = getTestUtils();
 
-///
 describe("Utilities", function () {
-  it("splits raw withdrawals into withdrawn and claimable", () => {
+  it("Splits raw withdrawals into Withdrawn and Claimable", () => {
     const crate1 = { amount: ethers.BigNumber.from(1000 * 1e6) };
     const crate2 = { amount: ethers.BigNumber.from(2000 * 1e6) };
     const crate3 = { amount: ethers.BigNumber.from(3000 * 1e6) };
@@ -47,7 +38,7 @@ describe("Utilities", function () {
       {
         "6074": crate1, // => claimable
         "6075": crate2, // => withdrawn
-        "6076": crate3, // => withdrawn
+        "6076": crate3 // => withdrawn
       },
       BigNumber.from(6074)
     );
@@ -63,10 +54,8 @@ describe("Utilities", function () {
     expect(result.withdrawn.crates.length).to.be.eq(2);
   });
 });
-//1000_000000
-//1000_000000
-///
-describe("Function: getBalance", function () {
+
+describe("getBalance", function () {
   it("returns an empty object", async () => {
     const balance = await sdk.silo.getBalance(sdk.tokens.BEAN, account2, { source: DataSource.SUBGRAPH });
     expect(balance.deposited.amount.eq(0)).to.be.true;
@@ -82,14 +71,13 @@ describe("Function: getBalance", function () {
   it("source: ledger === subgraph", async function () {
     const [ledger, subgraph] = await Promise.all([
       timer(sdk.silo.getBalance(sdk.tokens.BEAN, account1, { source: DataSource.LEDGER }), "Ledger result time"),
-      timer(sdk.silo.getBalance(sdk.tokens.BEAN, account1, { source: DataSource.SUBGRAPH }), "Subgraph result time"),
+      timer(sdk.silo.getBalance(sdk.tokens.BEAN, account1, { source: DataSource.SUBGRAPH }), "Subgraph result time")
     ]);
     expect(ledger).to.deep.eq(subgraph);
   });
 });
 
-///
-describe("Function: getBalances", function () {
+describe("getBalances", function () {
   let ledger: Map<Token, TokenSiloBalance>;
   let subgraph: Map<Token, TokenSiloBalance>;
 
@@ -98,7 +86,7 @@ describe("Function: getBalances", function () {
   beforeAll(async () => {
     [ledger, subgraph] = await Promise.all([
       timer(sdk.silo.getBalances(account1, { source: DataSource.LEDGER }), "Ledger result time"),
-      timer(sdk.silo.getBalances(account1, { source: DataSource.SUBGRAPH }), "Subgraph result time"),
+      timer(sdk.silo.getBalances(account1, { source: DataSource.SUBGRAPH }), "Subgraph result time")
     ]);
   });
 
@@ -118,8 +106,7 @@ describe("Function: getBalances", function () {
   });
 });
 
-///
-describe("Silo Deposit Permits", function () {
+describe("Deposit Permits", function () {
   it("permits", async () => {
     const owner = account;
     const spender = sdk.contracts.root.address;
@@ -162,6 +149,23 @@ describe("Silo Deposit Permits", function () {
     // Verify
     const allowance = await sdk.contracts.beanstalk.depositAllowance(owner, spender, token);
     expect(allowance.toString()).to.be.eq(amount);
+  });
+});
+
+describe("balanceOfStalk", () => {
+  it("Returns a TokenValue with STALK decimals", async () => {
+    const result = await sdk.silo.balanceOfStalk(BF_MULTISIG);
+    expect(result).to.be.instanceOf(TokenValue);
+    expect(result.decimals).to.eq(10);
+  });
+  it.todo("Adds grown stalk when requested");
+});
+
+describe("balanceOfSeeds", () => {
+  it("Returns a TokenValue with SEEDS decimals", async () => {
+    const result = await sdk.silo.balanceOfSeeds(BF_MULTISIG);
+    expect(result).to.be.instanceOf(TokenValue);
+    expect(result.decimals).to.eq(6);
   });
 });
 
