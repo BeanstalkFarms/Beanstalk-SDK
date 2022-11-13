@@ -1,4 +1,4 @@
-import { FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Clipboard, DataSource, Token } from "@beanstalk/sdk";
+import { FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Clipboard, DataSource, Token, Workflow } from "@beanstalk/sdk";
 import { BigNumber, ethers } from "ethers";
 import { sdk, test, account } from "../setup";
 
@@ -108,26 +108,40 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
           [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
           amountInStep // pass-thru
         ),
-      async (amountInStep) => {
+      async function deposit(amountInStep) {
         return pipe.wrap(sdk.contracts.beanstalk, "deposit", [depositToken.address, amountInStep, FarmFromMode.EXTERNAL], amountInStep);
       },
-      async (amountInStep) => {
+      // Notes:
+      // 1. amountInStep = amount from the `deposit()` in previous step
+      // 2. To mint ROOT, we need to create a `DepositTransferStruct[]` which ROOT uses
+      //    to transfer a deposit from PIPELINE -> itself. Since the deposit estimation returns
+      //    the amount deposited (but not the corresponding `season`, `bdv`, etc.), we "mock"
+      //    the deposit transfer struct using the current season.
+      // 3. Tokens are sent to PIPELINE's EXTERNAL balance.
+      // 4. Slippage is applied to `amountOutRoot` when this step is encoded.
+      // 5. This forwards the estimated amount of ROOT minted to the next function.
+      //    However, to prevent any dust left behind in PIPELINE, the transferToken
+      //    function uses Clipboard to copy the return value from `mint` directly
+      //    into its own calldata; if our `amountOutRoot` estimate is incorrect, the user
+      //    won't accidentally leave funds behind in PIPEPINE.
+      async function mintRoots(amountInStep) {
         const [currentSeason, estimatedDepositBDV] = await Promise.all([
           sdk.sun.getSeason(),
           sdk.silo.bdv(depositToken, depositToken.fromBlockchain(amountInStep))
         ]);
 
         const estimate = await sdk.root.estimateRoots(
-          depositToken, // The deposit token which ROOT will use to mint.
+          depositToken,
           [
-            // The previous step returns the amount of `depositToken` that was deposited.
-            // Here, we mock the Deposit crate by estimating the BDV with `beanstalk.bdv()`.
+            // Mock deposit for estimation.
+            // Note that the season of deposit is expected to equal the current season
+            // since we're depositing and minting in one transaction.
             sdk.silo.makeDepositCrate(
-              depositToken, // token of deposit
-              currentSeason, // season of deposit
-              amountInStep.toString(), // amount of deposit
-              estimatedDepositBDV.toBlockchain(), // bdv of deposit
-              currentSeason // current season
+              depositToken,
+              currentSeason,
+              amountInStep.toString(),
+              estimatedDepositBDV.toBlockchain(),
+              currentSeason
             )
           ],
           true // isDeposit
@@ -139,22 +153,25 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
         return pipe.wrap(
           sdk.contracts.root,
           "mint",
-          [
+          (context) =>
             [
-              {
-                token: depositToken.address,
-                seasons: [currentSeason], // FIXME: will fail if season flips during execution
-                amounts: [amountInStep] // amountInStep = amount deposited in previous step
-              }
-            ],
-            FarmToMode.EXTERNAL, // send tokens to PIPELINE's external balance
-            amountOutRoot // FIXME: should be minAmountOut
-          ],
-          amountOutRoot // pass ROOT amount to transfer function
+              [
+                // ROOT accepts multiple DepositTransferStruct for minting.
+                // However in this case we only made one deposit.
+                {
+                  token: depositToken.address,
+                  seasons: [currentSeason],
+                  amounts: [amountInStep]
+                }
+              ],
+              FarmToMode.EXTERNAL,
+              Workflow.slip(amountOutRoot, context.slippage)
+            ] as Parameters<typeof sdk.contracts.root["mint"]>,
+          amountOutRoot // pass to next step
         );
       },
-      (amountInStep) =>
-        pipe.wrap(
+      function unloadPipeline(amountInStep) {
+        return pipe.wrap(
           sdk.contracts.beanstalk,
           "transferToken",
           [
@@ -167,7 +184,8 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
           amountInStep,
           // Copy the first return
           Clipboard.encode([4, 32, 100])
-        )
+        );
+      }
     ])
   );
 

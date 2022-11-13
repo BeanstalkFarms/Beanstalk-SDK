@@ -44,7 +44,8 @@ export class ExchangeUnderlying extends StepClass {
     );
 
     if (!amountOut) throw new Error("Unexpected missing amountOut");
-    ExchangeUnderlying.sdk.debug(`[${this.name}.run()]: amountout: ${amountOut.toString()}`);
+    // ExchangeUnderlying.sdk.debug(`[${this.name}.run()]: amountout: ${amountOut.toString()}`);
+
     return {
       name: this.name,
       amountOut,

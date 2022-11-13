@@ -33,7 +33,7 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
    * Wrap a call to a contract into a Step<AdvancedPipeStruct>.
    * @param contract The contract to call.
    * @param method The contract method to call.
-   * @param args The arguments to pass to `method`.
+   * @param args The arguments to pass to `method`, or a function that accepts the EncodeContext and returns those args.
    * @param amountOut The expected amountOut from this Step.
    * @param advancedData Clipboard data used by Pipeline to copy any requisite calldata from prev steps.
    * @returns
@@ -41,16 +41,16 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
   wrap<C extends ethers.Contract, M extends keyof C["functions"], A extends Parameters<C["functions"][M]>>(
     contract: C,
     method: M,
-    args: A,
+    args: A | ((context: EncodeContext) => A),
     amountOut: ethers.BigNumber,
     advancedData: string = Clipboard.encode([])
   ): Step<AdvancedPipeStruct> {
     return {
       name: method.toString(),
       amountOut,
-      encode: () => ({
+      encode: (context) => ({
         target: contract.address,
-        callData: contract.interface.encodeFunctionData(method.toString(), args),
+        callData: contract.interface.encodeFunctionData(method.toString(), typeof args === "function" ? args(context) : args),
         advancedData
       }),
       decode: () => undefined,
