@@ -14,6 +14,7 @@ import {
 } from "./silo.utils";
 import { TokenValue } from "src/classes/TokenValue";
 import { MAX_UINT256 } from "src/constants";
+import { assert } from "src/utils";
 
 /**
  * A Crate is an `amount` of a token Deposited or
@@ -34,8 +35,12 @@ export type Crate<T extends BigNumbers = TokenValue> = {
 export type DepositCrate<T extends BigNumbers = TokenValue> = Crate<T> & {
   /** The BDV of the Deposit, determined upon Deposit. */
   bdv: T;
-  /** The amount of Stalk granted for this Deposit. */
+  /** The total amount of Stalk granted for this Deposit. */
   stalk: T;
+  /** The Stalk associated with the BDV of the Deposit. */
+  baseStalk: T;
+  /** The Stalk grown since the time of Deposit. */
+  grownStalk: T;
   /** The amount of Seeds granted for this Deposit. */
   seeds: T;
 };
@@ -73,6 +78,11 @@ export type UpdateFarmerSiloBalancesPayload = StringMap<Partial<TokenSiloBalance
 
 export class Silo {
   static sdk: BeanstalkSDK;
+
+  // 1 Seed grows 1 / 10_000 Stalk per Season.
+  // 1/10_000 = 1E-4
+  // FIXME
+  static STALK_PER_SEED_PER_SEASON = TokenValue.fromHuman(1e-4, 10);
 
   constructor(sdk: BeanstalkSDK) {
     Silo.sdk = sdk;
@@ -152,6 +162,22 @@ export class Silo {
   }
 
   /**
+   * Calculate the amount Stalk grown since `depositSeason`.
+   * Depends on the `currentSeason` and the `depositSeeds` awarded
+   * for a particular deposit.
+   *
+   * @param currentSeason
+   * @param depositSeason
+   * @param depositSeeds
+   * @returns TokenValue<STALK>
+   */
+  public calculateGrownStalk(currentSeason: ethers.BigNumberish, depositSeason: ethers.BigNumberish, depositSeeds: TokenValue): TokenValue {
+    const deltaSeasons = ethers.BigNumber.from(currentSeason).sub(depositSeason);
+    assert(deltaSeasons.gte(0), "Silo: Cannot calculate grown stalk when `currentSeason < depositSeason`.");
+    return Silo.STALK_PER_SEED_PER_SEASON.mul(depositSeeds).mul(deltaSeasons);
+  }
+
+  /**
    * Apply a Deposit to a TokenSiloBalance.
    *
    * @note expects inputs to be stringified (no decimals).
@@ -163,18 +189,26 @@ export class Silo {
       season: string | number;
       amount: string;
       bdv: string;
-    }
+    },
+    currentSeason: ethers.BigNumberish
   ) {
     const season = BigNumber.from(rawCrate.season);
     const amount = token.fromBlockchain(rawCrate.amount);
+
     const bdv = Silo.sdk.tokens.BEAN.fromBlockchain(rawCrate.bdv);
+    const seeds = token.getSeeds(bdv);
+    const baseStalk = token.getStalk(bdv);
+    const grownStalk = this.calculateGrownStalk(currentSeason, season, seeds);
+    const stalk = baseStalk.add(grownStalk);
 
     const crate: DepositCrate<TokenValue> = {
-      season: season,
-      amount: amount,
-      bdv: bdv,
-      stalk: token.getStalk(bdv), // FIXME: include grown stalk?
-      seeds: token.getSeeds(bdv)
+      season,
+      amount,
+      bdv,
+      stalk,
+      baseStalk,
+      grownStalk,
+      seeds
     };
 
     state.amount = state.amount.add(amount);
@@ -198,7 +232,6 @@ export class Silo {
     }
   ) {
     const season = BigNumber.from(rawCrate.season);
-    // const amount = toTokenUnitsBN(rawCrate.amount, token.decimals);
     const amount = token.amount(rawCrate.amount);
 
     const crate: Crate<TokenValue> = {
@@ -227,7 +260,7 @@ export class Silo {
     options?: { source: DataSource.LEDGER } | { source: DataSource.SUBGRAPH }
   ): Promise<TokenSiloBalance> {
     const source = Silo.sdk.deriveConfig("source", options);
-    const [account, season] = await Promise.all([Silo.sdk.getAccount(_account), Silo.sdk.sun.getSeason()]);
+    const [account, currentSeason] = await Promise.all([Silo.sdk.getAccount(_account), Silo.sdk.sun.getSeason()]);
 
     // FIXME: doesn't work if _token is an instance of a token created by the SDK consumer
     if (!Silo.sdk.tokens.siloWhitelist.has(_token)) throw new Error(`${_token.address} is not whitelisted in the Silo`);
@@ -238,10 +271,10 @@ export class Silo {
 
     if (source === DataSource.LEDGER) {
       // Fetch and process events.
-      const seasonBN = BigNumber.from(season);
+      const seasonBN = BigNumber.from(currentSeason);
       const events = await Silo.sdk.events.getSiloEvents(account, _token.address);
       const processor = new EventProcessor(Silo.sdk, account, {
-        season: ethers.BigNumber.from(season.toString()), // FIXME: verbose
+        season: seasonBN,
         whitelist
       });
 
@@ -259,7 +292,7 @@ export class Silo {
           };
           // Update the total deposited of this token
           // and return a parsed crate object
-          this._applyDeposit(balance.deposited, _token, rawCrate);
+          this._applyDeposit(balance.deposited, _token, rawCrate, currentSeason);
         }
 
         this._sortCrates(balance.deposited);
@@ -287,12 +320,12 @@ export class Silo {
       const query = await Silo.sdk.queries.getSiloBalance({
         token: _token.address.toLowerCase(),
         account,
-        season
+        season: currentSeason
       }); // crates ordered in asc order
       if (!query.farmer) return balance;
 
       const { deposited, withdrawn, claimable } = query.farmer!;
-      deposited.forEach((crate) => this._applyDeposit(balance.deposited, _token, crate));
+      deposited.forEach((crate) => this._applyDeposit(balance.deposited, _token, crate, currentSeason));
       withdrawn.forEach((crate) => this._applyWithdrawal(balance.withdrawn, _token, crate));
       claimable.forEach((crate) => this._applyWithdrawal(balance.claimable, _token, crate));
 
@@ -325,7 +358,7 @@ export class Silo {
     options?: { source: DataSource.LEDGER } | { source: DataSource.SUBGRAPH }
   ): Promise<Map<Token, TokenSiloBalance>> {
     const source = Silo.sdk.deriveConfig("source", options);
-    const [account, season] = await Promise.all([Silo.sdk.getAccount(_account), Silo.sdk.sun.getSeason()]);
+    const [account, currentSeason] = await Promise.all([Silo.sdk.getAccount(_account), Silo.sdk.sun.getSeason()]);
 
     /// SETUP
     const whitelist = Silo.sdk.tokens.siloWhitelist;
@@ -335,10 +368,10 @@ export class Silo {
     /// LEDGER
     if (source === DataSource.LEDGER) {
       // Fetch and process events.
-      const seasonBN = BigNumber.from(season);
+      const seasonBN = BigNumber.from(currentSeason); // FIXME
       const events = await Silo.sdk.events.getSiloEvents(account);
       const processor = new EventProcessor(Silo.sdk, account, {
-        season: ethers.BigNumber.from(season.toString()), // FIXME: verbose
+        season: seasonBN,
         whitelist
       });
       const { deposits, withdrawals } = processor.ingestAll(events);
@@ -360,7 +393,7 @@ export class Silo {
 
           // Update the total deposited of this token
           // and return a parsed crate object
-          this._applyDeposit(state, token, rawCrate);
+          this._applyDeposit(state, token, rawCrate, currentSeason);
         }
 
         this._sortCrates(state);
@@ -388,12 +421,13 @@ export class Silo {
 
     /// SUBGRAPH
     if (source === DataSource.SUBGRAPH) {
-      const query = await Silo.sdk.queries.getSiloBalances({ account, season }); // crates ordered in asc order
+      const query = await Silo.sdk.queries.getSiloBalances({ account, season: currentSeason }); // crates ordered in asc order
       if (!query.farmer) return balances;
       const { deposited, withdrawn, claimable } = query.farmer!;
 
       // Lookup token by address and create a TokenSiloBalance entity.
-      const prep = (address: string) => {
+      // @fixme private member of Silo?
+      const prepareToken = (address: string) => {
         const token = Silo.sdk.tokens.findByAddress(address);
         if (!token) return; // FIXME: unknown token handling
         if (!balances.has(token)) balances.set(token, this._makeTokenSiloBalance());
@@ -403,17 +437,17 @@ export class Silo {
       // Handle deposits.
       type DepositEntity = typeof deposited[number];
       const handleDeposit = (crate: DepositEntity) => {
-        const token = prep(crate.token);
+        const token = prepareToken(crate.token);
         if (!token) return;
         const state = balances.get(token)!.deposited;
-        this._applyDeposit(state, token, crate);
+        this._applyDeposit(state, token, crate, currentSeason);
       };
 
       // Handle withdrawals.
       // Claimable = withdrawals from the past. The GraphQL query enforces this.
       type WithdrawalEntity = typeof withdrawn[number];
       const handleWithdrawal = (key: "withdrawn" | "claimable") => (crate: WithdrawalEntity) => {
-        const token = prep(crate.token);
+        const token = prepareToken(crate.token);
         if (!token) return;
         const state = balances.get(token)![key];
         this._applyWithdrawal(state, token, crate);

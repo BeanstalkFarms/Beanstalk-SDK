@@ -118,6 +118,8 @@ export class Root {
       };
     }
 
+    throw new Error("unknown");
+
     //   // Deposit
     //   else if (isDeposit) {
 

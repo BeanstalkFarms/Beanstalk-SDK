@@ -113,6 +113,7 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
       },
       async (amountInStep) => {
         const season = await sdk.sun.getSeason();
+        // const amountOut = await
         const amountOut = amountInStep; // FIXME
         const minAmountOut = amountInStep; // FIXME
         return pipe.wrap(
