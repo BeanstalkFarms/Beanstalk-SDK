@@ -97,14 +97,44 @@ describe("TokenValues", function () {
   });
 
   it("mul", () => {
-    expect(TokenValue.fromHuman("100", 6).mul(TokenValue.fromHuman("1.5", 2))).toMatchTokenValue(8, "150", BigNumber.from("15000000000"));
-    expect(TokenValue.fromHuman("100", 6).mul(1.5)).toMatchTokenValue(7, "150", BigNumber.from("1500000000"));
-    expect(TokenValue.fromHuman("100", 6).mul(0.25)).toMatchTokenValue(8, "25", BigNumber.from("2500000000"));
+    expect(TokenValue.fromHuman("100", 6).mul(0.25)).toMatchTokenValue(6, "25", BigNumber.from("25000000"));
+    expect(TokenValue.fromHuman("100", 6).mul(1.5)).toMatchTokenValue(6, "150", BigNumber.from("150000000"));
     expect(TokenValue.fromHuman("100", 6).mul(3)).toMatchTokenValue(6, "300", BigNumber.from("300000000"));
-    expect(TokenValue.fromHuman("100", 6).mul(BigNumber.from(3))).toMatchTokenValue(6, "300", BigNumber.from("300000000"));
-    // Not intuitive, effectively 100.000000 * 3140000
-    expect(TokenValue.fromHuman("100", 6).mul(parseUnits("3.14", 6))).toMatchTokenValue(6, "314000000", BigNumber.from("314000000000000"));
-    expect(TokenValue.fromHuman("100", 6).mul(3.14)).toMatchTokenValue(8, "314", BigNumber.from("31400000000"));
+    expect(TokenValue.fromHuman("100", 6).mul(-3.14)).toMatchTokenValue(6, "-314", BigNumber.from("-314000000"));
+    expect(TokenValue.fromHuman("100.5", 6).mul(TokenValue.fromHuman("1.5", 2))).toMatchTokenValue(
+      6,
+      "150.75",
+      BigNumber.from("150750000")
+    );
+    expect(TokenValue.fromHuman("100.5", 6).mul(TokenValue.fromHuman("1.123456789", 9))).toMatchTokenValue(
+      6,
+      "112.907407",
+      BigNumber.from("112907407")
+    );
+    expect(TokenValue.fromHuman("100.5", 1).mul(TokenValue.fromHuman("1.123456789", 9))).toMatchTokenValue(
+      1,
+      "112.9",
+      BigNumber.from("1129")
+    );
+    expect(TokenValue.fromHuman("100.5", 0).mul(TokenValue.fromHuman("1.123456789", 9))).toMatchTokenValue(0, "112", BigNumber.from("112"));
+  });
+
+  it("mod", () => {
+    expect(TokenValue.fromHuman("100.5", 6).mod(TokenValue.fromHuman(2, 6))).toMatchTokenValue(6, "0.5", BigNumber.from("500000"));
+    expect(TokenValue.fromHuman("100.5", 6).mod(2)).toMatchTokenValue(6, "0.5", BigNumber.from("500000"));
+    expect(TokenValue.fromHuman("4", 10).mod(TokenValue.fromHuman(3, 6))).toMatchTokenValue(10, "1", BigNumber.from("10000000000"));
+    expect(TokenValue.fromHuman("12.56", 6).mod(5)).toMatchTokenValue(6, "2.56", BigNumber.from("2560000"));
+  });
+
+  it("mulMod", () => {
+    expect(TokenValue.fromHuman(3, 0).mulMod(4, 5)).toMatchTokenValue(0, "2", BigNumber.from("2"));
+    expect(TokenValue.fromHuman(3.14, 6).mul(4)).toMatchTokenValue(6, "12.56", BigNumber.from("12560000"));
+    expect(TokenValue.fromHuman(3.14, 6).mulMod(4, 5)).toMatchTokenValue(6, "2.56", BigNumber.from("2560000"));
+  });
+
+  // TODO: is this right?
+  it("mulDiv", () => {
+    expect(TokenValue.fromHuman(3.14, 6).mulDiv(10, 2)).toMatchTokenValue(6, "15.7", BigNumber.from("15700000"));
   });
 
   it("div", () => {
@@ -117,11 +147,6 @@ describe("TokenValues", function () {
     expect(TokenValue.fromHuman("100.5", 6).div(2.5)).toMatchTokenValue(7, "40.2", BigNumber.from("402000000"));
     // But we can override by passing a decimal param to .div()
     expect(TokenValue.fromHuman("100.5", 6).div(2.5, 6)).toMatchTokenValue(6, "40.2", BigNumber.from("40200000"));
-  });
-
-  it("mod", () => {
-    expect(TokenValue.fromHuman("100.5", 6).mod(TokenValue.fromHuman(2, 6))).toMatchTokenValue(6, "0.5", BigNumber.from("500000"));
-    expect(() => TokenValue.fromHuman("100.5", 6).mod(TokenValue.fromHuman(2, 5))).toThrow();
   });
 
   it("eq", () => {
@@ -181,6 +206,45 @@ describe("TokenValues", function () {
     expect(n1.lte(101)).toBe(true);
     expect(n1.lte(100)).toBe(true);
     expect(n1.lte(99)).toBe(false);
+  });
+  it("min", () => {
+    const n1 = TokenValue.fromHuman("1", 6);
+    const n2 = TokenValue.fromHuman("-1.5", 6);
+    const n3 = TokenValue.fromHuman("2", 6);
+    const n4 = TokenValue.fromHuman("3", 6);
+    const n5 = TokenValue.fromHuman("1", 0);
+    const n6 = TokenValue.fromHuman("0", 0);
+
+    expect(TokenValue.min(n1, n2, n3, n4)).toMatchTokenValue(6, "-1.5");
+    expect(TokenValue.min(n1, n5)).toMatchTokenValue(0, "1");
+    expect(TokenValue.min(n5, n6)).toMatchTokenValue(0, "0");
+
+    // same value but different decimals, both are equal, last one is returned
+    expect(TokenValue.min(TokenValue.fromHuman(3.14, 7), TokenValue.fromHuman(3.14, 3))).toMatchTokenValue(3, "3.14");
+    expect(TokenValue.min(TokenValue.fromHuman(3.14, 3), TokenValue.fromHuman(3.14, 7))).toMatchTokenValue(7, "3.14");
+    expect(TokenValue.min(TokenValue.fromHuman(1, 1), TokenValue.fromHuman(1, 1))).toMatchTokenValue(1, "1");
+    expect(TokenValue.min(TokenValue.fromHuman(1, 1))).toMatchTokenValue(1, "1");
+  });
+  it("max", () => {
+    const n1 = TokenValue.fromHuman("1", 6);
+    const n2 = TokenValue.fromHuman("-1.5", 6);
+    const n3 = TokenValue.fromHuman("2", 6);
+    const n4 = TokenValue.fromHuman("3", 6);
+    const n5 = TokenValue.fromHuman("1", 0);
+    const n6 = TokenValue.fromHuman("0", 0);
+
+    expect(TokenValue.max(n1, n2, n3, n4)).toMatchTokenValue(6, "3");
+    expect(TokenValue.max(n1, n4)).toMatchTokenValue(6, "3");
+    expect(TokenValue.max(n4, n1)).toMatchTokenValue(6, "3");
+
+    // to number with diff decimals, but equal bignumbers, will return based on order provided
+    expect(TokenValue.max(n1, n5)).toMatchTokenValue(0, "1");
+    expect(TokenValue.max(n5, n1)).toMatchTokenValue(6, "1");
+
+    expect(TokenValue.max(n5, n6)).toMatchTokenValue(0, "1");
+    expect(TokenValue.max(TokenValue.fromHuman(3.14, 7), TokenValue.fromHuman(3.14, 3))).toMatchTokenValue(3, "3.14");
+    expect(TokenValue.max(TokenValue.fromHuman(1, 1), TokenValue.fromHuman(1, 1))).toMatchTokenValue(1, "1");
+    expect(TokenValue.max(TokenValue.fromHuman(1, 1))).toMatchTokenValue(1, "1");
   });
 
   it("abs", () => {
