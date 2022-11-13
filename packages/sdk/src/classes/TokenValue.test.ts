@@ -71,6 +71,14 @@ describe("TokenValues", function () {
     expect(TokenValue.MAX_UINT32.toBlockchain()).toBe("4294967295");
   });
 
+  it("reDecimal()", () => {
+    expect(TokenValue.fromHuman("3.14", 2).reDecimal(0)).toMatchTokenValue(0, "3", BigNumber.from("3"));
+    expect(TokenValue.fromHuman("3.14", 2).reDecimal(1)).toMatchTokenValue(1, "3.1", BigNumber.from("31"));
+    expect(TokenValue.fromHuman("3.14", 2).reDecimal(2)).toMatchTokenValue(2, "3.14", BigNumber.from("314"));
+    expect(TokenValue.fromHuman("3.14", 2).reDecimal(3)).toMatchTokenValue(3, "3.14", BigNumber.from("3140"));
+    expect(TokenValue.fromHuman("3.14", 2).reDecimal(4)).toMatchTokenValue(4, "3.14", BigNumber.from("31400"));
+  });
+
   it("add", () => {
     expect(TokenValue.fromHuman("100", 6).add(TokenValue.fromHuman("3.14", 1))).toMatchTokenValue(6, "103.1");
     expect(TokenValue.fromHuman("100", 6).add(TokenValue.fromHuman("3.14", 2))).toMatchTokenValue(6, "103.14");

@@ -156,8 +156,8 @@ export class TokenValue {
    * Returns a new TokenValue with the number of decimals set to the new value
    * @param decimals
    */
-  public changeDecimals(decimals: number) {
-    return TokenValue.fromBigNumber(this.value.toBigNumber(decimals), decimals);
+  public reDecimal(decimals: number) {
+    return TokenValue.from(this.value.reDecimal(decimals));
   }
 
   ////// Math Functions //////
