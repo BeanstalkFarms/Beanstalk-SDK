@@ -26,7 +26,12 @@ export enum RunMode {
  * @fixme `any & { slippage }` doesn't seem to indicate the record could have a slippage key.
  */
 export type RunContext<RunData extends Record<string, any> = any & { slippage?: number }> = {
+  // Provided by Workflow
   runMode: RunMode;
+  step: {
+    index: number;
+  };
+  // Provided by developer
   data: RunData;
 };
 
@@ -315,7 +320,7 @@ export abstract class Workflow<EncodedResult extends any = string, RunData exten
    * @param amountIn
    * @param context
    */
-  protected async buildSteps(amountIn: ethers.BigNumber, context: RunContext) {
+  protected async buildSteps(amountIn: ethers.BigNumber, _context: Omit<RunContext, "step">) {
     this.clearSteps();
     let nextAmount = amountIn;
 
@@ -323,6 +328,12 @@ export abstract class Workflow<EncodedResult extends any = string, RunData exten
     const run = async (i: number, label: "estimate" | "estimateReversed") => {
       const generator = this._generators[i];
       const options = this._options[i];
+      const context: RunContext = {
+        ..._context,
+        step: {
+          index: this._steps.length
+        }
+      };
 
       const skip =
         // Don't build this step if it should only be built during execution, and we're
@@ -347,7 +358,7 @@ export abstract class Workflow<EncodedResult extends any = string, RunData exten
     };
 
     // Run reverse
-    if (context.runMode === RunMode.EstimateReversed) {
+    if (_context.runMode === RunMode.EstimateReversed) {
       for (let i = this._generators.length - 1; i >= 0; i -= 1) {
         await run(i, "estimateReversed");
       }

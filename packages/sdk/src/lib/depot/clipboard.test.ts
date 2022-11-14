@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { defaultAbiCoder } from "ethers/lib/utils";
 import { Clipboard } from "./clipboard";
 
-describe("Clipboard", () => {
+describe("Encode", () => {
   // Type 0
   describe("prepares type 0 (empty array)", () => {
     const COPY_DATA = [] as const;
@@ -101,5 +101,11 @@ describe("Clipboard", () => {
       );
       expect(encoded).toBe(defaultAbiCoder.encode(types, encodeData));
     });
+  });
+});
+
+describe("Encode Slot", () => {
+  it("correctly converts slots to byte indices", () => {
+    expect(Clipboard.encode([4, 32, 100])).toStrictEqual(Clipboard.encodeSlot(4, 0, 2));
   });
 });

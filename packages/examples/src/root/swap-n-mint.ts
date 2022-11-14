@@ -184,7 +184,7 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
             amountOutRoot // pass to next step
           );
         },
-        function unloadPipeline(amountInStep) {
+        function unloadPipeline(amountInStep, context) {
           return pipe.wrap(
             sdk.contracts.beanstalk,
             "transferToken",
@@ -196,8 +196,8 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
               /* 164 */ FarmToMode.EXTERNAL // TOOD: make this a parameter
             ],
             amountInStep,
-            // Copy the first return
-            Clipboard.encode([4, 32, 100])
+            // Copy from previous step
+            Clipboard.encodeSlot(context.step.index - 1, 0, 2)
           );
         }
       ])
