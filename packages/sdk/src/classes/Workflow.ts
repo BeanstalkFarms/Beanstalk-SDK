@@ -95,7 +95,6 @@ export type Step<EncodedResult extends any> = {
   value?: ethers.BigNumber;
   data?: any;
   encode: () => EncodedResult;
-  // encode: (context: EncodeContext) => EncodedResult;
   decode: (data: string) => undefined | Record<string, any>;
   decodeResult: (result: any) => undefined | ethers.utils.Result;
   print?: (result: any) => string;
@@ -114,7 +113,16 @@ type StepGenerators<EncodedResult extends any = string> =
  * StepGeneratorOptions define how a StepGenerator should be treated during the build process.
  */
 type StepGeneratorOptions = {
+  /**
+   * Only run this StepGenerator when executing
+   * @fixme this is really more like "onlyStatic"
+   */
   onlyExecute?: boolean;
+
+  /**
+   *
+   */
+  skip?: boolean | ((amountInStep: ethers.BigNumber, context: RunContext) => boolean | Promise<boolean>);
 };
 
 /**
@@ -316,10 +324,16 @@ export abstract class Workflow<EncodedResult extends any = string, RunData exten
       const generator = this._generators[i];
       const options = this._options[i];
 
-      // Don't build this step if it should only be built during execution, and we're
-      // in a non-static context. (All steps must be built for `execute`, `estimateGas`, and
-      // `callStatic`).
-      if (options?.onlyExecute === true && this.isStaticRunMode(context.runMode) === false) {
+      const skip =
+        // Don't build this step if it should only be built during execution, and we're
+        // in a non-static context. (All steps must be built for `execute`, `estimateGas`, and
+        // `callStatic`).
+        (options?.onlyExecute === true && this.isStaticRunMode(context.runMode) === false) ||
+        // If `options.skip` is true, skip.
+        // If `options.skip` is a function, call it and skip if the return value is true.
+        (options?.skip ? (typeof options.skip === "function" ? await options.skip(nextAmount, context) : options.skip) : false);
+
+      if (skip) {
         this.sdk.debug(`[Workflow][${this.name}][${label}][${i}: ${generator.name || "<unknown>"}] skipping`);
       } else {
         const step = await this.buildStep(generator, nextAmount, context);
