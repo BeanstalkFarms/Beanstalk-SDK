@@ -40,7 +40,15 @@ export abstract class StepClass<EncodedResult extends any = string> {
   // abstract run(_amountInStep: ethers.BigNumber, _forward: boolean): Promise<Step<EncodedResult>>;
 }
 
-export type RunMode = "estimate" | "estimateReversed" | "execute" | "callStatic" | "estimateGas";
+// export type RunMode = "estimate" | "estimateReversed" | "execute" | "callStatic" | "estimateGas";
+
+export enum RunMode {
+  Estimate = 0,
+  EstimateReversed = 1,
+  Execute = 2,
+  CallStatic = 3,
+  EstimateGas = 4
+}
 
 /**
  *
@@ -98,7 +106,9 @@ type StepGenerators<EncodedResult extends any = string> =
 /**
  *
  */
-type InputOptions = {};
+type InputOptions = {
+  onlyExecute?: boolean;
+};
 
 /**
  * A `Workflow` allows for iterative preparation of an Ethereum transaction
@@ -138,6 +148,7 @@ type InputOptions = {};
  */
 export abstract class Workflow<EncodedResult extends any = string, ExecuteData extends Record<string, any> = {}> {
   protected _generators: (StepGenerator<EncodedResult> | Workflow<EncodedResult>)[] = [];
+  protected _options: (InputOptions | null)[] = [];
   protected _steps: Step<EncodedResult>[] = [];
   protected _value = ethers.BigNumber.from(0);
 
@@ -183,7 +194,7 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
   add(input: StepGenerators<EncodedResult>, options?: InputOptions) {
     if (Array.isArray(input)) {
       for (const elem of input) {
-        this.add(elem); // recurse
+        this.add(elem, options); // recurse
       }
     } else {
       this.sdk.debug(`[Workflow][${this.name}][add] ${input.name || "<unknown>"}`);
@@ -191,6 +202,7 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
         input.setSDK(this.sdk);
       }
       this._generators.push(input);
+      this._options.push(options || null); // undefined = no options set
     }
 
     return this; // allows chaining
@@ -207,8 +219,6 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
   ): Promise<typeof this._steps[number]> {
     let step: typeof this._steps[number];
 
-    console.log("build with context", context);
-
     try {
       if (input instanceof Workflow) {
         // This input is a Workflow.
@@ -224,7 +234,7 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
           name: input.name, // Match the Workflow's name
           amountOut: nextAmount, // The result of this Step is the final result of the Workflow.
           encode: () => input.encode.bind(input)() as EncodedResult, // Encode the entire Workflow into one element.
-          // encode: (context) => input.encode.bind(input)(context) as EncodedResult, // Encode the entire Workflow into one element.
+          // encode: (context) => input.encode.bind(input)(context) as EncodedResult,
           decode: () => undefined, // fixme
           decodeResult: (data: string[]) => input.decodeResult(data) // fixme
         };
@@ -251,7 +261,10 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
           step = {
             name: input.name || "<unknown>",
             amountOut: amountInStep, // propagate amountOut
-            encode: () => fnResult as EncodedResult, //
+            encode: () => {
+              this.sdk.debug("Encoding from direct EncodedResult for ", input.name);
+              return fnResult as EncodedResult;
+            }, //
             decode: () => undefined, //
             decodeResult: () => undefined //
           };
@@ -271,6 +284,11 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
     return step;
   }
 
+  protected isStaticRunMode(r: RunMode) {
+    // return r > 1; // optimized form
+    return r === RunMode.CallStatic || r === RunMode.EstimateGas || r === RunMode.Execute;
+  }
+
   protected async buildSteps(amountIn: ethers.BigNumber, context: BuildContext) {
     this.clearSteps();
     let nextAmount = amountIn;
@@ -278,17 +296,22 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
     // Run generator at index i
     const run = async (i: number, label: "estimate" | "estimateReversed") => {
       const generator = this._generators[i];
-      const step = await this.buildStep(generator, nextAmount, context);
-      nextAmount = step.amountOut;
-      this.sdk.debug(
-        `[Workflow][${this.name}][${label}][${i}: ${step.name || "<unknown>"}]`,
-        step.amountOut.toString(),
-        step.value?.toString() || 0
-      );
+      const options = this._options[i];
+      if (options?.onlyExecute === true && this.isStaticRunMode(context.runMode) === false) {
+        this.sdk.debug(`[Workflow][${this.name}][${label}][${i}: ${generator.name || "<unknown>"}] skipping`);
+      } else {
+        const step = await this.buildStep(generator, nextAmount, context);
+        nextAmount = step.amountOut;
+        this.sdk.debug(
+          `[Workflow][${this.name}][${label}][${i}: ${step.name || "<unknown>"}]`,
+          step.amountOut.toString(),
+          step.value?.toString() || 0
+        );
+      }
     };
 
     // Run reverse
-    if (context.runMode === "estimateReversed") {
+    if (context.runMode === RunMode.EstimateReversed) {
       for (let i = this._generators.length - 1; i >= 0; i -= 1) {
         await run(i, "estimateReversed");
       }
@@ -315,7 +338,7 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
     return this.buildSteps(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn, {
       // if we're propagating from Workflow -> Workflow, inherit the run mode
       // and propagate data; otherwise, this is a top-level estimate().
-      runMode: context?.runMode || "estimate",
+      runMode: context?.runMode || RunMode.Estimate,
       data: context?.data || {}
     });
   }
@@ -331,7 +354,7 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
     return this.buildSteps(
       desiredAmountOut instanceof TokenValue ? desiredAmountOut.toBigNumber() : desiredAmountOut,
       {
-        runMode: "estimateReversed",
+        runMode: RunMode.EstimateReversed,
         data: {}
       } // FIXME
     );

@@ -37,11 +37,20 @@ export class LibraryPresets {
       generators.push(async function permitERC20(_amountInStep: ethers.BigNumber, context: BuildContext) {
         const permit = typeof _permit === "function" ? _permit(context) : _permit;
         const owner = await LibraryPresets.sdk.getAccount();
+        const spender = LibraryPresets.sdk.contracts.beanstalk.address;
+
+        LibraryPresets.sdk.debug(`[permitERC20.run()]`, {
+          token: _token.address,
+          owner: owner,
+          spender: spender,
+          value: _amountInStep.toString(),
+          permit: permit
+        });
 
         return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [
           _token.address, // token address
           owner, // owner
-          LibraryPresets.sdk.contracts.beanstalk.address, // spender
+          spender, // spender
           _amountInStep.toString(), // value
           permit.typedData.message.deadline, // deadline
           permit.split.v,
@@ -53,9 +62,17 @@ export class LibraryPresets {
 
     // transfer erc20 token from beanstalk -> pipeline
     generators.push(async function transferToken(_amountInStep: ethers.BigNumber) {
+      const recipient = LibraryPresets.sdk.contracts.pipeline.address;
+
+      LibraryPresets.sdk.debug(`[transferToken.run()]`, {
+        token: _token.address,
+        recipient,
+        value: _amountInStep.toString()
+      });
+
       return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("transferToken", [
         _token.address, // token
-        LibraryPresets.sdk.contracts.pipeline.address, // recipient
+        recipient, // recipient
         _amountInStep.toString(), // amount
         _from, // from
         FarmToMode.EXTERNAL // to

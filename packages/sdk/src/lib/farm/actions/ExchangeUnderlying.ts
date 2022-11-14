@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { BuildContext, Step, StepClass, Workflow } from "src/classes/Workflow";
+import { BuildContext, RunMode, Step, StepClass, Workflow } from "src/classes/Workflow";
 import { Token } from "src/classes/Token";
 import { CurveMetaPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
@@ -30,7 +30,7 @@ export class ExchangeUnderlying extends StepClass {
     const [tokenIn, tokenOut] = Workflow.direction(
       this.tokenIn,
       this.tokenOut,
-      context.runMode !== "estimateReversed" // _forward
+      context.runMode !== RunMode.EstimateReversed // _forward
     );
 
     const registry = ExchangeUnderlying.sdk.contracts.curve.registries.metaFactory;

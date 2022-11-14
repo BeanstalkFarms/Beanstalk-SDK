@@ -89,8 +89,9 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
   console.log("\n\nBuilding...");
 
   farm.add(
-    // returns an array with 2 StepGenerators if no permit, 2 StepGenerators if permit
-    sdk.farm.presets.loadPipeline(depositToken, FarmFromMode.INTERNAL, (context) => context.data.permit)
+    // returns an array with 1 StepGenerator if no permit, 2 StepGenerators if permit
+    sdk.farm.presets.loadPipeline(depositToken, FarmFromMode.INTERNAL, (context) => context.data.permit),
+    { onlyExecute: true }
   );
   farm.add(
     pipe.add([
@@ -213,27 +214,27 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
 
   // console.log("Executing this transaction is expected to mint", mintResult.toString(), "ROOT");
 
-  // console.log("\n\nExecuting...");
-  // const permit = await sdk.permit.sign(
-  //   account,
-  //   sdk.tokens.permitERC2612(
-  //     account, // owner
-  //     sdk.contracts.beanstalk.address, // spender
-  //     depositToken, // bean
-  //     estBean.toBlockchain() // amount of beans
-  //   )
-  // );
-  // console.log("Signed a permit: ", permit);
-  // const txn = await farm.execute(amountIn, {
-  //   slippage: 0.1,
-  //   permit,
-  // });
-  // console.log("Transaction submitted...", txn.hash);
+  console.log("\n\nExecuting...");
+  const permit = await sdk.permit.sign(
+    account,
+    sdk.tokens.permitERC2612(
+      account, // owner
+      sdk.contracts.beanstalk.address, // spender
+      depositToken, // bean
+      estBean.toBlockchain() // amount of beans
+    )
+  );
+  console.log("Signed a permit: ", permit);
+  const txn = await farm.execute(amountIn, {
+    slippage: 0.1,
+    permit
+  });
+  console.log("Transaction submitted...", txn.hash);
 
-  // const receipt = await txn.wait();
-  // console.log("Transaction executed");
+  const receipt = await txn.wait();
+  console.log("Transaction executed");
 
-  // Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
+  Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
 
   const accountBalanceOfBEAN = await sdk.tokens.getBalance(sdk.tokens.BEAN);
   const accountBalanceOfROOT = await sdk.tokens.getBalance(sdk.tokens.ROOT);

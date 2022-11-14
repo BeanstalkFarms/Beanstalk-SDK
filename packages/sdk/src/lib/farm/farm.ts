@@ -1,7 +1,7 @@
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import * as ActionLibrary from "./actions";
 import { LibraryPresets } from "./LibraryPresets";
-import { Step, Workflow } from "src/classes/Workflow";
+import { RunMode, Step, Workflow } from "src/classes/Workflow";
 import { Beanstalk } from "src/constants/generated";
 import { TokenValue } from "src/TokenValue";
 import { ethers } from "ethers";
@@ -31,18 +31,18 @@ export class FarmWorkflow<ExecuteData extends { slippage: number } = { slippage:
   }
 
   async execute(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.ContractTransaction> {
-    const encoded = await this.estimateAndEncodeSteps(amountIn, "execute", data);
+    const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.Execute, data);
     this.sdk.debug("Execute data", encoded);
     return this.contract.farm(encoded, { value: this.value });
   }
 
   async callStatic(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<string[]> {
-    const encoded = await this.estimateAndEncodeSteps(amountIn, "callStatic", data);
+    const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.CallStatic, data);
     return this.contract.callStatic.farm(encoded, { value: this.value });
   }
 
   async estimateGas(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.BigNumber> {
-    const encoded = await this.estimateAndEncodeSteps(amountIn, "estimateGas", data);
+    const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.EstimateGas, data);
     return this.contract.estimateGas.farm(encoded, { value: this.value });
   }
 }
