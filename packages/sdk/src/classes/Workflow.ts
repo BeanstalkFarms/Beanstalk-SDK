@@ -2,7 +2,33 @@ import { ethers } from "ethers";
 import { Token } from "src/classes/Token";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { TokenValue } from "src/TokenValue";
-import { assert } from "src/utils";
+
+/**
+ * RunMode identifies the different ways that a Workflow can be called.
+ */
+export enum RunMode {
+  // "Estimates" allow some steps to be skipped (like permitting).
+  Estimate = 0,
+  EstimateReversed = 1,
+  // "Static Calls" require the full transaction to be ready.
+  Execute = 2,
+  CallStatic = 3,
+  EstimateGas = 4
+}
+
+/**
+ * The RunContext provides context & runtime data to Step Generators.
+ * RunData allows a developer to inject data into each Step Generator as it is called.
+ *
+ * For example, you might wait until a user clicks "Submit" to ask them to sign
+ * a permit, and then inject that permit via RunData into a `permitERC20` Step.
+ *
+ * @fixme `any & { slippage }` doesn't seem to indicate the record could have a slippage key.
+ */
+export type RunContext<RunData extends Record<string, any> = any & { slippage?: number }> = {
+  runMode: RunMode;
+  data: RunData;
+};
 
 /**
  * A StepGenerator is responsible for building a Step.
@@ -36,27 +62,8 @@ export abstract class StepClass<EncodedResult extends any = string> {
     StepClass.sdk = sdk;
   }
 
-  abstract run(_amountInStep: ethers.BigNumber, context: BuildContext): Promise<Step<EncodedResult>>;
-  // abstract run(_amountInStep: ethers.BigNumber, _forward: boolean): Promise<Step<EncodedResult>>;
+  abstract run(_amountInStep: ethers.BigNumber, context: RunContext): Promise<Step<EncodedResult>>;
 }
-
-// export type RunMode = "estimate" | "estimateReversed" | "execute" | "callStatic" | "estimateGas";
-
-export enum RunMode {
-  Estimate = 0,
-  EstimateReversed = 1,
-  Execute = 2,
-  CallStatic = 3,
-  EstimateGas = 4
-}
-
-/**
- *
- */
-export type BuildContext<ExecuteData extends Record<string, any> = any & { slippage?: number }> = {
-  runMode: RunMode;
-  data: ExecuteData;
-};
 
 /**
  * A StepFunction is a type of StepGenerator. It can return a Step or an
@@ -73,7 +80,7 @@ export type BuildContext<ExecuteData extends Record<string, any> = any & { slipp
  */
 export type StepFunction<EncodedResult extends any = string> = (
   amountIn: ethers.BigNumber,
-  context: BuildContext
+  context: RunContext
 ) =>
   | (EncodedResult | Step<EncodedResult>) // synchronous
   | Promise<EncodedResult | Step<EncodedResult>>; // asynchronous
@@ -104,9 +111,9 @@ type StepGenerators<EncodedResult extends any = string> =
   | StepGenerators<EncodedResult>[]; // Recurse (allows nesting & arrays).
 
 /**
- *
+ * StepGeneratorOptions define how a StepGenerator should be treated during the build process.
  */
-type InputOptions = {
+type StepGeneratorOptions = {
   onlyExecute?: boolean;
 };
 
@@ -145,17 +152,19 @@ type InputOptions = {
  * and continue the chain of passing `amountOut` between StepGenerators.
  *
  * See `.buildStep()` for a description of how Workflows are handled.
+ *
+ * @fixme nesting a Farm inside a Farm should fail (?)
  */
-export abstract class Workflow<EncodedResult extends any = string, ExecuteData extends Record<string, any> = {}> {
+export abstract class Workflow<EncodedResult extends any = string, RunData extends Record<string, any> = {}> {
   protected _generators: (StepGenerator<EncodedResult> | Workflow<EncodedResult>)[] = [];
-  protected _options: (InputOptions | null)[] = [];
+  protected _options: (StepGeneratorOptions | null)[] = [];
   protected _steps: Step<EncodedResult>[] = [];
   protected _value = ethers.BigNumber.from(0);
 
+  static SLIPPAGE_PRECISION = 10 ** 6;
+
   constructor(protected sdk: BeanstalkSDK, public name: string = "Workflow") {}
 
-  //
-  static SLIPPAGE_PRECISION = 10 ** 6;
   static slip(_amount: ethers.BigNumber, _slippage: number) {
     return _amount.mul(Math.floor(Workflow.SLIPPAGE_PRECISION * (1 - _slippage))).div(Workflow.SLIPPAGE_PRECISION);
   }
@@ -188,10 +197,11 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
   }
 
   /**
-   * Add a new StepGenerator to the list of generators.
-   * Each StepGenerator is called during `.estimate()`.
+   * Add new StepGenerator(s) to memory. Each StepGenerator is called during `.estimate()`.
+   * @param input A StepGenerator, an nested array of StepGenerators, or another Workflow.
+   * @param options Options passed to each individual StepGenerator in `input`.
    */
-  add(input: StepGenerators<EncodedResult>, options?: InputOptions) {
+  add(input: StepGenerators<EncodedResult>, options?: StepGeneratorOptions) {
     if (Array.isArray(input)) {
       for (const elem of input) {
         this.add(elem, options); // recurse
@@ -202,20 +212,18 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
         input.setSDK(this.sdk);
       }
       this._generators.push(input);
-      this._options.push(options || null); // undefined = no options set
+      this._options.push(options || null); // null = no options set
     }
-
-    return this; // allows chaining
+    return this; // allow chaining
   }
 
   /**
    * Run a StepGenerator to produce a Step.
-   * @fixme "runGenerator"? i'm ok with buildStep personally
    */
   protected async buildStep(
     input: StepGenerator<EncodedResult> | Workflow<EncodedResult>,
     amountInStep: ethers.BigNumber,
-    context: BuildContext
+    context: RunContext
   ): Promise<typeof this._steps[number]> {
     let step: typeof this._steps[number];
 
@@ -234,7 +242,6 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
           name: input.name, // Match the Workflow's name
           amountOut: nextAmount, // The result of this Step is the final result of the Workflow.
           encode: () => input.encode.bind(input)() as EncodedResult, // Encode the entire Workflow into one element.
-          // encode: (context) => input.encode.bind(input)(context) as EncodedResult,
           decode: () => undefined, // fixme
           decodeResult: (data: string[]) => input.decodeResult(data) // fixme
         };
@@ -261,10 +268,7 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
           step = {
             name: input.name || "<unknown>",
             amountOut: amountInStep, // propagate amountOut
-            encode: () => {
-              this.sdk.debug("Encoding from direct EncodedResult for ", input.name);
-              return fnResult as EncodedResult;
-            }, //
+            encode: () => fnResult as EncodedResult,
             decode: () => undefined, //
             decodeResult: () => undefined //
           };
@@ -284,12 +288,26 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
     return step;
   }
 
+  /**
+   * Determine if this RunMode is "static". Static RunModes require
+   * transactions to be fully built, i.e. no steps in the chain can be skipped.
+   *
+   * For example, you might skip a step that makes an approval during `estimate()`
+   * because it requires a permit that the user hasn't yet signed. However, for
+   * the transaction to be valid to `execute()` or `callStatic()`, the approval
+   * step must be included.
+   *
+   * @fixme use: `return r > 1; // optimized form`
+   */
   protected isStaticRunMode(r: RunMode) {
-    // return r > 1; // optimized form
     return r === RunMode.CallStatic || r === RunMode.EstimateGas || r === RunMode.Execute;
   }
 
-  protected async buildSteps(amountIn: ethers.BigNumber, context: BuildContext) {
+  /**
+   * @param amountIn
+   * @param context
+   */
+  protected async buildSteps(amountIn: ethers.BigNumber, context: RunContext) {
     this.clearSteps();
     let nextAmount = amountIn;
 
@@ -297,6 +315,10 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
     const run = async (i: number, label: "estimate" | "estimateReversed") => {
       const generator = this._generators[i];
       const options = this._options[i];
+
+      // Don't build this step if it should only be built during execution, and we're
+      // in a non-static context. (All steps must be built for `execute`, `estimateGas`, and
+      // `callStatic`).
       if (options?.onlyExecute === true && this.isStaticRunMode(context.runMode) === false) {
         this.sdk.debug(`[Workflow][${this.name}][${label}][${i}: ${generator.name || "<unknown>"}] skipping`);
       } else {
@@ -332,11 +354,12 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
    * For ex, if we are trading ETH -> BEAN, and you want to spend exactly 5 ETH, estimate()
    * would tell how much BEAN you'd receive for 5 ETH
    * @param amountIn Amount to send to workflow as input for estimation
+   * @param context
    * @returns Promise of BigNumber
    */
-  async estimate(amountIn: ethers.BigNumber | TokenValue, context?: BuildContext): Promise<ethers.BigNumber> {
+  async estimate(amountIn: ethers.BigNumber | TokenValue, context?: RunContext): Promise<ethers.BigNumber> {
     return this.buildSteps(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn, {
-      // if we're propagating from Workflow -> Workflow, inherit the run mode
+      // If we're propagating from Workflow -> Workflow, inherit the RunMode
       // and propagate data; otherwise, this is a top-level estimate().
       runMode: context?.runMode || RunMode.Estimate,
       data: context?.data || {}
@@ -363,24 +386,21 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
   /**
    * Run `.estimate()` and encode all resulting Steps in preparation for execute().
    * Embed the requested runMode in context.
+   *
+   * @fixme collapse `runMode` and `data` into one struct?
    */
-  protected async estimateAndEncodeSteps(amountIn: ethers.BigNumber | TokenValue, runMode: RunMode, data: ExecuteData) {
-    // assert(slippage >= 0 && slippage <= 100, "Slippage must be between (0, 100).");
-    this.sdk.debug(`[Workflow._estimateAndEncodeSteps()]`, { amountIn, runMode, data }); // , slippage
+  protected async estimateAndEncodeSteps(amountIn: ethers.BigNumber | TokenValue, runMode: RunMode, data: RunData) {
+    this.sdk.debug(`[Workflow._estimateAndEncodeSteps()]`, { amountIn, runMode, data });
     await this.buildSteps(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn, { runMode, data });
-    return this.encodeSteps(); // slippage / 100);
+    return this.encodeSteps();
   }
 
   /**
-   * Loop over a sequence of pre-estimated Steps and encode their
-   * calldata with context (like slippage) available for access.
+   * Loop over a sequence of pre-estimated Steps and encode their calldata.
    */
   protected encodeSteps() {
     if (this._steps.length === 0) throw new Error("Work: must run estimate() before encoding");
 
-    // const context = Object.freeze({ slippage: _slippage }); // share context object across encode steps
-
-    // fixme: switch to map
     const encoded: EncodedResult[] = [];
     for (let i = 0; i < this._steps.length; i += 1) {
       encoded.push(this._steps[i].encode());
@@ -404,14 +424,13 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
    * This must be implemented by extensions of Workflow.
    */
   abstract encode(): string;
-  // abstract encode(context: EncodeContext): string;
 
   /**
    * @param amountIn Amount to use as first input to Work
    * @param slippage A human readable percent value. Ex: 0.1 would mean 0.1% slippage
    * @returns Promise of a Transaction
    */
-  abstract execute(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.ContractTransaction>;
+  abstract execute(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<ethers.ContractTransaction>;
 
   /**
    * CallStatic version of the execute method. Allows testing the execution of the workflow.
@@ -419,10 +438,10 @@ export abstract class Workflow<EncodedResult extends any = string, ExecuteData e
    * @param slippage A human readable percent value. Ex: 0.1 would mean 0.1% slippage
    * @returns Promise of a Transaction
    */
-  abstract callStatic(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<string[]>;
+  abstract callStatic(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<string[]>;
 
   /**
    *
    */
-  abstract estimateGas(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.BigNumber>;
+  abstract estimateGas(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<ethers.BigNumber>;
 }

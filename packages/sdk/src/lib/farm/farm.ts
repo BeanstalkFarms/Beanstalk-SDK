@@ -6,6 +6,7 @@ import { Beanstalk } from "src/constants/generated";
 import { TokenValue } from "src/TokenValue";
 import { ethers } from "ethers";
 import { AdvancedPipeWorkflow } from "src/lib/depot/pipe";
+import { AdvancedDataStruct } from "src/constants/generated/Beanstalk/Beanstalk";
 
 export type FarmStep = Step<string>;
 
@@ -17,7 +18,7 @@ export class FarmWorkflow<ExecuteData extends { slippage: number } = { slippage:
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "Farm") {
     super(sdk, name);
-    this.contract = this.sdk.contracts.beanstalk;
+    this.contract = this.sdk.contracts.beanstalk; // ?
   }
 
   copy() {
@@ -25,8 +26,6 @@ export class FarmWorkflow<ExecuteData extends { slippage: number } = { slippage:
   }
 
   encode() {
-    // TODO: we need to do somethign here with minAmountOut I think
-    // and also the same in pipe.ts:encode()
     return this.contract.interface.encodeFunctionData("farm", [this.encodeSteps()]);
   }
 
@@ -44,6 +43,42 @@ export class FarmWorkflow<ExecuteData extends { slippage: number } = { slippage:
   async estimateGas(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.BigNumber> {
     const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.EstimateGas, data);
     return this.contract.estimateGas.farm(encoded, { value: this.value });
+  }
+}
+
+export class AdvancedFarmWorkflow<ExecuteData extends { slippage: number } = { slippage: number }> extends Workflow<
+  AdvancedDataStruct,
+  ExecuteData
+> {
+  private contract: Beanstalk;
+
+  constructor(protected sdk: BeanstalkSDK, public name: string = "Farm") {
+    super(sdk, name);
+    this.contract = this.sdk.contracts.beanstalk; // ?
+  }
+
+  copy() {
+    return this._copy(AdvancedFarmWorkflow<ExecuteData>);
+  }
+
+  encode() {
+    return this.contract.interface.encodeFunctionData("advancedFarm", [this.encodeSteps()]);
+  }
+
+  async execute(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.ContractTransaction> {
+    const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.Execute, data);
+    this.sdk.debug("Execute data", encoded);
+    return this.contract.advancedFarm(encoded, { value: this.value });
+  }
+
+  async callStatic(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<string[]> {
+    const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.CallStatic, data);
+    return this.contract.callStatic.advancedFarm(encoded, { value: this.value });
+  }
+
+  async estimateGas(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.BigNumber> {
+    const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.EstimateGas, data);
+    return this.contract.estimateGas.advancedFarm(encoded, { value: this.value });
   }
 }
 

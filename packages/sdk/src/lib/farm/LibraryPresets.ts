@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { ERC20Token } from "src/classes/Token";
-import { BuildContext, StepGenerator } from "src/classes/Workflow";
+import { RunContext, StepGenerator } from "src/classes/Workflow";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { FarmFromMode, FarmToMode } from "../farm/types";
 import { EIP2612PermitMessage, SignedPermit } from "../permit";
@@ -28,13 +28,13 @@ export class LibraryPresets {
   public loadPipeline(
     _token: ERC20Token,
     _from: FarmFromMode,
-    _permit?: SignedPermit<EIP2612PermitMessage> | ((context: BuildContext) => SignedPermit<EIP2612PermitMessage>)
+    _permit?: SignedPermit<EIP2612PermitMessage> | ((context: RunContext) => SignedPermit<EIP2612PermitMessage>)
   ) {
     let generators: StepGenerator[] = [];
 
     // give beanstalk permission to send this ERC-20 token from my balance -> pipeline
     if (_permit) {
-      generators.push(async function permitERC20(_amountInStep: ethers.BigNumber, context: BuildContext) {
+      generators.push(async function permitERC20(_amountInStep: ethers.BigNumber, context: RunContext) {
         const permit = typeof _permit === "function" ? _permit(context) : _permit;
         const owner = await LibraryPresets.sdk.getAccount();
         const spender = LibraryPresets.sdk.contracts.beanstalk.address;

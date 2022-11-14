@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { BuildContext, Step, StepClass, Workflow } from "src/classes/Workflow";
+import { RunContext, Step, StepClass, Workflow } from "src/classes/Workflow";
 import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
 
@@ -16,7 +16,7 @@ export class RemoveLiquidityOneToken extends StepClass<string> {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, context: BuildContext): Promise<Step<string>> {
+  async run(_amountInStep: ethers.BigNumber, context: RunContext): Promise<Step<string>> {
     RemoveLiquidityOneToken.sdk.debug(`[${this.name}.run()]`, {
       pool: this._pool,
       registry: this._registry,

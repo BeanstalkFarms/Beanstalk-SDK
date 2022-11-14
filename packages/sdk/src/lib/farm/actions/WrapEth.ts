@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { BuildContext, Step, StepClass } from "src/classes/Workflow";
+import { RunContext, Step, StepClass } from "src/classes/Workflow";
 import { FarmToMode } from "../types";
 
 export class WrapEth extends StepClass {
@@ -9,7 +9,7 @@ export class WrapEth extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, context: BuildContext): Promise<Step<string>> {
+  async run(_amountInStep: ethers.BigNumber, context: RunContext): Promise<Step<string>> {
     WrapEth.sdk.debug(`[${this.name}.run()]`, { toMode: this.toMode, _amountInStep, context });
     return {
       name: this.name,

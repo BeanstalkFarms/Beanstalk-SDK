@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { BuildContext, Step, StepClass } from "src/classes/Workflow";
+import { RunContext, Step, StepClass } from "src/classes/Workflow";
 import { FarmFromMode } from "../types";
 
 export class UnwrapEth extends StepClass {
@@ -9,7 +9,7 @@ export class UnwrapEth extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, context: BuildContext): Promise<Step<string>> {
+  async run(_amountInStep: ethers.BigNumber, context: RunContext): Promise<Step<string>> {
     UnwrapEth.sdk.debug(`[${this.name}.run()]`, { fromMode: this.fromMode, _amountInStep, context });
     return {
       name: this.name,

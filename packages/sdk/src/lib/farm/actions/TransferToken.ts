@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { BuildContext, Step, StepClass } from "src/classes/Workflow";
+import { RunContext, Step, StepClass } from "src/classes/Workflow";
 import { FarmFromMode, FarmToMode } from "../types";
 
 export class TransferToken extends StepClass {
@@ -14,7 +14,7 @@ export class TransferToken extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, context: BuildContext): Promise<Step<string>> {
+  async run(_amountInStep: ethers.BigNumber, context: RunContext): Promise<Step<string>> {
     TransferToken.sdk.debug(`[${this.name}.run()]`, {
       tokenIn: this._tokenIn,
       recipient: this._recipient,

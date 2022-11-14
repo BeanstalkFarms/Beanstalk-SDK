@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { BuildContext, RunMode, Step, StepClass, Workflow } from "src/classes/Workflow";
+import { RunContext, RunMode, Step, StepClass, Workflow } from "src/classes/Workflow";
 import { Token } from "src/classes/Token";
 import { CurveMetaPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
@@ -17,7 +17,7 @@ export class ExchangeUnderlying extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, context: BuildContext): Promise<Step<string>> {
+  async run(_amountInStep: ethers.BigNumber, context: RunContext): Promise<Step<string>> {
     ExchangeUnderlying.sdk.debug(`[${this.name}.run()]`, {
       pool: this.pool,
       tokenIn: this.tokenIn.symbol,
