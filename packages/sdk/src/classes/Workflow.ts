@@ -30,6 +30,7 @@ export type RunContext<RunData extends Record<string, any> = any & { slippage?: 
   runMode: RunMode;
   step: {
     index: number;
+    findTag: (tag: string) => number;
   };
   // Provided by developer
   data: RunData;
@@ -125,6 +126,11 @@ type StepGeneratorOptions = {
   onlyExecute?: boolean;
 
   /**
+   * Nametag for a particular step. Used for named lookup.
+   */
+  tag?: string;
+
+  /**
    *
    */
   skip?: boolean | ((amountInStep: ethers.BigNumber, context: RunContext) => boolean | Promise<boolean>);
@@ -169,10 +175,14 @@ type StepGeneratorOptions = {
  * @fixme nesting a Farm inside a Farm should fail (?)
  */
 export abstract class Workflow<EncodedResult extends any = string, RunData extends Record<string, any> = {}> {
+  //
   protected _generators: (StepGenerator<EncodedResult> | Workflow<EncodedResult>)[] = [];
   protected _options: (StepGeneratorOptions | null)[] = [];
+
+  //
   protected _steps: Step<EncodedResult>[] = [];
   protected _value = ethers.BigNumber.from(0);
+  protected _tagMap: { [key: string]: number } = {};
 
   static SLIPPAGE_PRECISION = 10 ** 6;
 
@@ -188,6 +198,7 @@ export abstract class Workflow<EncodedResult extends any = string, RunData exten
 
   clearSteps() {
     this._steps = [];
+    this._tagMap = {};
     this._value = ethers.BigNumber.from(0);
   }
 
@@ -316,6 +327,23 @@ export abstract class Workflow<EncodedResult extends any = string, RunData exten
     return r === RunMode.CallStatic || r === RunMode.EstimateGas || r === RunMode.Execute;
   }
 
+  get tags() {
+    return Object.freeze({ ...this._tagMap });
+  }
+
+  public findTag(tag: string): number {
+    if (this._tagMap[tag] === undefined) throw new Error(`Tag does not exist: ${tag}`);
+    const stepIndex = this._tagMap[tag];
+    if (this._steps[stepIndex] === undefined) throw new Error("Step does not exist");
+    return stepIndex;
+  }
+
+  public addTag(tag: string, stepIndex: number): void {
+    if (this._tagMap[tag] !== undefined) throw new Error(`Tag already exists: ${tag}`);
+    if (this._steps[stepIndex] === undefined) throw new Error("Step does not exist");
+    this._tagMap[tag] = stepIndex;
+  }
+
   /**
    * @param amountIn
    * @param context
@@ -328,10 +356,18 @@ export abstract class Workflow<EncodedResult extends any = string, RunData exten
     const run = async (i: number, label: "estimate" | "estimateReversed") => {
       const generator = this._generators[i];
       const options = this._options[i];
+
+      // If this step is not skipped, this is the position
+      // in the current `_steps` at which it will reside.
+      // FIXME: what about reverse?
+      const stepIndex = this._steps.length;
+
+      //
       const context: RunContext = {
         ..._context,
         step: {
-          index: this._steps.length
+          index: stepIndex,
+          findTag: (tag: string) => this.findTag(tag)
         }
       };
 
@@ -349,6 +385,10 @@ export abstract class Workflow<EncodedResult extends any = string, RunData exten
       } else {
         const step = await this.buildStep(generator, nextAmount, context);
         nextAmount = step.amountOut;
+
+        // use stepIndex from before `buildStep()`
+        if (options?.tag) this.addTag(options.tag, stepIndex);
+
         this.sdk.debug(
           `[Workflow][${this.name}][${label}][${i}: ${step.name || "<unknown>"}]`,
           step.amountOut.toString(),
