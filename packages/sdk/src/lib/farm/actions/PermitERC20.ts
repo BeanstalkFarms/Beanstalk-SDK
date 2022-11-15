@@ -30,11 +30,12 @@ export class PermitERC20 extends StepClass<BasicPreparedResult> {
       value: ethers.BigNumber.from(0),
       prepare: () => {
         PermitERC20.sdk.debug(`>[${this.name}.prepare()]`, {
+          permit: permit,
           address: this.token.address, // token address
           owner, // owner
           spender: this.spender, // spender
           amount: _amountInStep.toString(), // value
-          deadline: permit.typedData.message.deadline, // deadline
+          deadline: permit.typedData.message.deadline || permit.typedData.message.expiry, // deadline
           v: permit.split.v,
           r: permit.split.r,
           s: permit.split.s
@@ -46,7 +47,7 @@ export class PermitERC20 extends StepClass<BasicPreparedResult> {
             owner, // owner
             this.spender, // spender
             _amountInStep.toString(), // value
-            permit.typedData.message.deadline, // deadline
+            permit.typedData.message.deadline || permit.typedData.message.expiry, // deadline
             permit.split.v,
             permit.split.r,
             permit.split.s

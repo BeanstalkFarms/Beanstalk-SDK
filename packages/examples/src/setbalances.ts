@@ -7,5 +7,6 @@ main().catch((e) => {
 
 async function main() {
   let t = new Test.TestUtils(sdk);
-  await t.setAllBalances(account, "500000");
+  await t.setAllBalances(account, "0");
+  await t.setDAIBalance(account, sdk.tokens.DAI.amount("0"));
 }

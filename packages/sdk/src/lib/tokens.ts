@@ -1,7 +1,7 @@
 import { addresses, ZERO_BN } from "src/constants";
 import { Token, BeanstalkToken, ERC20Token, NativeToken } from "src/classes/Token";
 import { BeanstalkSDK } from "./BeanstalkSDK";
-import { EIP2612PermitMessage, EIP712Domain, EIP712TypedData, Permit } from "./permit";
+import { DaiPermitMessage, EIP2612PermitMessage, EIP712Domain, EIP712TypedData, Permit } from "./permit";
 import { TokenValue } from "src/classes/TokenValue";
 import { BigNumber } from "ethers";
 
@@ -420,6 +420,48 @@ export class Tokens {
         { name: "value", type: "uint256" },
         { name: "nonce", type: "uint256" },
         { name: "deadline", type: "uint256" }
+      ]
+    },
+    primaryType: "Permit",
+    domain,
+    message
+  });
+
+  public async permitDAI(
+    holder: string,
+    spender: string,
+    token: ERC20Token,
+    _nonce?: number,
+    _expiry?: number
+  ): Promise<EIP712TypedData<DaiPermitMessage>> {
+    const expiry = _expiry || Permit.MAX_UINT256;
+    const [domain, nonce] = await Promise.all([
+      this.getEIP712DomainForToken(token),
+      // @ts-ignore FIXME
+      token
+        .getContract()
+        .nonces(holder)
+        .then((r) => r.toNumber())
+    ]);
+
+    return this.createTypedDAIData(domain, {
+      holder,
+      spender,
+      nonce,
+      expiry,
+      allowed: true
+    });
+  }
+
+  private createTypedDAIData = (domain: EIP712Domain, message: DaiPermitMessage) => ({
+    types: {
+      EIP712Domain: Permit.EIP712_DOMAIN,
+      Permit: [
+        { name: "holder", type: "address" },
+        { name: "spender", type: "address" },
+        { name: "nonce", type: "uint256" },
+        { name: "expiry", type: "uint256" },
+        { name: "allowed", type: "bool" }
       ]
     },
     primaryType: "Permit",
