@@ -32,6 +32,8 @@ export class LibraryPresets {
   ) {
     let generators: StepGenerator[] = [];
 
+    // FIXME: use permitToken if _from === INTERNAL
+
     // give beanstalk permission to send this ERC-20 token from my balance -> pipeline
     if (_permit) {
       generators.push(async function permitERC20(_amountInStep: ethers.BigNumber, context: RunContext) {

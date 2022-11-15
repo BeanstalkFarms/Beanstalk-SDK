@@ -8,7 +8,8 @@ import {
   DataSource,
   Token,
   Workflow,
-  FarmWorkflow
+  FarmWorkflow,
+  ERC20Token
 } from "@beanstalk/sdk";
 import { BigNumber, ethers } from "ethers";
 import { sdk, test, account } from "../setup";
@@ -35,7 +36,7 @@ import { sdk, test, account } from "../setup";
  * 5. `yarn x ./src/root/from-circulating.ts`
  *
  */
-export async function roots_via_swap(token: Token, amount: TokenValue): Promise<TokenBalance> {
+export async function roots_via_swap(token: ERC20Token, amount: TokenValue): Promise<TokenBalance> {
   // setup
   const account = await sdk.getAccount();
   console.log("Using account:", account);
@@ -49,24 +50,23 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
 
   // Swap from `token` -> `depositToken` (BEAN)
   const depositToken = sdk.tokens.BEAN;
-  const swap = sdk.swap.buildSwap(token, depositToken, account, FarmFromMode.EXTERNAL, FarmToMode.INTERNAL);
+  const swap = sdk.swap.buildSwap(token, depositToken, account, FarmFromMode.EXTERNAL, FarmToMode.EXTERNAL);
 
   const estBean = await swap.estimate(amount);
   console.log(`Swap Estimate: ${amount.toHuman()} ${token.symbol} --> ${estBean.toHuman()} BEAN`);
 
   // farm
-  type Data = {
+  const farm = swap.getFarm() as FarmWorkflow<{
     slippage: number;
     permit: any;
-  };
-  const farm = swap.getFarm() as FarmWorkflow<Data>;
+  }>;
   const pipe = sdk.farm.createAdvancedPipe();
 
   console.log("\n\nBuilding...");
 
   farm.add(
     // returns an array with 1 StepGenerator if no permit, 2 StepGenerators if permit
-    sdk.farm.presets.loadPipeline(depositToken, FarmFromMode.INTERNAL, (context) => context.data.permit),
+    sdk.farm.presets.loadPipeline(depositToken, FarmFromMode.EXTERNAL, (context) => context.data.permit),
     { onlyExecute: true }
   );
 
@@ -225,7 +225,7 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
     sdk.tokens.permitERC2612(
       account, // owner
       sdk.contracts.beanstalk.address, // spender
-      depositToken, // bean
+      token, // bean
       estBean.toBlockchain() // amount of beans
     )
   );
@@ -258,5 +258,7 @@ export async function roots_via_swap(token: Token, amount: TokenValue): Promise<
 }
 
 (async () => {
-  await roots_via_swap(sdk.tokens.ETH, sdk.tokens.ETH.amount(3.14));
+  await test.setUSDCBalance(account, sdk.tokens.USDC.amount(101));
+  console.log(await (await sdk.tokens.getBalance(sdk.tokens.USDC)).total.toHuman());
+  await roots_via_swap(sdk.tokens.USDC, sdk.tokens.USDC.amount(100));
 })();

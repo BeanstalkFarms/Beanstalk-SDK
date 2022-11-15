@@ -80,7 +80,8 @@ export class Exchange extends StepClass {
         toMode: this.toMode
       },
       encode: () => {
-        const minAmountOut = Workflow.slip(amountOut!, context.data.slippage || 0);
+        if (context.data.slippage === undefined) throw new Error("Exchange: slippage required");
+        const minAmountOut = Workflow.slip(amountOut!, context.data.slippage);
         Exchange.sdk.debug(`[${this.name}.encode()]`, {
           pool: this.pool,
           registry: this.registry,

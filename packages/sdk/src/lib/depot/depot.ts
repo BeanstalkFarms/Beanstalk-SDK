@@ -1,10 +1,10 @@
 // import { ethers } from "ethers";
 // import { Action, ActionResult, BaseAction } from "src/lib/farm/types";
-import { AdvancedPipeStruct, PipeStruct } from "../../constants/generated/Beanstalk/Beanstalk";
+import { AdvancedPipeCallStruct, PipeCallStruct } from "../../constants/generated/Beanstalk/Beanstalk";
 // import { BeanstalkSDK } from "../BeanstalkSDK";
 // import { Clipboard } from "./clipboard";
 
-export type { AdvancedPipeStruct, PipeStruct };
+export type { AdvancedPipeCallStruct, PipeCallStruct };
 
 // interface PipeStep {
 //   encode(): AdvancedPipeStruct;

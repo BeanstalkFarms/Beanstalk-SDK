@@ -6,7 +6,7 @@ import { Beanstalk } from "src/constants/generated";
 import { TokenValue } from "src/TokenValue";
 import { ethers } from "ethers";
 import { AdvancedPipeWorkflow } from "src/lib/depot/pipe";
-import { AdvancedDataStruct } from "src/constants/generated/Beanstalk/Beanstalk";
+import { AdvancedFarmCallStruct } from "src/constants/generated/Beanstalk/Beanstalk";
 
 export type FarmStep = Step<string>;
 
@@ -47,7 +47,7 @@ export class FarmWorkflow<ExecuteData extends { slippage: number } = { slippage:
 }
 
 export class AdvancedFarmWorkflow<ExecuteData extends { slippage: number } = { slippage: number }> extends Workflow<
-  AdvancedDataStruct,
+  AdvancedFarmCallStruct,
   ExecuteData
 > {
   private contract: Beanstalk;

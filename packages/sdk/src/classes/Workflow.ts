@@ -25,7 +25,7 @@ export enum RunMode {
  *
  * @fixme `any & { slippage }` doesn't seem to indicate the record could have a slippage key.
  */
-export type RunContext<RunData extends Record<string, any> = any & { slippage?: number }> = {
+export type RunContext<RunData extends Record<string, any> = { [key: string]: any } & { slippage?: number }> = {
   // Provided by Workflow
   runMode: RunMode;
   step: {
@@ -189,6 +189,7 @@ export abstract class Workflow<EncodedResult extends any = string, RunData exten
   constructor(protected sdk: BeanstalkSDK, public name: string = "Workflow") {}
 
   static slip(_amount: ethers.BigNumber, _slippage: number) {
+    if (_slippage < 0) throw new Error("Slippage must be positive");
     return _amount.mul(Math.floor(Workflow.SLIPPAGE_PRECISION * (1 - _slippage))).div(Workflow.SLIPPAGE_PRECISION);
   }
 

@@ -3,13 +3,13 @@ import { Step, Workflow } from "src/classes/Workflow";
 import { Beanstalk } from "src/constants/generated";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { Clipboard } from "src/lib/depot/clipboard";
-import { AdvancedPipeStruct } from "src/lib/depot/depot";
+import { AdvancedPipeCallStruct } from "src/lib/depot/depot";
 import { TokenValue } from "src/TokenValue";
 
 /**
  * The "AdvancedPipe" is a Workflow that encodes a call to `beanstalk.advancedPipe()`.
  */
-export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
+export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeCallStruct> {
   private contract: Beanstalk;
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "AdvancedPipe") {
@@ -34,7 +34,7 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
    * @param method The contract method to call.
    * @param args The arguments to pass to `method`,
    * @param amountOut The expected amountOut from this Step.
-   * @param advancedData Clipboard data used by Pipeline to copy any requisite calldata from prev steps.
+   * @param clipboard Clipboard data used by Pipeline to copy any requisite calldata from prev steps.
    * @returns
    */
   wrap<C extends ethers.Contract, M extends keyof C["functions"], A extends Parameters<C["functions"][M]>>(
@@ -42,15 +42,15 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeStruct> {
     method: M,
     args: A,
     amountOut: ethers.BigNumber,
-    advancedData: string = Clipboard.encode([])
-  ): Step<AdvancedPipeStruct> {
+    clipboard: string = Clipboard.encode([])
+  ): Step<AdvancedPipeCallStruct> {
     return {
       name: method.toString(),
       amountOut,
       encode: () => ({
         target: contract.address,
         callData: contract.interface.encodeFunctionData(method.toString(), args),
-        advancedData
+        clipboard
       }),
       decode: () => undefined,
       decodeResult: () => undefined

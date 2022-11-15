@@ -168,7 +168,7 @@ describe("Workflow", () => {
           const pipe = sdk.farm.createAdvancedPipe();
           farm.add(() => "0xTEST1", { tag: "test1" });
           farm.add(
-            pipe.add(() => ({ target: "", callData: "0xPIPE", advancedData: "" }), { tag: "insidePipe" }),
+            pipe.add(() => ({ target: "", callData: "0xPIPE", clipboard: "" }), { tag: "insidePipe" }),
             { tag: "pipe" }
           );
           farm.add(() => "0xBUFFER");
