@@ -24,6 +24,8 @@ import {
   BeanstalkFertilizer
 } from "src/constants/generated";
 import { BaseContract } from "ethers";
+import { Depot__factory } from "src/constants/generated/factories/Depot__factory";
+import { Depot } from "src/constants/generated/Depot";
 
 type CurveContracts = {
   pools: {
@@ -45,9 +47,11 @@ export class Contracts {
   static sdk: BeanstalkSDK;
 
   public readonly beanstalk: Beanstalk;
-  public readonly root: Root;
-  public readonly pipeline: Pipeline;
   public readonly fertilizer: BeanstalkFertilizer;
+
+  public readonly pipeline: Pipeline;
+  public readonly depot: Depot; // temp
+  public readonly root: Root;
 
   public readonly curve: CurveContracts;
 
@@ -58,13 +62,15 @@ export class Contracts {
 
     // Addressses
     const beanstalkAddress = sdk.addresses.BEANSTALK.get(sdk.chainId);
-    const pipelineAddress = sdk.addresses.PIPELINE.get(sdk.chainId);
-    const rootAddress = sdk.addresses.ROOT.get(sdk.chainId);
     const beanstalkFertilizerAddress = sdk.addresses.BEANSTALK_FERTILIZER.get(sdk.chainId);
 
+    const pipelineAddress = sdk.addresses.PIPELINE.get(sdk.chainId);
+    const depotAddress = sdk.addresses.DEPOT.get(sdk.chainId);
+    const rootAddress = sdk.addresses.ROOT.get(sdk.chainId);
+
+    const beancrv3Address = sdk.addresses.BEAN_CRV3.get(sdk.chainId);
     const pool3Address = sdk.addresses.POOL3.get(sdk.chainId);
     const tricrypto2Address = sdk.addresses.TRICRYPTO2.get(sdk.chainId);
-    const beancrv3Address = sdk.addresses.BEAN_CRV3.get(sdk.chainId);
     const poolRegistryAddress = sdk.addresses.POOL_REGISTRY.get(sdk.chainId);
     const metaFactoryAddress = sdk.addresses.META_FACTORY.get(sdk.chainId);
     const cryptoFactoryAddress = sdk.addresses.CRYPTO_FACTORY.get(sdk.chainId);
@@ -72,13 +78,15 @@ export class Contracts {
 
     // Instances
     this.beanstalk = Beanstalk__factory.connect(beanstalkAddress, sdk.providerOrSigner);
-    this.pipeline = Pipeline__factory.connect(pipelineAddress, sdk.providerOrSigner);
-    this.root = Root__factory.connect(rootAddress, sdk.providerOrSigner);
     this.fertilizer = BeanstalkFertilizer__factory.connect(beanstalkFertilizerAddress, sdk.providerOrSigner);
 
+    this.pipeline = Pipeline__factory.connect(pipelineAddress, sdk.providerOrSigner);
+    this.depot = Depot__factory.connect(depotAddress, sdk.providerOrSigner);
+    this.root = Root__factory.connect(rootAddress, sdk.providerOrSigner);
+
+    const beanCrv3 = CurveMetaPool__factory.connect(beancrv3Address, sdk.providerOrSigner);
     const pool3 = Curve3Pool__factory.connect(pool3Address, sdk.providerOrSigner);
     const tricrypto2 = CurveTriCrypto2Pool__factory.connect(tricrypto2Address, sdk.providerOrSigner);
-    const beanCrv3 = CurveMetaPool__factory.connect(beancrv3Address, sdk.providerOrSigner);
     const poolRegistry = CurveRegistry__factory.connect(poolRegistryAddress, sdk.providerOrSigner);
     const metaFactory = CurveMetaFactory__factory.connect(metaFactoryAddress, sdk.providerOrSigner);
     const cryptoFactory = CurveCryptoFactory__factory.connect(cryptoFactoryAddress, sdk.providerOrSigner);
@@ -86,12 +94,12 @@ export class Contracts {
 
     this.curve = {
       pools: {
+        beanCrv3,
+        [beancrv3Address]: beanCrv3,
         pool3,
         [pool3Address]: pool3,
         tricrypto2,
-        [tricrypto2Address]: tricrypto2,
-        beanCrv3,
-        [beancrv3Address]: beanCrv3
+        [tricrypto2Address]: tricrypto2
       },
       registries: {
         poolRegistry,

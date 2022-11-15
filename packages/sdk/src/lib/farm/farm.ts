@@ -8,6 +8,7 @@ import { ethers } from "ethers";
 import { AdvancedPipeWorkflow } from "src/lib/depot/pipe";
 import { AdvancedFarmCallStruct } from "src/constants/generated/Beanstalk/Beanstalk";
 import { Clipboard } from "src/lib/depot";
+import { Depot } from "src/constants/generated/Depot";
 
 type FarmPreparedResult = { callData: string };
 // export type FarmStep = Step<FarmPreparedResult>;
@@ -21,11 +22,11 @@ export class FarmWorkflow<RunData extends { slippage: number } = { slippage: num
   FarmPreparedResult, // PreparedResult
   RunData // RunData
 > {
-  private contract: Beanstalk;
+  private contract: Beanstalk | Depot;
 
-  constructor(protected sdk: BeanstalkSDK, public name: string = "Farm") {
+  constructor(protected sdk: BeanstalkSDK, public name: string = "Farm", using: "beanstalk" | "depot" = "beanstalk") {
     super(sdk, name);
-    this.contract = this.sdk.contracts.beanstalk; // ?
+    this.contract = this.sdk.contracts[using]; // use beanstalk or depot
   }
 
   copy() {
@@ -86,7 +87,7 @@ export class AdvancedFarmWorkflow<RunData extends { slippage: number } = { slipp
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "Farm") {
     super(sdk, name);
-    this.contract = this.sdk.contracts.depot; // ?
+    this.contract = this.sdk.contracts.beanstalk; // ?
   }
 
   copy() {
@@ -94,6 +95,13 @@ export class AdvancedFarmWorkflow<RunData extends { slippage: number } = { slipp
   }
 
   ////////// Nested Behavior //////////
+
+  prepare() {
+    return {
+      target: this.contract.address,
+      callData: this.encodeWorkflow()
+    };
+  }
 
   encodeWorkflow() {
     return this.contract.interface.encodeFunctionData("advancedFarm", [this.encodeSteps()]);
