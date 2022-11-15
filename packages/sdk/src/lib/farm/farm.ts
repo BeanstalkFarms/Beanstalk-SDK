@@ -147,7 +147,7 @@ export class Farm {
     this.presets = new LibraryPresets(Farm.sdk);
   }
 
-  create(name?: string) {
+  create<T = Record<string, any>>(name?: string): FarmWorkflow<{ slippage: number } & T> {
     return new FarmWorkflow(Farm.sdk, name);
   }
 

@@ -245,7 +245,7 @@ export abstract class Workflow<
   }
 
   get generators(): Readonly<(StepGenerator<PreparedResult> | Workflow<PreparedResult>)[]> {
-    return Object.freeze([...this._generators]);
+    return [...this._generators];
   }
 
   get length(): number {
