@@ -49,7 +49,7 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
   const account = await sdk.getAccount();
   console.log("Using account:", account);
 
-  // get balance and validate amount
+  // Check `account`' balance of `inputToken`, validate `amount`
   const balance = await sdk.tokens.getBalance(inputToken);
   console.log(`Account ${account} has balance ${balance.total.toHuman()} ${inputToken.symbol}`);
   if (amount.gt(balance.total)) {
@@ -77,7 +77,10 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
 
   const farm = sdk.farm.create<{ permit: any }>("Swap And Mint");
 
-  // If more external allowance for the inputToken, expect a permit.
+  // To perform a swap from EXTERNAL, we may need an allowance.
+  // We can skip this step if:
+  //    `inputToken` = ETH
+  //    `inputToken.allowance(account, beanstalk) > amountInStep`
   farm.add(new sdk.farm.actions.PermitERC20(inputToken as ERC20Token, sdk.contracts.beanstalk.address, "permit"), {
     onlyExecute: true,
     skip: (amountInStep) => hasEnoughExternalAllowance(inputToken, account, sdk.contracts.beanstalk.address, amountInStep)
@@ -86,13 +89,12 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
   ////////// Add Swap to Farm //////////
 
   farm.add([
-    // workaround for typescript Readonly: unpack
+    // workaround for typescript `Readonly<>`: unpack into array
     ...swap.getFarm().generators
   ]);
 
   farm.add(
     // returns an array with 1 StepGenerator if no permit, 2 StepGenerators if permit
-    //
     sdk.farm.presets.loadPipeline(depositToken, loadPipelineFrom),
     { onlyExecute: true }
   );
@@ -105,13 +107,6 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
 
   pipe.add(
     function approveBean(amountInStep) {
-      // return {
-      //   target: sdk.tokens.BEAN.address,
-      //   callData: sdk.tokens.BEAN.getContract().interface.encodeFunctionData(
-      //     "approve",
-      //     [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
-      //   )
-      // };
       return pipe.wrap(
         sdk.tokens.BEAN.getContract(),
         "approve",
@@ -120,7 +115,6 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
       );
     },
     {
-      // skip: false,
       skip: (amountInStep) =>
         hasEnoughExternalAllowance(sdk.tokens.BEAN, sdk.contracts.pipeline.address, sdk.contracts.beanstalk.address, amountInStep)
     }
