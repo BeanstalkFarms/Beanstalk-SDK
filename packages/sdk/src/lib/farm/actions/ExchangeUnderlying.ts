@@ -1,10 +1,10 @@
 import { ethers } from "ethers";
-import { RunContext, RunMode, Step, StepClass, Workflow } from "src/classes/Workflow";
+import { BasicPreparedResult, RunContext, RunMode, StepClass, Workflow } from "src/classes/Workflow";
 import { Token } from "src/classes/Token";
 import { CurveMetaPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
 
-export class ExchangeUnderlying extends StepClass {
+export class ExchangeUnderlying extends StepClass<BasicPreparedResult> {
   public name: string = "exchangeUnderlying";
 
   constructor(
@@ -17,8 +17,8 @@ export class ExchangeUnderlying extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, context: RunContext): Promise<Step<string>> {
-    ExchangeUnderlying.sdk.debug(`[${this.name}.run()]`, {
+  async run(_amountInStep: ethers.BigNumber, context: RunContext) {
+    ExchangeUnderlying.sdk.debug(`>[${this.name}.run()]`, {
       pool: this.pool,
       tokenIn: this.tokenIn.symbol,
       tokenOut: this.tokenOut.symbol,
@@ -61,10 +61,10 @@ export class ExchangeUnderlying extends StepClass {
         fromMode: this.fromMode,
         toMode: this.toMode
       },
-      encode: () => {
+      prepare: () => {
         if (context.data.slippage === undefined) throw new Error("Exchange: slippage required");
         const minAmountOut = Workflow.slip(amountOut!, context.data.slippage);
-        ExchangeUnderlying.sdk.debug(`[${this.name}.encode()]`, {
+        ExchangeUnderlying.sdk.debug(`>[${this.name}.prepare()]`, {
           pool: this.pool,
           tokenIn: tokenIn.symbol,
           tokenOut: tokenOut.symbol,
@@ -76,15 +76,18 @@ export class ExchangeUnderlying extends StepClass {
           context
         });
         if (!minAmountOut) throw new Error("ExchangeUnderlying: Missing minAmountOut");
-        return ExchangeUnderlying.sdk.contracts.beanstalk.interface.encodeFunctionData("exchangeUnderlying", [
-          this.pool,
-          tokenIn.address,
-          tokenOut.address,
-          _amountInStep,
-          minAmountOut,
-          this.fromMode,
-          this.toMode
-        ]);
+        return {
+          target: ExchangeUnderlying.sdk.contracts.beanstalk.address,
+          callData: ExchangeUnderlying.sdk.contracts.beanstalk.interface.encodeFunctionData("exchangeUnderlying", [
+            this.pool,
+            tokenIn.address,
+            tokenOut.address,
+            _amountInStep,
+            minAmountOut,
+            this.fromMode,
+            this.toMode
+          ])
+        };
       },
       decode: (data: string) => ExchangeUnderlying.sdk.contracts.beanstalk.interface.decodeFunctionData("exchangeUnderlying", data),
       decodeResult: (result: string) =>

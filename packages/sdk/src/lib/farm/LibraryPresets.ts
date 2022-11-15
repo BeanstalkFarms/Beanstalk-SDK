@@ -1,12 +1,15 @@
 import { ethers } from "ethers";
 import { ERC20Token } from "src/classes/Token";
-import { RunContext, StepGenerator } from "src/classes/Workflow";
+import { BasicPreparedResult, RunContext, StepGenerator } from "src/classes/Workflow";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { FarmFromMode, FarmToMode } from "../farm/types";
 import { EIP2612PermitMessage, SignedPermit } from "../permit";
 import { Exchange, ExchangeUnderlying } from "./actions/index";
 
-export type ActionBuilder = (fromMode?: FarmFromMode, toMode?: FarmToMode) => StepGenerator<string> | StepGenerator<string>[];
+export type ActionBuilder = (
+  fromMode?: FarmFromMode,
+  toMode?: FarmToMode
+) => StepGenerator<BasicPreparedResult> | StepGenerator<BasicPreparedResult>[];
 
 export class LibraryPresets {
   static sdk: BeanstalkSDK;
@@ -19,10 +22,6 @@ export class LibraryPresets {
 
   /**
    * Load the Pipeline in preparation for a set Pipe actions.
-   * @
-   */
-
-  /**
    * @param _permit provide a permit directly, or provide a function to extract it from `context`.
    */
   public loadPipeline(
@@ -36,49 +35,61 @@ export class LibraryPresets {
 
     // give beanstalk permission to send this ERC-20 token from my balance -> pipeline
     if (_permit) {
-      generators.push(async function permitERC20(_amountInStep: ethers.BigNumber, context: RunContext) {
-        const permit = typeof _permit === "function" ? _permit(context) : _permit;
-        const owner = await LibraryPresets.sdk.getAccount();
-        const spender = LibraryPresets.sdk.contracts.beanstalk.address;
+      if (_from === FarmFromMode.EXTERNAL) {
+        generators.push(async function permitERC20(_amountInStep: ethers.BigNumber, context: RunContext) {
+          const permit = typeof _permit === "function" ? _permit(context) : _permit;
+          const owner = await LibraryPresets.sdk.getAccount();
+          const spender = LibraryPresets.sdk.contracts.beanstalk.address;
 
-        LibraryPresets.sdk.debug(`[permitERC20.run()]`, {
-          token: _token.address,
-          owner: owner,
-          spender: spender,
-          value: _amountInStep.toString(),
-          permit: permit
+          LibraryPresets.sdk.debug(`[permitERC20.run()]`, {
+            token: _token.address,
+            owner: owner,
+            spender: spender,
+            value: _amountInStep.toString(),
+            permit: permit
+          });
+
+          return {
+            target: LibraryPresets.sdk.contracts.beanstalk.address,
+            callData: LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [
+              _token.address, // token address
+              owner, // owner
+              spender, // spender
+              _amountInStep.toString(), // value
+              permit.typedData.message.deadline, // deadline
+              permit.split.v,
+              permit.split.r,
+              permit.split.s
+            ])
+          };
         });
-
-        return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [
-          _token.address, // token address
-          owner, // owner
-          spender, // spender
-          _amountInStep.toString(), // value
-          permit.typedData.message.deadline, // deadline
-          permit.split.v,
-          permit.split.r,
-          permit.split.s
-        ]);
-      });
+      } else {
+        throw new Error(`Permit provided for FarmFromMode that does not yet support permits: ${_from}`);
+      }
     }
 
-    // transfer erc20 token from beanstalk -> pipeline
+    // transfer erc20 token from msg.sender -> PIPELINE
     generators.push(async function transferToken(_amountInStep: ethers.BigNumber) {
       const recipient = LibraryPresets.sdk.contracts.pipeline.address;
 
       LibraryPresets.sdk.debug(`[transferToken.run()]`, {
         token: _token.address,
         recipient,
-        value: _amountInStep.toString()
+        amount: _amountInStep.toString(),
+        from: _from,
+        to: FarmToMode.EXTERNAL
       });
 
-      return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("transferToken", [
-        _token.address, // token
-        recipient, // recipient
-        _amountInStep.toString(), // amount
-        _from, // from
-        FarmToMode.EXTERNAL // to
-      ]);
+      return {
+        target: LibraryPresets.sdk.contracts.beanstalk.address,
+        callData: LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("transferToken", [
+          _token.address, // token
+          recipient, // recipient
+          _amountInStep.toString(), // amount
+          _from, // from
+          FarmToMode.EXTERNAL // to
+        ])
+      };
     });
 
     return generators;
