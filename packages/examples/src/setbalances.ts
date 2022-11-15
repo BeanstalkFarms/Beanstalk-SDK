@@ -1,11 +1,10 @@
-import { sdk, account } from "./setup";
-import { Test } from "@beanstalk/sdk";
+import { sdk, account, chain } from "./setup";
+
 main().catch((e) => {
   console.log("FAILED:");
   console.log(e);
 });
 
 async function main() {
-  let t = new Test.TestUtils(sdk);
-  await t.setAllBalances(account, "500000");
+  await chain.setAllBalances(account, "500000");
 }

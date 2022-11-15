@@ -1,6 +1,6 @@
 import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, TestUtils, Clipboard, DataSource } from "@beanstalk/sdk";
 import { ethers } from "ethers";
-import { sdk, test, account } from "../setup";
+import { sdk, chain, account } from "../setup";
 
 /**
  * Running this example (November 2022)
@@ -177,6 +177,6 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
 }
 
 (async () => {
-  await test.setBEANBalance(account, sdk.tokens.BEAN.amount(150));
+  await chain.setBEANBalance(account, sdk.tokens.BEAN.amount(150));
   await roots_from_circulating(sdk.tokens.BEAN, sdk.tokens.BEAN.amount(124));
 })();

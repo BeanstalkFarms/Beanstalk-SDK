@@ -1,5 +1,7 @@
+import { DataSource } from "src/lib/BeanstalkSDK";
+
 // Core
-export { BeanstalkSDK } from "src/lib/BeanstalkSDK";
+export { BeanstalkSDK, DataSource } from "src/lib/BeanstalkSDK";
 
 // Constants
 export { ChainId } from "src/constants/chains";

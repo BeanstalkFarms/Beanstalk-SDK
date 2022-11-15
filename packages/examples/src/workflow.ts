@@ -29,7 +29,7 @@ async function main() {
 async function run(sdk: BeanstalkSDK) {
   const work = sdk.farm.create();
 
-  work.adds([
+  work.add([
     new sdk.farm.actions.WrapEth(FarmToMode.INTERNAL),
     new sdk.farm.actions.Exchange(
       sdk.contracts.curve.pools.tricrypto2.address,
@@ -43,7 +43,7 @@ async function run(sdk: BeanstalkSDK) {
       sdk.tokens.BEAN,
       undefined,
       FarmToMode.EXTERNAL
-    ),
+    )
   ]);
 
   // Run it forward
@@ -60,12 +60,12 @@ async function run(sdk: BeanstalkSDK) {
 async function runWithPresets(sdk: BeanstalkSDK) {
   const work = sdk.farm.create();
 
-  work.adds([
+  work.add([
     new sdk.farm.actions.WrapEth(FarmToMode.INTERNAL),
     /////// USING presets
 
     sdk.farm.presets.weth2usdt(),
-    sdk.farm.presets.usdt2bean(),
+    sdk.farm.presets.usdt2bean()
 
     ///// OR with Preset flow
     // sdk.farm.presets.weth2bean(),
@@ -84,16 +84,16 @@ async function runWithPresets(sdk: BeanstalkSDK) {
 async function buyAndDeposit(sdk: BeanstalkSDK) {
   const work = sdk.farm.create();
 
-  work.adds([
+  work.add([
     new sdk.farm.actions.WrapEth(FarmToMode.INTERNAL),
     sdk.farm.presets.weth2bean(FarmFromMode.INTERNAL, FarmToMode.INTERNAL),
     async (_amountInStep) => {
       return sdk.contracts.beanstalk.interface.encodeFunctionData("deposit", [
         sdk.tokens.BEAN.address,
         _amountInStep,
-        FarmFromMode.INTERNAL,
+        FarmFromMode.INTERNAL
       ]);
-    },
+    }
   ]);
 
   const amountIn = ethers.utils.parseUnits("10", 18);
@@ -116,7 +116,7 @@ async function buyAndDeposit(sdk: BeanstalkSDK) {
 async function runReverse(sdk: BeanstalkSDK) {
   const work = sdk.farm.create();
 
-  work.adds([
+  work.add([
     new sdk.farm.actions.WrapEth(),
     new sdk.farm.actions.Exchange(
       sdk.contracts.curve.pools.tricrypto2.address,
@@ -130,7 +130,7 @@ async function runReverse(sdk: BeanstalkSDK) {
       sdk.tokens.BEAN,
       undefined,
       FarmToMode.EXTERNAL
-    ),
+    )
   ]);
 
   const amountIn = ethers.utils.parseUnits("5000", 6);
