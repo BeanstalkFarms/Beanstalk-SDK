@@ -15,7 +15,7 @@ export class UnwrapEth extends StepClass {
       name: this.name,
       amountOut: _amountInStep, // amountInStep should be an amount of ETH.
       value: _amountInStep, // need to use this amount in the txn.
-      encode: () => {
+      prepare: () => {
         UnwrapEth.sdk.debug(`[${this.name}.encode()]`, { fromMode: this.fromMode, _amountInStep, context });
         return UnwrapEth.sdk.contracts.beanstalk.interface.encodeFunctionData("unwrapEth", [
           _amountInStep, // ignore minAmountOut since there is no slippage

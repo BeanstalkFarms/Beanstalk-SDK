@@ -15,7 +15,7 @@ export class WrapEth extends StepClass {
       name: this.name,
       amountOut: _amountInStep, // amountInStep should be an amount of ETH.
       value: _amountInStep, // need to use this amount in the txn.
-      encode: () => {
+      prepare: () => {
         WrapEth.sdk.debug(`[${this.name}.encode()]`, { toMode: this.toMode, _amountInStep, context });
         return WrapEth.sdk.contracts.beanstalk.interface.encodeFunctionData("wrapEth", [
           _amountInStep, // ignore minAmountOut since there is no slippage

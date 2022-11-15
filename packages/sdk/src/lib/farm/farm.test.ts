@@ -53,7 +53,7 @@ describe("Workflow", () => {
             // instanceof StepFunction (returns Step<EncodedData>)
             name: "call3",
             amountOut: ethers.BigNumber.from(0),
-            encode: () => "0xCALLDATA2",
+            prepare: () => "0xCALLDATA2",
             decode: () => undefined,
             decodeResult: () => undefined
           })
@@ -69,9 +69,9 @@ describe("Workflow", () => {
         // @ts-ignore testing private value
         expect(farm._steps.length).toBe(3); // haven't yet estimated, so no steps
         // @ts-ignore testing private value
-        expect(farm._steps[1].encode(ethers.BigNumber.from(0))).toBe("0xCALLDATA1");
+        expect(farm._steps[1].prepare(ethers.BigNumber.from(0))).toBe("0xCALLDATA1");
         // @ts-ignore testing private value
-        expect(farm._steps[2].encode(ethers.BigNumber.from(0))).toBe("0xCALLDATA2");
+        expect(farm._steps[2].prepare(ethers.BigNumber.from(0))).toBe("0xCALLDATA2");
       });
       it("recurses through nested arrays of StepGenerators", async () => {
         // Setup
@@ -92,11 +92,11 @@ describe("Workflow", () => {
         // Estimation
         await farm.estimate(ethers.BigNumber.from(1000_000000));
         // @ts-ignore testing private value
-        expect(farm._steps[1].encode(ethers.BigNumber.from(0))).toBe("0xCALLDATA100000000000000000000000000000000000000");
+        expect(farm._steps[1].prepare(ethers.BigNumber.from(0))).toBe("0xCALLDATA100000000000000000000000000000000000000");
         // @ts-ignore testing private value
-        expect(farm._steps[2].encode(ethers.BigNumber.from(0))).toBe("0xCALLDATA200000000000000000000000000000000000000");
+        expect(farm._steps[2].prepare(ethers.BigNumber.from(0))).toBe("0xCALLDATA200000000000000000000000000000000000000");
         // @ts-ignore testing private value
-        expect(farm._steps[5].encode(ethers.BigNumber.from(0))).toBe("0xCALLDATA200000000000000000000000000000000000000");
+        expect(farm._steps[5].prepare(ethers.BigNumber.from(0))).toBe("0xCALLDATA200000000000000000000000000000000000000");
       });
       it.todo("works when adding another Workflow");
       it("chains", () => {
@@ -118,7 +118,7 @@ describe("Workflow", () => {
         expect(farm1.length).toEqual(1);
         expect(farm2.length).toEqual(1);
         // @ts-ignore
-        expect(farm1._steps[0].encode()).toEqual(farm2._steps[0].encode());
+        expect(farm1._steps[0].prepare()).toEqual(farm2._steps[0].prepare());
       });
       it("doesn't copy results", async () => {
         const farm3 = farm1.copy();

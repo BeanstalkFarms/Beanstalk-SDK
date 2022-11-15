@@ -61,7 +61,7 @@ export class RemoveLiquidityOneToken extends StepClass<string> {
       name: this.name,
       amountOut,
       data: {},
-      encode: () => {
+      prepare: () => {
         const minAmountOut = Workflow.slip(amountOut!, context.data.slippage || 0);
         RemoveLiquidityOneToken.sdk.debug(`[${this.name}.encode()]`, {
           pool: this._pool,

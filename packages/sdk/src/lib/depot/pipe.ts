@@ -9,7 +9,17 @@ import { TokenValue } from "src/TokenValue";
 /**
  * The "AdvancedPipe" is a Workflow that encodes a call to `beanstalk.advancedPipe()`.
  */
-export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeCallStruct> {
+
+type AdvancedPipePreparedResult = {
+  target: string;
+  callData: string;
+  clipboard?: string;
+};
+export class AdvancedPipeWorkflow<ExecuteData extends { slippage: number } = { slippage: number }> extends Workflow<
+  AdvancedPipeCallStruct,
+  AdvancedPipePreparedResult,
+  ExecuteData
+> {
   private contract: Beanstalk;
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "AdvancedPipe") {
@@ -18,10 +28,25 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeCallStruct> {
   }
 
   copy() {
-    return this._copy(AdvancedPipeWorkflow);
+    return this._copy(AdvancedPipeWorkflow<ExecuteData>);
   }
 
-  encode() {
+  prepare(): AdvancedPipePreparedResult {
+    return {
+      target: this.contract.address,
+      callData: this.encodeWorkflow()
+    };
+  }
+
+  encodeStep(p: AdvancedPipePreparedResult): AdvancedPipeCallStruct {
+    return {
+      target: p.target,
+      callData: p.callData,
+      clipboard: p.clipboard || Clipboard.encode([])
+    };
+  }
+
+  encodeWorkflow() {
     return this.contract.interface.encodeFunctionData("advancedPipe", [
       this.encodeSteps(),
       "0" // fixme
@@ -43,11 +68,11 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeCallStruct> {
     args: A,
     amountOut: ethers.BigNumber,
     clipboard: string = Clipboard.encode([])
-  ): Step<AdvancedPipeCallStruct> {
+  ): Step<AdvancedPipePreparedResult> {
     return {
       name: method.toString(),
       amountOut,
-      encode: () => ({
+      prepare: () => ({
         target: contract.address,
         callData: contract.interface.encodeFunctionData(method.toString(), args),
         clipboard
@@ -61,11 +86,11 @@ export class AdvancedPipeWorkflow extends Workflow<AdvancedPipeCallStruct> {
     throw new Error("Not implemented");
   }
 
-  async callStatic(_amountIn: ethers.BigNumber | TokenValue, _slippage: number): Promise<string[]> {
+  async callStatic(): Promise<string[]> {
     throw new Error("Not implemented");
   }
 
-  async estimateGas(_amountIn: ethers.BigNumber | TokenValue, _slippage: number): Promise<ethers.BigNumber> {
+  async estimateGas(): Promise<ethers.BigNumber> {
     throw new Error("Not implemented");
   }
 }

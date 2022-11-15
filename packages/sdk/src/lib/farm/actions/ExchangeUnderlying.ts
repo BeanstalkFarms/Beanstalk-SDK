@@ -61,7 +61,7 @@ export class ExchangeUnderlying extends StepClass {
         fromMode: this.fromMode,
         toMode: this.toMode
       },
-      encode: () => {
+      prepare: () => {
         if (context.data.slippage === undefined) throw new Error("Exchange: slippage required");
         const minAmountOut = Workflow.slip(amountOut!, context.data.slippage);
         ExchangeUnderlying.sdk.debug(`[${this.name}.encode()]`, {

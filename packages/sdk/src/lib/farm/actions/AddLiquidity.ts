@@ -90,7 +90,7 @@ export class AddLiquidity extends StepClass {
         fromMode: this._fromMode,
         toMode: this._toMode
       },
-      encode: () => {
+      prepare: () => {
         const minAmountOut = Workflow.slip(_amountInStep, context.data.slippage || 0);
         AddLiquidity.sdk.debug(`[${this.name}.encode()]`, {
           pool: this._pool,

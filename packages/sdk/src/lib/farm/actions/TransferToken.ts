@@ -25,7 +25,7 @@ export class TransferToken extends StepClass {
     return {
       name: this.name,
       amountOut: _amountInStep, // transfer exact amount
-      encode: () => {
+      prepare: () => {
         TransferToken.sdk.debug(`[${this.name}.encode()]`, {
           tokenIn: this._tokenIn,
           recipient: this._recipient,

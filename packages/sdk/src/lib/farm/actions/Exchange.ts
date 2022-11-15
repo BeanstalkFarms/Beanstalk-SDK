@@ -4,7 +4,7 @@ import { Token } from "src/classes/Token";
 import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
 
-export class Exchange extends StepClass {
+export class Exchange extends StepClass implements StepClass {
   public name: string = "exchange";
 
   constructor(
@@ -18,7 +18,7 @@ export class Exchange extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, context: RunContext): Promise<Step<string>> {
+  async run(_amountInStep: ethers.BigNumber, context: RunContext) {
     Exchange.sdk.debug(`[${this.name}.run()]`, {
       pool: this.pool,
       registry: this.registry,
@@ -95,16 +95,19 @@ export class Exchange extends StepClass {
           context
         });
         if (!minAmountOut) throw new Error("Exhange: missing minAmountOut");
-        return Exchange.sdk.contracts.beanstalk.interface.encodeFunctionData("exchange", [
-          this.pool,
-          this.registry,
-          tokenIn.address,
-          tokenOut.address,
-          _amountInStep,
-          minAmountOut,
-          this.fromMode,
-          this.toMode
-        ]);
+        return {
+          target: Exchange.sdk.contracts.beanstalk.address,
+          callData: Exchange.sdk.contracts.beanstalk.interface.encodeFunctionData("exchange", [
+            this.pool,
+            this.registry,
+            tokenIn.address,
+            tokenOut.address,
+            _amountInStep,
+            minAmountOut,
+            this.fromMode,
+            this.toMode
+          ])
+        };
       },
       decode: (data: string) => Exchange.sdk.contracts.beanstalk.interface.decodeFunctionData("exchange", data),
       decodeResult: (result: string) => Exchange.sdk.contracts.beanstalk.interface.decodeFunctionResult("exchange", result)

@@ -226,7 +226,7 @@ export async function roots_via_swap(token: ERC20Token, amount: TokenValue): Pro
       account, // owner
       sdk.contracts.beanstalk.address, // spender
       token, // bean
-      estBean.toBlockchain() // amount of beans
+      amount.toBlockchain() // amount of beans
     )
   );
   console.log("Signed a permit: ", permit);
