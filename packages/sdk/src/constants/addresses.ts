@@ -12,9 +12,9 @@ export const addresses = {
   // ----------------------------------------
   // Ecosystem Contracts
   // ----------------------------------------
-  PIPELINE: Address.make("0xb1b300007b05D708a4BBFE71aAF64fe0B27a0125"),
+  PIPELINE: Address.make("0xb1bE0000bFdcDDc92A8290202830C4Ef689dCeaa"),
   DEPOT: Address.make("0xDEb0f000082fD56C10f449d4f8497682494da84D"),
-  ROOT: Address.make("0x3d5965EB520E53CC1A6AEe3A44E5c1De406E028F"),
+  ROOT: Address.make("0x77700005BEA4DE0A78b956517f099260C2CA9a26"),
 
   // ----------------------------------------
   // BeaNFT Contracts

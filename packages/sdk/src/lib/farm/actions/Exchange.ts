@@ -19,7 +19,7 @@ export class Exchange extends StepClass implements StepClass<BasicPreparedResult
   }
 
   async run(_amountInStep: ethers.BigNumber, context: RunContext) {
-    Exchange.sdk.debug(`[${this.name}.run()]`, {
+    Exchange.sdk.debug(`>[${this.name}.run()]`, {
       pool: this.pool,
       registry: this.registry,
       tokenIn: this.tokenIn.symbol,
@@ -65,7 +65,7 @@ export class Exchange extends StepClass implements StepClass<BasicPreparedResult
     }
 
     if (!amountOut) throw new Error("No supported pool found");
-    Exchange.sdk.debug(`[${this.name}.run()]: amountout: ${amountOut.toString()}`);
+    // Exchange.sdk.debug(`[${this.name}.run()]: amountout: ${amountOut.toString()}`);
 
     return {
       name: this.name,
@@ -82,7 +82,7 @@ export class Exchange extends StepClass implements StepClass<BasicPreparedResult
       prepare: () => {
         if (context.data.slippage === undefined) throw new Error("Exchange: slippage required");
         const minAmountOut = Workflow.slip(amountOut!, context.data.slippage);
-        Exchange.sdk.debug(`[${this.name}.prepare()]`, {
+        Exchange.sdk.debug(`>[${this.name}.prepare()]`, {
           pool: this.pool,
           registry: this.registry,
           tokenIn: this.tokenIn.symbol,

@@ -10,13 +10,13 @@ export class WrapEth extends StepClass<BasicPreparedResult> {
   }
 
   async run(_amountInStep: ethers.BigNumber, context: RunContext) {
-    WrapEth.sdk.debug(`[${this.name}.run()]`, { toMode: this.toMode, _amountInStep, context });
+    WrapEth.sdk.debug(`>[${this.name}.run()]`, { toMode: this.toMode, _amountInStep, context });
     return {
       name: this.name,
       amountOut: _amountInStep, // amountInStep should be an amount of ETH.
       value: _amountInStep, // need to use this amount in the txn.
       prepare: () => {
-        WrapEth.sdk.debug(`[${this.name}.encode()]`, { toMode: this.toMode, _amountInStep, context });
+        WrapEth.sdk.debug(`>[${this.name}.prepare()]`, { toMode: this.toMode, _amountInStep, context });
         return {
           target: WrapEth.sdk.contracts.beanstalk.address,
           callData: WrapEth.sdk.contracts.beanstalk.interface.encodeFunctionData("wrapEth", [

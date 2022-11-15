@@ -21,11 +21,11 @@ import {
   Root__factory,
   Pipeline,
   Pipeline__factory,
-  BeanstalkFertilizer
+  BeanstalkFertilizer,
+  Depot__factory,
+  Depot
 } from "src/constants/generated";
 import { BaseContract } from "ethers";
-import { Depot__factory } from "src/constants/generated/factories/Depot__factory";
-import { Depot } from "src/constants/generated/Depot";
 
 type CurveContracts = {
   pools: {

@@ -19,6 +19,7 @@ export class AdvancedPipeWorkflow<RunData extends { slippage: number } = { slipp
   AdvancedPipePreparedResult, // PreparedResult
   RunData
 > {
+  public readonly FUNCTION_NAME = "advancedPipe";
   private contract: Beanstalk;
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "AdvancedPipe") {
@@ -40,7 +41,10 @@ export class AdvancedPipeWorkflow<RunData extends { slippage: number } = { slipp
   }
 
   encodeWorkflow() {
-    return this.contract.interface.encodeFunctionData("advancedPipe", [this.encodeSteps(), "0"]);
+    const steps = this.encodeSteps();
+    const encodedWorkflow = this.contract.interface.encodeFunctionData("advancedPipe", [steps, "0"]);
+    this.sdk.debug(`[Workflow][${this.name}][encodeWorkflow] RESULT`, encodedWorkflow);
+    return encodedWorkflow;
   }
 
   encodeStep(p: AdvancedPipePreparedResult): AdvancedPipeCallStruct {
@@ -84,7 +88,7 @@ export class AdvancedPipeWorkflow<RunData extends { slippage: number } = { slipp
     clipboard: string = Clipboard.encode([])
   ): Step<AdvancedPipePreparedResult> {
     return {
-      name: method.toString(),
+      name: `wrap<${method.toString()}>`,
       amountOut,
       prepare: () => ({
         target: contract.address,

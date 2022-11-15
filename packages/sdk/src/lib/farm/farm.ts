@@ -2,13 +2,12 @@ import { BeanstalkSDK } from "../BeanstalkSDK";
 import * as ActionLibrary from "./actions";
 import { LibraryPresets } from "./LibraryPresets";
 import { BasicPreparedResult, RunMode, Step, Workflow } from "src/classes/Workflow";
-import { Beanstalk } from "src/constants/generated";
+import { Beanstalk, Depot } from "src/constants/generated";
 import { TokenValue } from "src/TokenValue";
 import { ethers } from "ethers";
 import { AdvancedPipeWorkflow } from "src/lib/depot/pipe";
 import { AdvancedFarmCallStruct } from "src/constants/generated/Beanstalk/Beanstalk";
 import { Clipboard } from "src/lib/depot";
-import { Depot } from "src/constants/generated/Depot";
 
 type FarmPreparedResult = { callData: string };
 // export type FarmStep = Step<FarmPreparedResult>;
@@ -22,6 +21,7 @@ export class FarmWorkflow<RunData extends { slippage: number } = { slippage: num
   FarmPreparedResult, // PreparedResult
   RunData // RunData
 > {
+  public readonly FUNCTION_NAME = "farm";
   private contract: Beanstalk | Depot;
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "Farm", using: "beanstalk" | "depot" = "beanstalk") {
@@ -43,7 +43,10 @@ export class FarmWorkflow<RunData extends { slippage: number } = { slippage: num
   }
 
   encodeWorkflow() {
-    return this.contract.interface.encodeFunctionData("farm", [this.encodeSteps()]);
+    const steps = this.encodeSteps();
+    const encodedWorkflow = this.contract.interface.encodeFunctionData("farm", [steps]);
+    this.sdk.debug(`[Workflow][${this.name}][encodeWorkflow] RESULT`, encodedWorkflow);
+    return encodedWorkflow;
   }
 
   encodeStep(p: FarmPreparedResult): string {
@@ -83,6 +86,7 @@ export class AdvancedFarmWorkflow<RunData extends { slippage: number } = { slipp
   AdvancedFarmPreparedResult,
   RunData
 > {
+  public readonly FUNCTION_NAME = "advancedFarm";
   private contract: Beanstalk;
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "Farm") {
@@ -104,7 +108,7 @@ export class AdvancedFarmWorkflow<RunData extends { slippage: number } = { slipp
   }
 
   encodeWorkflow() {
-    return this.contract.interface.encodeFunctionData("advancedFarm", [this.encodeSteps()]);
+    return this.contract.interface.encodeFunctionData(this.FUNCTION_NAME, [this.encodeSteps()]);
   }
 
   encodeStep(p: AdvancedFarmPreparedResult): AdvancedFarmCallStruct {
@@ -147,8 +151,8 @@ export class Farm {
     this.presets = new LibraryPresets(Farm.sdk);
   }
 
-  create<T = Record<string, any>>(name?: string): FarmWorkflow<{ slippage: number } & T> {
-    return new FarmWorkflow(Farm.sdk, name);
+  create<T = Record<string, any>>(name?: string, using: "beanstalk" | "depot" = "beanstalk"): FarmWorkflow<{ slippage: number } & T> {
+    return new FarmWorkflow(Farm.sdk, name, using);
   }
 
   /**

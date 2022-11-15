@@ -18,7 +18,7 @@ export class ExchangeUnderlying extends StepClass<BasicPreparedResult> {
   }
 
   async run(_amountInStep: ethers.BigNumber, context: RunContext) {
-    ExchangeUnderlying.sdk.debug(`[${this.name}.run()]`, {
+    ExchangeUnderlying.sdk.debug(`>[${this.name}.run()]`, {
       pool: this.pool,
       tokenIn: this.tokenIn.symbol,
       tokenOut: this.tokenOut.symbol,
@@ -64,7 +64,7 @@ export class ExchangeUnderlying extends StepClass<BasicPreparedResult> {
       prepare: () => {
         if (context.data.slippage === undefined) throw new Error("Exchange: slippage required");
         const minAmountOut = Workflow.slip(amountOut!, context.data.slippage);
-        ExchangeUnderlying.sdk.debug(`[${this.name}.prepare()]`, {
+        ExchangeUnderlying.sdk.debug(`>[${this.name}.prepare()]`, {
           pool: this.pool,
           tokenIn: tokenIn.symbol,
           tokenOut: tokenOut.symbol,

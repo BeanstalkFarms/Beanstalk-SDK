@@ -210,6 +210,8 @@ export abstract class Workflow<
   PreparedResult extends BasicPreparedResult = BasicPreparedResult, // the value returned from prepare() in each step
   RunData extends Record<string, any> = {} // RunData passed into context
 > {
+  abstract readonly FUNCTION_NAME: string;
+
   //
   protected _generators: (StepGenerator<PreparedResult> | Workflow<PreparedResult>)[] = [];
   protected _options: (StepGeneratorOptions | null)[] = [];
@@ -403,6 +405,7 @@ export abstract class Workflow<
     const run = async (i: number, label: "estimate" | "estimateReversed") => {
       const generator = this._generators[i];
       const options = this._options[i];
+      const prefix = `[Workflow][${this.name}][${label}][${i}: ${generator.name || "<unknown>"}]`;
 
       // If this step is not skipped, this is the position
       // in the current `_steps` at which it will reside.
@@ -418,29 +421,29 @@ export abstract class Workflow<
         }
       };
 
-      const skip =
-        // Don't build this step if it should only be built during execution, and we're
-        // in a non-static context. (All steps must be built for `execute`, `estimateGas`, and
-        // `callStatic`).
-        (options?.onlyExecute === true && this.isStaticRunMode(context.runMode) === false) ||
-        // If `options.skip` is true, skip.
-        // If `options.skip` is a function, call it and skip if the return value is true.
-        (options?.skip ? (typeof options.skip === "function" ? await options.skip(nextAmount, context) : options.skip) : false);
+      // Don't build this step if it should only be built during execution, and we're
+      // in a non-static context. (All steps must be built for `execute`, `estimateGas`, and
+      // `callStatic`).
+      const onlyExecute = options?.onlyExecute === true && this.isStaticRunMode(context.runMode) === false;
 
-      if (skip) {
-        this.sdk.debug(`[Workflow][${this.name}][${label}][${i}: ${generator.name || "<unknown>"}] skipping`);
+      // If `options.skip` is true, skip.
+      // If `options.skip` is a function, call it and skip if the return value is true.
+      const skip = options?.skip ? (typeof options.skip === "function" ? await options.skip(nextAmount, context) : options.skip) : false;
+
+      if (onlyExecute || skip) {
+        this.sdk.debug(`${prefix} SKIP`, { onlyExecute, skip });
       } else {
+        this.sdk.debug(`${prefix} BUILD`);
         const step = await this.buildStep(generator, nextAmount, context);
         nextAmount = step.amountOut;
 
         // use stepIndex from before `buildStep()`
         if (options?.tag) this.addTag(options.tag, stepIndex);
 
-        this.sdk.debug(
-          `[Workflow][${this.name}][${label}][${i}: ${step.name || "<unknown>"}]`,
-          step.amountOut.toString(),
-          step.value?.toString() || 0
-        );
+        this.sdk.debug(prefix, "RESULT", {
+          amountOut: step.amountOut.toString(),
+          value: step.value?.toString() || "0"
+        });
       }
     };
 
@@ -502,8 +505,9 @@ export abstract class Workflow<
    * @fixme collapse `runMode` and `data` into one struct?
    */
   protected async estimateAndEncodeSteps(amountIn: ethers.BigNumber | TokenValue, runMode: RunMode, data: RunData) {
-    this.sdk.debug(`[Workflow._estimateAndEncodeSteps()]`, { amountIn, runMode, data });
+    this.sdk.debug(`[Workflow][${this.name}][estimateAndEncodeSteps] building...`, { amountIn, runMode, data });
     await this.buildSteps(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn, { runMode, data });
+    this.sdk.debug(`[Workflow][${this.name}][estimateAndEncodeSteps] encoding...`, { count: this._steps.length });
     return this.encodeSteps();
   }
 
@@ -524,7 +528,9 @@ export abstract class Workflow<
    */
   protected encodeSteps() {
     if (this._steps.length === 0) throw new Error("Work: must run estimate() before encoding");
-    return this._steps.map((step) => this.encodeStep(step.prepare()));
+    const encodedSteps = this._steps.map((step) => this.encodeStep(step.prepare()));
+    this.sdk.debug(`[Workflow][${this.name}][encodeSteps] RESULT`, encodedSteps);
+    return encodedSteps;
   }
 
   /**
