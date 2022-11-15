@@ -142,10 +142,29 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
     }
   );
 
+  pipe.add(
+    async function getBalance() {
+      return {
+        target: sdk.contracts.beanstalk.address,
+        callData: sdk.contracts.beanstalk.interface.encodeFunctionData("getExternalBalance", [
+          sdk.contracts.pipeline.address,
+          sdk.tokens.BEAN.address
+        ])
+      };
+    },
+    { tag: "balanceOfBean" }
+  );
+
   ////////// Deposit into Silo //////////
 
-  pipe.add(async function deposit(amountInStep, test) {
-    return pipe.wrap(sdk.contracts.beanstalk, "deposit", [depositToken.address, amountInStep, FarmFromMode.EXTERNAL], amountInStep);
+  pipe.add(async function deposit(amountInStep, context) {
+    return pipe.wrap(
+      sdk.contracts.beanstalk,
+      "deposit",
+      [/* 0 */ depositToken.address, /* 1 */ amountInStep, /* 2 */ FarmFromMode.EXTERNAL],
+      amountInStep, // pass-thru
+      Clipboard.encodeSlot(context.step.findTag("balanceOfBean"), 0, 1)
+    );
   });
 
   ////////// Mint ROOT //////////
@@ -194,20 +213,17 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
             {
               token: depositToken.address,
               seasons: [currentSeason],
-              amounts: [amountInStep]
+              amounts: ["0"] // overwritten by Clipboard
             }
           ],
-          FarmToMode.EXTERNAL,
-          Workflow.slip(amountOutRoot, context.data.slippage || 0)
+          FarmToMode.EXTERNAL, // deliver to EXTERNAL
+          Workflow.slip(amountOutRoot, context.data.slippage || 0) // minRootsOut
         ] as Parameters<typeof sdk.contracts.root["mint"]>,
-        amountOutRoot // pass to next step
+        amountOutRoot, // pass to next step
+        Clipboard.encodeSlot(context.step.findTag("balanceOfBean"), 0, 11) // slot 11 = `amounts[0]`
       );
     },
-    {
-      // Need to tag this because the "approve" step depends on the
-      // amountOut from this step, and may be skipped.
-      tag: "mint"
-    }
+    { tag: "mint" }
   );
 
   ////////// Transfer ROOT back to ACCOUNT //////////
@@ -217,7 +233,7 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
       pipe.wrap(
         sdk.tokens.ROOT.getContract(),
         "approve",
-        [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
+        [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256], // FIXME: copy prev
         amountInStep // pass-thru
       ),
     {
@@ -229,6 +245,11 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
   );
 
   pipe.add(function unloadPipeline(amountInStep, context) {
+    sdk.debug(
+      `\n\n\tUnloading estimated ${amountInStep.toString()} from PIPELINE -> ACCOUNT using data from step index = ${context.step.findTag(
+        "mint"
+      )} \n\n`
+    );
     return pipe.wrap(
       sdk.contracts.beanstalk,
       "transferToken",
@@ -315,11 +336,11 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
 
 (async () => {
   //await (await (sdk.tokens.USDC as ERC20Token).approve(sdk.contracts.beanstalk.address, sdk.tokens.USDC.amount(101).toBigNumber())).wait();
-  const tokenIn = sdk.tokens.WETH;
-  const amountIn = tokenIn.amount(1);
+  const tokenIn = sdk.tokens.DAI;
+  const amountIn = tokenIn.amount(100);
 
-  await test.setWETHBalance(account, amountIn);
-  await sdk.tokens.WETH.approve(sdk.contracts.beanstalk.address, amountIn.toBigNumber()).then((r) => r.wait());
+  await test.setDAIBalance(account, amountIn);
+  await sdk.tokens.DAI.approve(sdk.contracts.beanstalk.address, amountIn.toBigNumber()).then((r) => r.wait());
   // await test.setDAIBalance(account, amountIn);
 
   console.log(`Approved and set initial balance to ${amountIn.toHuman()} ${tokenIn.symbol}.`);

@@ -87,6 +87,13 @@ export class AdvancedPipeWorkflow<RunData extends { slippage: number } = { slipp
     amountOut: ethers.BigNumber,
     clipboard: string = Clipboard.encode([])
   ): Step<AdvancedPipePreparedResult> {
+    this.sdk.debug(`[Workflow][${this.name}][wrap]`, {
+      contract: `${contract.address} ${contract.constructor.name}`,
+      method,
+      args,
+      clipboard,
+      amountOut
+    });
     return {
       name: `wrap<${method.toString()}>`,
       amountOut,

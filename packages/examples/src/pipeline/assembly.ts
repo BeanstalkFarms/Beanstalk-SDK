@@ -22,13 +22,13 @@ function splitEncoded(hexstr: string) {
     // strip 0x, grab first 4 bytes (function selector)
     // function selector doesn't have padding
     hexstr.slice(2, 2 + 8),
-    ...split32(hexstr.slice(10, hexstr.length)),
+    ...split32(hexstr.slice(10, hexstr.length))
   ];
   return [
     // prepend with 32 byte padded hex containing
     // the length of the following `lines`
     lines.length.toString(16).padStart(64, "0"),
-    ...lines,
+    ...lines
   ];
 }
 
@@ -56,7 +56,13 @@ function displayAssembly<C extends ethers.Contract, N extends keyof C["functions
   console.log("* Note: 32 bytes of hex data = 64 hex digits.");
   console.log("");
 
-  console.log("idx".padEnd(5, " "), "start".padEnd(5, " "), "bytes".padEnd(64, " "), "hex".padEnd(16, " "), "value".padEnd(16, " "));
+  console.log(
+    "idx".padEnd(5, " "),
+    /*"slot".padEnd(6, " "),*/ "start".padEnd(5, " "),
+    "bytes".padEnd(64, " "),
+    "hex".padEnd(16, " "),
+    "value".padEnd(16, " ")
+  );
   console.log("".padEnd(5, "-"), "".padEnd(5, "-"), "".padEnd(64, "-"), "".padEnd(16, "-"), "".padEnd(16, "-"));
 
   splitEncoded(data).forEach((s, i) => {
@@ -78,26 +84,22 @@ function displayAssembly<C extends ethers.Contract, N extends keyof C["functions
 
 // ----
 
-// displayAssembly(sdk.contracts.root, "mint", [
-//   [
-//     {
-//       amounts: [sdk.tokens.BEAN.amount(100).toBlockchain()],
-//       token: sdk.tokens.BEAN.address,
-//       seasons: ["6075"],
-//     },
-//     {
-//       token: sdk.tokens.BEAN_CRV3_LP.address,
-//       seasons: ["6075"],
-//       amounts: [sdk.tokens.BEAN_CRV3_LP.amount(500).toBlockchain()],
-//     },
-//   ],
-//   FarmToMode.INTERNAL,
-// ]);
-
-displayAssembly(sdk.contracts.beanstalk, "transferToken", [
-  sdk.contracts.root.address,
-  account,
-  "1", // amount - will be overwritten by advancedData
-  FarmFromMode.EXTERNAL, // pipeline holds in external
-  FarmFromMode.INTERNAL, // farmer wants in their internal
+displayAssembly(sdk.contracts.root, "mint", [
+  [
+    {
+      token: sdk.tokens.BEAN.address,
+      seasons: ["6075"],
+      amounts: [sdk.tokens.BEAN.amount(100).toBlockchain()]
+    }
+  ],
+  FarmToMode.EXTERNAL, // from
+  sdk.tokens.ROOT.amount(90).toBlockchain() // minRootsOut
 ]);
+
+// displayAssembly(sdk.contracts.beanstalk, "transferToken", [
+//   sdk.contracts.root.address,
+//   account,
+//   "1", // amount - will be overwritten by advancedData
+//   FarmFromMode.EXTERNAL, // pipeline holds in external
+//   FarmFromMode.INTERNAL, // farmer wants in their internal
+// ]);
