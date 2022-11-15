@@ -35,43 +35,49 @@ export class LibraryPresets {
 
     // give beanstalk permission to send this ERC-20 token from my balance -> pipeline
     if (_permit) {
-      generators.push(async function permitERC20(_amountInStep: ethers.BigNumber, context: RunContext) {
-        const permit = typeof _permit === "function" ? _permit(context) : _permit;
-        const owner = await LibraryPresets.sdk.getAccount();
-        const spender = LibraryPresets.sdk.contracts.beanstalk.address;
+      if (_from === FarmFromMode.EXTERNAL) {
+        generators.push(async function permitERC20(_amountInStep: ethers.BigNumber, context: RunContext) {
+          const permit = typeof _permit === "function" ? _permit(context) : _permit;
+          const owner = await LibraryPresets.sdk.getAccount();
+          const spender = LibraryPresets.sdk.contracts.beanstalk.address;
 
-        LibraryPresets.sdk.debug(`[permitERC20.run()]`, {
-          token: _token.address,
-          owner: owner,
-          spender: spender,
-          value: _amountInStep.toString(),
-          permit: permit
+          LibraryPresets.sdk.debug(`[permitERC20.run()]`, {
+            token: _token.address,
+            owner: owner,
+            spender: spender,
+            value: _amountInStep.toString(),
+            permit: permit
+          });
+
+          return {
+            target: LibraryPresets.sdk.contracts.beanstalk.address,
+            callData: LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [
+              _token.address, // token address
+              owner, // owner
+              spender, // spender
+              _amountInStep.toString(), // value
+              permit.typedData.message.deadline, // deadline
+              permit.split.v,
+              permit.split.r,
+              permit.split.s
+            ])
+          };
         });
-
-        return {
-          target: LibraryPresets.sdk.contracts.beanstalk.address,
-          callData: LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [
-            _token.address, // token address
-            owner, // owner
-            spender, // spender
-            _amountInStep.toString(), // value
-            permit.typedData.message.deadline, // deadline
-            permit.split.v,
-            permit.split.r,
-            permit.split.s
-          ])
-        };
-      });
+      } else {
+        throw new Error(`Permit provided for FarmFromMode that does not yet support permits: ${_from}`);
+      }
     }
 
-    // transfer erc20 token from beanstalk -> pipeline
+    // transfer erc20 token from msg.sender -> PIPELINE
     generators.push(async function transferToken(_amountInStep: ethers.BigNumber) {
       const recipient = LibraryPresets.sdk.contracts.pipeline.address;
 
       LibraryPresets.sdk.debug(`[transferToken.run()]`, {
         token: _token.address,
         recipient,
-        value: _amountInStep.toString()
+        amount: _amountInStep.toString(),
+        from: _from,
+        to: FarmToMode.EXTERNAL
       });
 
       return {

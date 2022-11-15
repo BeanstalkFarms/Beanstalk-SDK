@@ -29,7 +29,16 @@ export class PermitERC20 extends StepClass<BasicPreparedResult> {
       amountOut: _amountInStep,
       value: ethers.BigNumber.from(0),
       prepare: () => {
-        // PermitERC20.sdk.debug(`[${this.name}.prepare()]`, {});
+        PermitERC20.sdk.debug(`>[${this.name}.prepare()]`, {
+          address: this.token.address, // token address
+          owner, // owner
+          spender: this.spender, // spender
+          amount: _amountInStep.toString(), // value
+          deadline: permit.typedData.message.deadline, // deadline
+          v: permit.split.v,
+          r: permit.split.r,
+          s: permit.split.s
+        });
         return {
           target: PermitERC20.sdk.contracts.beanstalk.address,
           callData: PermitERC20.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [

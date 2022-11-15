@@ -19,7 +19,14 @@ const hasEnoughExternalAllowance = async (_token: Token, _account: string, _spen
   if (_token instanceof NativeToken) return true; // FIXME: ERC1155
   if (!(_token instanceof ERC20Token)) throw new Error("Unsupported token type");
   const allowance = await (_token as ERC20Token).getAllowance(_account, _spender);
-  return allowance.toBigNumber().gte(_amount);
+  const hasEnough = allowance.toBigNumber().gte(_amount);
+  console.log(
+    `hasEnoughExternalAllowance for ${_token.symbol} ${_account} ${_spender}`,
+    allowance.toBlockchain(),
+    _amount.toString(),
+    hasEnough
+  );
+  return hasEnough;
 };
 
 /**
@@ -60,7 +67,7 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
 
   const depositToken = sdk.tokens.BEAN;
   const swapTo = FarmToMode.INTERNAL;
-  const loadPipelineFrom = FarmFromMode.INTERNAL;
+  const loadPipelineFrom = FarmFromMode.INTERNAL_TOLERANT;
 
   // Swap from `inputToken` -> `depositToken` (BEAN)
   // If `swapDestination = INTERNAL`, and this is called via `beanstalk.farm()`,
@@ -267,16 +274,14 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
 
   const ready = await hasEnoughExternalAllowance(inputToken, account, sdk.contracts.beanstalk.address, amountIn);
   if (!ready) {
-    permit = await sdk.permit.sign(
-      account,
-      sdk.tokens.permitERC2612(
-        account, // owner
-        sdk.contracts.beanstalk.address, // spender
-        inputToken as ERC20Token, // inputToken
-        amountIn.toString() // amount
-      )
+    const data = await sdk.tokens.permitERC2612(
+      account, // owner
+      sdk.contracts.beanstalk.address, // spender
+      inputToken as ERC20Token, // inputToken
+      amountIn.toString() // amount
     );
-    console.log("Signed a permit: ", permit);
+    permit = await sdk.permit.sign(account, data);
+    console.log("Signed a permit: ", JSON.stringify(data, null, 2), permit);
   }
 
   const txn = await farm.execute(amountIn, {
@@ -290,17 +295,19 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
 
   Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
 
-  const accountBalanceOfBEAN = await sdk.tokens.getBalance(sdk.tokens.BEAN);
+  const accountBalanceOfINPUT = await sdk.tokens.getBalance(inputToken);
+  const accountBalanceOfDEPOSIT = await sdk.tokens.getBalance(depositToken);
   const accountBalanceOfROOT = await sdk.tokens.getBalance(sdk.tokens.ROOT);
-  const pipelineBalanceOfBEAN = await sdk.tokens.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address);
+  const pipelineBalanceOfDEPOSIT = await sdk.tokens.getBalance(depositToken, sdk.contracts.pipeline.address);
   const pipelineBalanceOfROOT = await sdk.tokens.getBalance(sdk.tokens.ROOT, sdk.contracts.pipeline.address);
   const pipelineSiloBalance = await sdk.silo.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address, { source: DataSource.LEDGER });
 
-  console.log(`(1) BEAN balance for Account :`, accountBalanceOfBEAN.total.toHuman());
+  console.log(`(0) ${inputToken.symbol} balance for Account :`, accountBalanceOfINPUT.total.toHuman());
+  console.log(`(1) ${depositToken.symbol} balance for Account :`, accountBalanceOfDEPOSIT.total.toHuman());
   console.log(`(2) ROOT balance for Account :`, accountBalanceOfROOT.total.toHuman());
-  console.log(`(3) BEAN balance for Pipeline:`, pipelineBalanceOfBEAN.total.toHuman());
+  console.log(`(3) ${depositToken.symbol} balance for Pipeline:`, pipelineBalanceOfDEPOSIT.total.toHuman());
   console.log(`(4) ROOT balance for Pipeline:`, pipelineBalanceOfROOT.total.toHuman());
-  console.log("(5) BEAN deposits in Pipeline:", pipelineSiloBalance.deposited.crates.length);
+  console.log(`(5) ${depositToken.symbol} deposits in Pipeline:`, pipelineSiloBalance.deposited.crates.length);
   console.log(` ^ 3-5 should be 0 if Pipeline was properly unloaded.`);
 
   return accountBalanceOfROOT;
@@ -308,8 +315,14 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
 
 (async () => {
   //await (await (sdk.tokens.USDC as ERC20Token).approve(sdk.contracts.beanstalk.address, sdk.tokens.USDC.amount(101).toBigNumber())).wait();
-  const tokenIn = sdk.tokens.ETH;
+  const tokenIn = sdk.tokens.WETH;
   const amountIn = tokenIn.amount(1);
-  // await test[`set${tokenIn.symbol}Balance`](account, amountIn);
+
+  await test.setWETHBalance(account, amountIn);
+  await sdk.tokens.WETH.approve(sdk.contracts.beanstalk.address, amountIn.toBigNumber()).then((r) => r.wait());
+  // await test.setDAIBalance(account, amountIn);
+
+  console.log(`Approved and set initial balance to ${amountIn.toHuman()} ${tokenIn.symbol}.`);
+
   await roots_via_swap(tokenIn, amountIn);
 })();
