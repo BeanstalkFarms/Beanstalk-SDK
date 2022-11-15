@@ -53,7 +53,9 @@ describe("Workflow", () => {
             // instanceof StepFunction (returns Step<EncodedData>)
             name: "call3",
             amountOut: ethers.BigNumber.from(0),
-            prepare: () => "0xCALLDATA2",
+            prepare: () => ({
+              callData: "0xCALLDATA2"
+            }),
             decode: () => undefined,
             decodeResult: () => undefined
           })

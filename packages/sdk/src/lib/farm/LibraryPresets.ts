@@ -1,12 +1,15 @@
 import { ethers } from "ethers";
 import { ERC20Token } from "src/classes/Token";
-import { RunContext, StepGenerator } from "src/classes/Workflow";
+import { BasicPreparedResult, RunContext, StepGenerator } from "src/classes/Workflow";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { FarmFromMode, FarmToMode } from "../farm/types";
 import { EIP2612PermitMessage, SignedPermit } from "../permit";
 import { Exchange, ExchangeUnderlying } from "./actions/index";
 
-export type ActionBuilder = (fromMode?: FarmFromMode, toMode?: FarmToMode) => StepGenerator<string> | StepGenerator<string>[];
+export type ActionBuilder = (
+  fromMode?: FarmFromMode,
+  toMode?: FarmToMode
+) => StepGenerator<BasicPreparedResult> | StepGenerator<BasicPreparedResult>[];
 
 export class LibraryPresets {
   static sdk: BeanstalkSDK;
@@ -19,10 +22,6 @@ export class LibraryPresets {
 
   /**
    * Load the Pipeline in preparation for a set Pipe actions.
-   * @
-   */
-
-  /**
    * @param _permit provide a permit directly, or provide a function to extract it from `context`.
    */
   public loadPipeline(
@@ -49,16 +48,19 @@ export class LibraryPresets {
           permit: permit
         });
 
-        return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [
-          _token.address, // token address
-          owner, // owner
-          spender, // spender
-          _amountInStep.toString(), // value
-          permit.typedData.message.deadline, // deadline
-          permit.split.v,
-          permit.split.r,
-          permit.split.s
-        ]);
+        return {
+          target: LibraryPresets.sdk.contracts.beanstalk.address,
+          callData: LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [
+            _token.address, // token address
+            owner, // owner
+            spender, // spender
+            _amountInStep.toString(), // value
+            permit.typedData.message.deadline, // deadline
+            permit.split.v,
+            permit.split.r,
+            permit.split.s
+          ])
+        };
       });
     }
 
@@ -72,13 +74,16 @@ export class LibraryPresets {
         value: _amountInStep.toString()
       });
 
-      return LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("transferToken", [
-        _token.address, // token
-        recipient, // recipient
-        _amountInStep.toString(), // amount
-        _from, // from
-        FarmToMode.EXTERNAL // to
-      ]);
+      return {
+        target: LibraryPresets.sdk.contracts.beanstalk.address,
+        callData: LibraryPresets.sdk.contracts.beanstalk.interface.encodeFunctionData("transferToken", [
+          _token.address, // token
+          recipient, // recipient
+          _amountInStep.toString(), // amount
+          _from, // from
+          FarmToMode.EXTERNAL // to
+        ])
+      };
     });
 
     return generators;

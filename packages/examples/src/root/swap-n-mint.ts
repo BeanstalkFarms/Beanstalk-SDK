@@ -36,7 +36,7 @@ import { sdk, test, account } from "../setup";
  * 5. `yarn x ./src/root/from-circulating.ts`
  *
  */
-export async function roots_via_swap(token: ERC20Token, amount: TokenValue): Promise<TokenBalance> {
+export async function roots_via_swap(token: Token, amount: TokenValue): Promise<TokenBalance> {
   // setup
   const account = await sdk.getAccount();
   console.log("Using account:", account);
@@ -52,8 +52,8 @@ export async function roots_via_swap(token: ERC20Token, amount: TokenValue): Pro
   const depositToken = sdk.tokens.BEAN;
   const swap = sdk.swap.buildSwap(token, depositToken, account, FarmFromMode.EXTERNAL, FarmToMode.EXTERNAL);
 
-  const estBean = await swap.estimate(amount);
-  console.log(`Swap Estimate: ${amount.toHuman()} ${token.symbol} --> ${estBean.toHuman()} BEAN`);
+  const amountFromSwap = await swap.estimate(amount);
+  console.log(`Swap Estimate: ${amount.toHuman()} ${token.symbol} --> ${amountFromSwap.toHuman()} BEAN`);
 
   // farm
   const farm = swap.getFarm() as FarmWorkflow<{
@@ -199,7 +199,7 @@ export async function roots_via_swap(token: ERC20Token, amount: TokenValue): Pro
     );
   });
 
-  farm.add(pipe);
+  // farm.add(pipe);
 
   console.log("\n\nEstimating...");
   const amountIn = amount.toBigNumber();
@@ -225,8 +225,8 @@ export async function roots_via_swap(token: ERC20Token, amount: TokenValue): Pro
     sdk.tokens.permitERC2612(
       account, // owner
       sdk.contracts.beanstalk.address, // spender
-      token, // bean
-      amount.toBlockchain() // amount of beans
+      depositToken, // token
+      amountFromSwap.toBlockchain() // amount
     )
   );
   console.log("Signed a permit: ", permit);
@@ -258,7 +258,8 @@ export async function roots_via_swap(token: ERC20Token, amount: TokenValue): Pro
 }
 
 (async () => {
-  await test.setUSDCBalance(account, sdk.tokens.USDC.amount(101));
-  console.log(await (await sdk.tokens.getBalance(sdk.tokens.USDC)).total.toHuman());
-  await roots_via_swap(sdk.tokens.USDC, sdk.tokens.USDC.amount(100));
+  await roots_via_swap(sdk.tokens.ETH, sdk.tokens.ETH.amount(1));
+  // await test.setUSDCBalance(account, sdk.tokens.USDC.amount(101));
+  // console.log(await (await sdk.tokens.getBalance(sdk.tokens.USDC)).total.toHuman());
+  // await roots_via_swap(sdk.tokens.USDC, sdk.tokens.USDC.amount(100));
 })();

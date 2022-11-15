@@ -1,10 +1,10 @@
 import { ethers } from "ethers";
-import { RunContext, RunMode, Step, StepClass, Workflow } from "src/classes/Workflow";
+import { BasicPreparedResult, RunContext, RunMode, Step, StepClass, Workflow } from "src/classes/Workflow";
 import { Token } from "src/classes/Token";
 import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
 
-export class Exchange extends StepClass implements StepClass {
+export class Exchange extends StepClass implements StepClass<BasicPreparedResult> {
   public name: string = "exchange";
 
   constructor(
@@ -79,10 +79,10 @@ export class Exchange extends StepClass implements StepClass {
         fromMode: this.fromMode,
         toMode: this.toMode
       },
-      encode: () => {
+      prepare: () => {
         if (context.data.slippage === undefined) throw new Error("Exchange: slippage required");
         const minAmountOut = Workflow.slip(amountOut!, context.data.slippage);
-        Exchange.sdk.debug(`[${this.name}.encode()]`, {
+        Exchange.sdk.debug(`[${this.name}.prepare()]`, {
           pool: this.pool,
           registry: this.registry,
           tokenIn: this.tokenIn.symbol,

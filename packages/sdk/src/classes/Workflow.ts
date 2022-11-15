@@ -7,12 +7,12 @@ import { TokenValue } from "src/TokenValue";
  *
  */
 export type BasicPreparedResult = {
+  /** Pipe calls have `target` */
+  target?: string;
   /** All results have `callData` */
   callData: string;
   /** AdvancedFarm, AdvancedPipe have `clipboard` */
   clipboard?: string;
-  /** Pipe calls have `target` */
-  target?: string;
 };
 
 /**
@@ -60,7 +60,7 @@ export type RunContext<RunData extends Record<string, any> = { [key: string]: an
  *    b. provides functions to encode & decode the Step when
  *       preparing it within a transaction like `farm()`.
  */
-export type StepGenerator<E extends BasicPreparedResult = BasicPreparedResult> = StepClass<E> | StepFunction<E>;
+export type StepGenerator<P extends BasicPreparedResult = BasicPreparedResult> = StepClass<P> | StepFunction<P>;
 
 /**
  * A StepClass is a type of StepGenerator. It wraps a `run()` function
@@ -72,7 +72,7 @@ export type StepGenerator<E extends BasicPreparedResult = BasicPreparedResult> =
  * Unlke StepFunction, the `run()` function must return a Step and not
  * raw encoded data.
  */
-export abstract class StepClass<E extends BasicPreparedResult = BasicPreparedResult> {
+export abstract class StepClass<P extends BasicPreparedResult = BasicPreparedResult> {
   static sdk: BeanstalkSDK;
   name: string;
 
@@ -80,7 +80,7 @@ export abstract class StepClass<E extends BasicPreparedResult = BasicPreparedRes
     StepClass.sdk = sdk;
   }
 
-  abstract run(_amountInStep: ethers.BigNumber, context: RunContext): Promise<Step<E>>;
+  abstract run(_amountInStep: ethers.BigNumber, context: RunContext): Promise<Step<P>>;
 }
 
 /**
@@ -96,23 +96,23 @@ export abstract class StepClass<E extends BasicPreparedResult = BasicPreparedRes
  * () => '0xCALLDATA' // in this case, EncodedResult = string.
  * ```
  */
-export type StepFunction<E extends BasicPreparedResult = BasicPreparedResult> = (
+export type StepFunction<P extends BasicPreparedResult = BasicPreparedResult> = (
   amountIn: ethers.BigNumber,
   context: RunContext
 ) =>
-  | (E | Step<E>) // synchronous
-  | Promise<E | Step<E>>; // asynchronous
+  | (string | P | Step<P>) // synchronous
+  | Promise<string | P | Step<P>>; // asynchronous
 
 /**
  * A Step represents one pre-estimated Ethereum function call
  * which can be encoded and executed on-chain.
  */
-export type Step<E extends BasicPreparedResult> = {
+export type Step<P extends BasicPreparedResult> = {
   name: string;
   amountOut: ethers.BigNumber;
   value?: ethers.BigNumber;
   data?: any;
-  prepare: () => E;
+  prepare: () => P;
   decode: (data: string) => undefined | Record<string, any>;
   decodeResult: (result: any) => undefined | ethers.utils.Result;
   print?: (result: any) => string;
@@ -122,10 +122,10 @@ export type Step<E extends BasicPreparedResult> = {
  * StepGenerators contains all types that are can be passed
  * to a Workflow via `.add()`.
  */
-type StepGenerators<E extends BasicPreparedResult = BasicPreparedResult> =
-  | StepGenerator<E> // Add a StepGenerator.
+type StepGenerators<P extends BasicPreparedResult = BasicPreparedResult> =
+  | StepGenerator<P> // Add a StepGenerator.
   | Workflow<any> // Add another Workflow.
-  | StepGenerators<E>[]; // Recurse (allows nesting & arrays).
+  | StepGenerators<P>[]; // Recurse (allows nesting & arrays).
 
 /**
  * StepGeneratorOptions define how a StepGenerator should be treated during the build process.
@@ -299,12 +299,23 @@ export abstract class Workflow<
       } else {
         // This input is a StepFunction.
         // We call the function directly and investigate the shape of its return value.
-        const fnResult = (await input.call(this, amountInStep, context)) as Step<PreparedResult> | PreparedResult;
+        const fnResult = (await input.call(this, amountInStep, context)) as Step<PreparedResult> | PreparedResult | string;
 
         // If the StepFunction returns an object with `.encode()` function,
         // we assume the object itself is a Step.
         if (typeof (fnResult as Step<PreparedResult>)?.prepare === "function") {
           step = fnResult as Step<PreparedResult>;
+        } else if (typeof fnResult === "string") {
+          step = {
+            name: input.name || "<unknown>",
+            amountOut: amountInStep, // propagate amountOut
+            prepare: () =>
+              ({
+                callData: fnResult
+              } as PreparedResult), // ?
+            decode: () => undefined, //
+            decodeResult: () => undefined //
+          };
         }
 
         // Otherwise, it's the EncodedResult (could be a string or a struct),
