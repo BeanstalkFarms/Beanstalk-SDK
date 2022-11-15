@@ -209,8 +209,8 @@ export abstract class Workflow<EncodedResult extends any = string, RunData exten
     return copy;
   }
 
-  get generators(): Readonly<(StepGenerator<EncodedResult> | Workflow<EncodedResult>)[]> {
-    return Object.freeze([...this._generators]);
+  get generators(): (StepGenerator<EncodedResult> | Workflow<EncodedResult>)[] {
+    return [...this._generators];
   }
 
   get length(): number {

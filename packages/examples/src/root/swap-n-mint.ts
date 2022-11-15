@@ -56,13 +56,10 @@ export async function roots_via_swap(token: ERC20Token, amount: TokenValue): Pro
   console.log(`Swap Estimate: ${amount.toHuman()} ${token.symbol} --> ${estBean.toHuman()} BEAN`);
 
   // farm
-  const farm = swap.getFarm() as FarmWorkflow<{
-    slippage: number;
-    permit: any;
-  }>;
+  console.log("\n\nBuilding Farm...");
+  const farm = sdk.farm.create<{ permit: any }>("Swap And Mint");
+  farm.add(swap.getFarm().generators);
   const pipe = sdk.farm.createAdvancedPipe();
-
-  console.log("\n\nBuilding...");
 
   farm.add(
     // returns an array with 1 StepGenerator if no permit, 2 StepGenerators if permit
@@ -226,7 +223,7 @@ export async function roots_via_swap(token: ERC20Token, amount: TokenValue): Pro
       account, // owner
       sdk.contracts.beanstalk.address, // spender
       token, // bean
-      estBean.toBlockchain() // amount of beans
+      amount.toBlockchain() // amount of beans
     )
   );
   console.log("Signed a permit: ", permit);
@@ -258,7 +255,9 @@ export async function roots_via_swap(token: ERC20Token, amount: TokenValue): Pro
 }
 
 (async () => {
-  await test.setUSDCBalance(account, sdk.tokens.USDC.amount(101));
-  console.log(await (await sdk.tokens.getBalance(sdk.tokens.USDC)).total.toHuman());
-  await roots_via_swap(sdk.tokens.USDC, sdk.tokens.USDC.amount(100));
+  //await (await (sdk.tokens.USDC as ERC20Token).approve(sdk.contracts.beanstalk.address, sdk.tokens.USDC.amount(101).toBigNumber())).wait();
+  const tokenIn = sdk.tokens.WETH;
+  const amountIn = tokenIn.amount(100);
+  await test[`set${tokenIn.symbol}Balance`](account, amountIn);
+  await roots_via_swap(tokenIn, amountIn);
 })();
