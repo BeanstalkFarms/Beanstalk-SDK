@@ -7,18 +7,19 @@ import { TokenValue } from "src/TokenValue";
 import { ethers } from "ethers";
 import { AdvancedPipeWorkflow } from "src/lib/depot/pipe";
 import { AdvancedFarmCallStruct } from "src/constants/generated/Beanstalk/Beanstalk";
-
-export type FarmStep = Step<{ callData: string }>;
-
-/**
- * The "Farm" is a Workflow that encodes a call to `beanstalk.farm()`.
- */
+import { Clipboard } from "src/lib/depot";
 
 type FarmPreparedResult = { callData: string };
-export class FarmWorkflow<ExecuteData extends { slippage: number } = { slippage: number }> extends Workflow<
-  string,
-  FarmPreparedResult,
-  ExecuteData
+// export type FarmStep = Step<FarmPreparedResult>;
+
+/**
+ * FarmWorkflow
+ * => `beanstalk.farm()`.
+ */
+export class FarmWorkflow<RunData extends { slippage: number } = { slippage: number }> extends Workflow<
+  string, // EncodedResult
+  FarmPreparedResult, // PreparedResult
+  RunData // RunData
 > {
   private contract: Beanstalk;
 
@@ -28,14 +29,20 @@ export class FarmWorkflow<ExecuteData extends { slippage: number } = { slippage:
   }
 
   copy() {
-    return this._copy(FarmWorkflow<ExecuteData>);
+    return this._copy(FarmWorkflow<RunData>);
   }
+
+  ////////// Nested Behavior //////////
 
   prepare() {
     return {
-      target: this.contract.address,
-      callData: this.encodeWorkflow()
+      target: this.contract.address, // targets Beanstalk if used in a pipeline
+      callData: this.encodeWorkflow() // encodes: farm([ this.encodeSteps() ])
     };
+  }
+
+  encodeWorkflow() {
+    return this.contract.interface.encodeFunctionData("farm", [this.encodeSteps()]);
   }
 
   encodeStep(p: FarmPreparedResult): string {
@@ -43,62 +50,80 @@ export class FarmWorkflow<ExecuteData extends { slippage: number } = { slippage:
     return p.callData;
   }
 
-  encodeWorkflow() {
-    return this.contract.interface.encodeFunctionData("farm", [this.encodeSteps()]);
-  }
+  ////////// Parent Behavior //////////
 
-  async execute(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.ContractTransaction> {
+  async execute(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<ethers.ContractTransaction> {
     const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.Execute, data);
     this.sdk.debug("Execute data", encoded);
     return this.contract.farm(encoded, { value: this.value });
   }
 
-  async callStatic(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<string[]> {
+  async callStatic(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<string[]> {
     const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.CallStatic, data);
     return this.contract.callStatic.farm(encoded, { value: this.value });
   }
 
-  async estimateGas(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.BigNumber> {
+  async estimateGas(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<ethers.BigNumber> {
     const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.EstimateGas, data);
     return this.contract.estimateGas.farm(encoded, { value: this.value });
   }
 }
 
-// export class AdvancedFarmWorkflow<ExecuteData extends { slippage: number } = { slippage: number }> extends Workflow<
-//   AdvancedFarmCallStruct,
-//   ExecuteData
-// > {
-//   private contract: Beanstalk;
+/**
+ * AdvancedFarmWorkflow
+ * => `depot.advancedFarm()`.
+ */
+type AdvancedFarmPreparedResult = {
+  callData: string;
+  clipboard?: string;
+};
+export class AdvancedFarmWorkflow<RunData extends { slippage: number } = { slippage: number }> extends Workflow<
+  AdvancedFarmCallStruct,
+  AdvancedFarmPreparedResult,
+  RunData
+> {
+  private contract: Beanstalk;
 
-//   constructor(protected sdk: BeanstalkSDK, public name: string = "Farm") {
-//     super(sdk, name);
-//     this.contract = this.sdk.contracts.beanstalk; // ?
-//   }
+  constructor(protected sdk: BeanstalkSDK, public name: string = "Farm") {
+    super(sdk, name);
+    this.contract = this.sdk.contracts.depot; // ?
+  }
 
-//   copy() {
-//     return this._copy(AdvancedFarmWorkflow<ExecuteData>);
-//   }
+  copy() {
+    return this._copy(AdvancedFarmWorkflow<RunData>);
+  }
 
-//   encodeWorkflow() {
-//     return this.contract.interface.encodeFunctionData("advancedFarm", [this.encodeSteps()]);
-//   }
+  ////////// Nested Behavior //////////
 
-//   async execute(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.ContractTransaction> {
-//     const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.Execute, data);
-//     this.sdk.debug("Execute data", encoded);
-//     return this.contract.advancedFarm(encoded, { value: this.value });
-//   }
+  encodeWorkflow() {
+    return this.contract.interface.encodeFunctionData("advancedFarm", [this.encodeSteps()]);
+  }
 
-//   async callStatic(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<string[]> {
-//     const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.CallStatic, data);
-//     return this.contract.callStatic.advancedFarm(encoded, { value: this.value });
-//   }
+  encodeStep(p: AdvancedFarmPreparedResult): AdvancedFarmCallStruct {
+    return {
+      callData: p.callData,
+      clipboard: p.clipboard || Clipboard.encode([])
+    };
+  }
 
-//   async estimateGas(amountIn: ethers.BigNumber | TokenValue, data: ExecuteData): Promise<ethers.BigNumber> {
-//     const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.EstimateGas, data);
-//     return this.contract.estimateGas.advancedFarm(encoded, { value: this.value });
-//   }
-// }
+  ////////// Parent Behavior //////////
+
+  async execute(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<ethers.ContractTransaction> {
+    const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.Execute, data);
+    this.sdk.debug("Execute data", encoded);
+    return this.contract.advancedFarm(encoded, { value: this.value });
+  }
+
+  async callStatic(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<string[]> {
+    const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.CallStatic, data);
+    return this.contract.callStatic.advancedFarm(encoded, { value: this.value });
+  }
+
+  async estimateGas(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<ethers.BigNumber> {
+    const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.EstimateGas, data);
+    return this.contract.estimateGas.advancedFarm(encoded, { value: this.value });
+  }
+}
 
 /**
  *

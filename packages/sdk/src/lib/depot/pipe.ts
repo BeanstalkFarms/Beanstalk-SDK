@@ -4,21 +4,20 @@ import { Beanstalk } from "src/constants/generated";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { Clipboard } from "src/lib/depot/clipboard";
 import { AdvancedPipeCallStruct } from "src/lib/depot/depot";
-import { TokenValue } from "src/TokenValue";
-
-/**
- * The "AdvancedPipe" is a Workflow that encodes a call to `beanstalk.advancedPipe()`.
- */
 
 type AdvancedPipePreparedResult = {
   target: string;
   callData: string;
   clipboard?: string;
 };
-export class AdvancedPipeWorkflow<ExecuteData extends { slippage: number } = { slippage: number }> extends Workflow<
-  AdvancedPipeCallStruct,
-  AdvancedPipePreparedResult,
-  ExecuteData
+
+/**
+ * The "AdvancedPipe" is a Workflow that encodes a call to `beanstalk.advancedPipe()`.
+ */
+export class AdvancedPipeWorkflow<RunData extends { slippage: number } = { slippage: number }> extends Workflow<
+  AdvancedPipeCallStruct, // EncodedResult
+  AdvancedPipePreparedResult, // PreparedResult
+  RunData
 > {
   private contract: Beanstalk;
 
@@ -28,14 +27,20 @@ export class AdvancedPipeWorkflow<ExecuteData extends { slippage: number } = { s
   }
 
   copy() {
-    return this._copy(AdvancedPipeWorkflow<ExecuteData>);
+    return this._copy(AdvancedPipeWorkflow<RunData>);
   }
 
-  prepare(): AdvancedPipePreparedResult {
+  ////////// Nested Behavior //////////
+
+  prepare() {
     return {
       target: this.contract.address,
       callData: this.encodeWorkflow()
     };
+  }
+
+  encodeWorkflow() {
+    return this.contract.interface.encodeFunctionData("advancedPipe", [this.encodeSteps(), "0"]);
   }
 
   encodeStep(p: AdvancedPipePreparedResult): AdvancedPipeCallStruct {
@@ -46,12 +51,21 @@ export class AdvancedPipeWorkflow<ExecuteData extends { slippage: number } = { s
     };
   }
 
-  encodeWorkflow() {
-    return this.contract.interface.encodeFunctionData("advancedPipe", [
-      this.encodeSteps(),
-      "0" // fixme
-    ]);
+  ////////// Parent Behavior //////////
+
+  async execute(): Promise<ethers.ContractTransaction> {
+    throw new Error("Not implemented");
   }
+
+  async callStatic(): Promise<string[]> {
+    throw new Error("Not implemented");
+  }
+
+  async estimateGas(): Promise<ethers.BigNumber> {
+    throw new Error("Not implemented");
+  }
+
+  ////////// Extensions //////////
 
   /**
    * Wrap a call to a contract into a Step<AdvancedPipeStruct>.
@@ -80,17 +94,5 @@ export class AdvancedPipeWorkflow<ExecuteData extends { slippage: number } = { s
       decode: () => undefined,
       decodeResult: () => undefined
     };
-  }
-
-  async execute(): Promise<ethers.ContractTransaction> {
-    throw new Error("Not implemented");
-  }
-
-  async callStatic(): Promise<string[]> {
-    throw new Error("Not implemented");
-  }
-
-  async estimateGas(): Promise<ethers.BigNumber> {
-    throw new Error("Not implemented");
   }
 }

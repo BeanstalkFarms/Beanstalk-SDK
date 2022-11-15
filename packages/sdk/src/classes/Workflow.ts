@@ -186,6 +186,20 @@ type StepGeneratorOptions = {
  *
  * @fixme nesting a Farm inside a Farm should fail (?)
  *
+ * ## GENERATION PIPELINE
+ *
+ * 1. Add StepGenerators to a Workflow.
+ *
+ * 2. `.estimate()` the workflow. This calls each StepGenerator, creates a Step, and passes its output
+ *    to the next StepGenerator until all Steps are generated. The result is the estimated `amountOut`
+ *    of each individual step, as well as the `amountOut` for the entire workflow.
+ *
+ *    Note that during estimation, StepGenerators can be skipped by applying the option `{ onlyExecute : true }`.
+ *    This allows addition of approval steps which affect the transaction as a whole but not the estimate
+ *    we care about showing users before execution.
+ *
+ * 3. `.execute()` the workflow. This runs `estimateAndEncodeSteps()`,
+ *
  * StepGenerator
  * -[build]   -> Step
  * -[prepare] -> PreparedResult
@@ -493,10 +507,14 @@ export abstract class Workflow<
     return this.encodeSteps();
   }
 
+  /**
+   * If a Workflow is nested inside another Workflow, its `.prepare()`
+   * function will be called.
+   */
   abstract prepare(): PreparedResult;
 
   /**
-   * Encodea single Step as a string or struct. This is later packaged
+   * Encode a single Step as a string or struct.
    * @param p A generic PreparedResult from a Step.
    */
   abstract encodeStep(p: PreparedResult): EncodedResult;
@@ -510,7 +528,7 @@ export abstract class Workflow<
   }
 
   /**
-   * Encode this Workflow into a single hex string for submission to Ethereum.
+   * Encode an entire Workflow into a single hex string for submission to Ethereum.
    * This must be implemented by extensions of Workflow.
    */
   abstract encodeWorkflow(): string;
