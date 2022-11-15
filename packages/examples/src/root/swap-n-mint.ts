@@ -113,13 +113,9 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
   ////////// Setup Pipeline Approvals //////////
 
   pipe.add(
+    // Approve BEANSTALK to use PIPELINE's `depositToken`.
     function approveBean(amountInStep) {
-      return pipe.wrap(
-        sdk.tokens.BEAN.getContract(),
-        "approve",
-        [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
-        amountInStep // pass-thru
-      );
+      return pipe.wrap(depositToken.getContract(), "approve", [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256], amountInStep);
     },
     {
       skip: (amountInStep) =>
@@ -128,50 +124,52 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
   );
 
   pipe.add(
-    (amountInStep) =>
-      pipe.wrap(
+    // Approve ROOT to use PIPELINE's `depositToken` Deposit.
+    function approveDeposit(amountInStep) {
+      return pipe.wrap(
         sdk.contracts.beanstalk,
         "approveDeposit",
         [sdk.contracts.root.address, depositToken.address, ethers.constants.MaxUint256],
-        amountInStep // pass-thru
-      ),
-    {
-      async skip(amountInStep) {
-        return false; // FIXME
-      }
+        amountInStep
+      );
     }
   );
 
   pipe.add(
+    // Get PIPELINE's current balance of `depositToken`.
     async function getBalance() {
       return {
         target: sdk.contracts.beanstalk.address,
         callData: sdk.contracts.beanstalk.interface.encodeFunctionData("getExternalBalance", [
           sdk.contracts.pipeline.address,
-          sdk.tokens.BEAN.address
+          depositToken.address
         ])
       };
     },
+    // Tag this result for use in future steps.
     { tag: "balanceOfBean" }
   );
 
   ////////// Deposit into Silo //////////
 
-  pipe.add(async function deposit(amountInStep, context) {
-    return pipe.wrap(
-      sdk.contracts.beanstalk,
-      "deposit",
-      [/* 0 */ depositToken.address, /* 1 */ amountInStep, /* 2 */ FarmFromMode.EXTERNAL],
-      amountInStep, // pass-thru
-      Clipboard.encodeSlot(context.step.findTag("balanceOfBean"), 0, 1)
-    );
-  });
+  pipe.add(
+    // Deposit `depositToken`; use the amount from the `balanceOfBean` step.
+    async function deposit(amountInStep, context) {
+      return pipe.wrap(
+        sdk.contracts.beanstalk,
+        "deposit",
+        [/* 0 */ depositToken.address, /* 1 */ amountInStep, /* 2 */ FarmFromMode.EXTERNAL],
+        amountInStep,
+        Clipboard.encodeSlot(context.step.findTag("balanceOfBean"), 0, 1)
+      );
+    }
+  );
 
   ////////// Mint ROOT //////////
 
   pipe.add(
     // Notes:
-    // 1. amountInStep = amount from the `deposit()` in previous step
+    // 1. amountInStep = ESTIMATED amount from the `deposit()` in previous step
     // 2. To mint ROOT, we need to create a `DepositTransferStruct[]` which ROOT uses
     //    to transfer a deposit from PIPELINE -> itself. Since the deposit estimation returns
     //    the amount deposited (but not the corresponding `season`, `bdv`, etc.), we "mock"
@@ -219,7 +217,7 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
           FarmToMode.EXTERNAL, // deliver to EXTERNAL
           Workflow.slip(amountOutRoot, context.data.slippage || 0) // minRootsOut
         ] as Parameters<typeof sdk.contracts.root["mint"]>,
-        amountOutRoot, // pass to next step
+        amountOutRoot,
         Clipboard.encodeSlot(context.step.findTag("balanceOfBean"), 0, 11) // slot 11 = `amounts[0]`
       );
     },
@@ -229,6 +227,7 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
   ////////// Transfer ROOT back to ACCOUNT //////////
 
   pipe.add(
+    // FIXME: amountInStep may need to be copied from "balanceOfBean"
     (amountInStep) =>
       pipe.wrap(
         sdk.tokens.ROOT.getContract(),
@@ -237,6 +236,7 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
         amountInStep // pass-thru
       ),
     {
+      // Only run this step if BEANSTALK doesn't have enough approval to transfer ROOT from PIPELINE.
       async skip(amountInStep) {
         const allowance = await sdk.tokens.ROOT.getAllowance(sdk.contracts.pipeline.address, sdk.contracts.beanstalk.address);
         return allowance.toBigNumber().gt(amountInStep);
@@ -245,11 +245,6 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
   );
 
   pipe.add(function unloadPipeline(amountInStep, context) {
-    sdk.debug(
-      `\n\n\tUnloading estimated ${amountInStep.toString()} from PIPELINE -> ACCOUNT using data from step index = ${context.step.findTag(
-        "mint"
-      )} \n\n`
-    );
     return pipe.wrap(
       sdk.contracts.beanstalk,
       "transferToken",
@@ -258,10 +253,9 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
         /*  68 1 */ account,
         /* 100 2 */ "0", // Will be overwritten by advancedData
         /* 132 3 */ FarmFromMode.EXTERNAL, // use PIPELINE's external balance
-        /* 164 4 */ FarmToMode.EXTERNAL // TOOD: make this a parameter
+        /* 164 4 */ FarmToMode.EXTERNAL // send to ACCOUNT's external balance
       ],
       amountInStep,
-      // Copy from previous step
       Clipboard.encodeSlot(context.step.findTag("mint"), 0, 2)
     );
   });
