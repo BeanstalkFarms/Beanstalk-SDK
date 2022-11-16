@@ -1,5 +1,5 @@
 import { BigNumber } from "ethers";
-import { DecimalBigNumber as DBN, assert } from "src/utils/DecimalBigNumber";
+import { assert } from "src/utils";
 import { Interpolate } from "./interpolate";
 
 export function bnToHex(bn: string | number | bigint | boolean) {

@@ -1,10 +1,11 @@
 import { BigNumber } from "ethers";
 import { Token } from "src/classes/Token";
-import { MapValueType } from "src/types";
 import { EventProcessorData } from "./events/processor";
 import { EIP712PermitMessage } from "./permit";
 import { Crate, DepositCrate, TokenSiloBalance, WithdrawalCrate } from "./silo";
 import { TokenValue } from "src/classes/TokenValue";
+
+export type MapValueType<A> = A extends Map<any, infer V> ? V : never;
 
 // FIXME: resolve with EIP712PermitMessage
 export type DepositTokenPermitMessage = EIP712PermitMessage<{

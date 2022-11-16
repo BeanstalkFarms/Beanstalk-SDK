@@ -2,7 +2,7 @@ import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { EventType, reduceEvent, sortEvents } from "./utils";
 import { Blocks } from "src/constants/blocks";
 import { ChainId } from "src/constants";
-import { flattenDeep } from "lodash";
+import flattenDeep from "lodash.flattendeep";
 import { Event } from "ethers";
 
 export class EventManager {

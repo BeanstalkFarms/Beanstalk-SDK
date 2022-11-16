@@ -1,12 +1,12 @@
 import { FarmWorkflow } from "src/lib/farm/farm";
-import { TestUtils } from "src/utils.tests";
-import { setupConnection } from "../../utils.tests/provider";
+import { BlockchainUtils } from "src/utils/TestUtils";
+import { setupConnection } from "../../utils/TestUtils/provider";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import { FarmFromMode } from "./types";
 
 let account: string;
 let sdk: BeanstalkSDK;
-let test: TestUtils;
+let test: BlockchainUtils;
 
 beforeAll(async () => {
   const { provider, signer, account: _account } = setupConnection();
@@ -16,7 +16,7 @@ beforeAll(async () => {
     signer,
     subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing"
   });
-  test = new TestUtils(sdk);
+  test = new BlockchainUtils(sdk);
 });
 
 describe("Facet: Pipeline", () => {

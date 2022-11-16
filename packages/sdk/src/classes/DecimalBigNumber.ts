@@ -1,21 +1,9 @@
 import { BigNumber } from "ethers";
 import { formatUnits, parseUnits, commify } from "ethers/lib/utils";
+import { assert } from "src/utils";
 
-// TODO: move this to utils
-export function assert(value: boolean, message?: string): asserts value;
-export function assert<T>(value: T | null | undefined, message?: string): asserts value is T;
-export function assert(value: any, message?: string) {
-  if (value === false || value === null || typeof value === "undefined") {
-    throw new Error(message || "Assertion failed");
-  }
-}
-
-/**
- *
- * @export
- * @class DecimalBigNumber
- */
-
+// Class copied from sushiswap
+// https://github.com/sushiswap/mev-router-devkit/blob/6c94562561797fe11216e7e656828906d783ca79/src/DecimalBigNumber.ts
 export class DecimalBigNumber {
   private _decimals: number;
   private _value: BigNumber;

@@ -1,5 +1,5 @@
 import { Token } from "src/classes/Token";
-import { getTestUtils } from "src/utils.tests/provider";
+import { getTestUtils } from "src/utils/TestUtils/provider";
 
 const { sdk, account, utils } = getTestUtils();
 

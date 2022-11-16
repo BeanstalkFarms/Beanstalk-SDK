@@ -1,7 +1,7 @@
-import { FarmFromMode, FarmToMode, TokenValue, Test, Clipboard, DataSource, Token, Workflow, ERC20Token } from "@beanstalk/sdk";
+import { FarmFromMode, FarmToMode, TokenValue, TestUtils, Clipboard, DataSource, Token, Workflow, ERC20Token } from "@beanstalk/sdk";
 import { ERC20 } from "@beanstalk/sdk/dist/types/constants/generated";
 import { ethers } from "ethers";
-import { sdk, test, account } from "../setup";
+import { sdk, chain, account } from "../setup";
 import { logBalances } from "./log";
 
 /**
@@ -63,7 +63,7 @@ export async function roots_via_swap(inputToken: Token, spender: string, amount:
   // We can skip this step if:
   //    `inputToken` = ETH
   //    `inputToken.allowance(account, beanstalk) > amountInStep`
-  depotFarm.add(new sdk.farm.actions.PermitERC20(inputToken as ERC20Token, spender, "permit"), {
+  depotFarm.add(new sdk.farm.actions.PermitERC20((context) => context.data.permit), {
     onlyExecute: true,
     skip: (amountInStep) => inputToken.hasEnoughAllowance(account, spender, amountInStep)
   });
@@ -312,11 +312,11 @@ export async function roots_via_swap(inputToken: Token, spender: string, amount:
     const receipt = await txn.wait();
     console.log("Transaction executed");
 
-    Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
+    TestUtils.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
 
     await logBalances(account, inputToken, depositToken, "AFTER");
   } catch (e) {
-    throw new Error(test.ethersError(e));
+    throw new Error(chain.ethersError(e));
     e;
   }
 }
@@ -326,9 +326,9 @@ export async function roots_via_swap(inputToken: Token, spender: string, amount:
   const tokenIn = sdk.tokens.BEAN;
   const amountIn = tokenIn.amount(100);
 
-  // await test.setUSDTBalance(account, amountIn);
+  // await chain.setUSDTBalance(account, amountIn);
   // await sdk.tokens.DAI.approve(sdk.contracts.beanstalk.address, tokenIn.amount(500).toBigNumber()).then((r) => r.wait());
-  await test.setBEANBalance(account, amountIn);
+  await chain.setBEANBalance(account, amountIn);
   await sdk.tokens.BEAN.approve(sdk.contracts.depot.address, tokenIn.amount(500).toBigNumber()).then((r) => r.wait());
 
   console.log(`Approved and set initial balance to ${amountIn.toHuman()} ${tokenIn.symbol}.`);

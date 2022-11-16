@@ -4,16 +4,16 @@ import {
   AddWithdrawalEvent,
   RemoveDepositEvent,
   RemoveWithdrawalEvent,
-  RemoveWithdrawalsEvent,
+  RemoveWithdrawalsEvent
 } from "../../constants/generated/Beanstalk/Beanstalk";
 import EventProcessor, { EventProcessingParameters } from "./processor";
 import { BeanstalkSDK } from "../BeanstalkSDK";
-import { getProvider } from "../../utils.tests/provider";
+import { getProvider } from "../../utils/TestUtils/provider";
 
 // ------------------------------------------
 
 const sdk = new BeanstalkSDK({
-  provider: getProvider(),
+  provider: getProvider()
 });
 const Bean = sdk.tokens.BEAN;
 const BeanCrv3 = sdk.tokens.BEAN_CRV3_LP;
@@ -21,7 +21,7 @@ const BeanCrv3 = sdk.tokens.BEAN_CRV3_LP;
 const account = "0xFARMER";
 const epp: EventProcessingParameters = {
   season: EBN.from(6074),
-  whitelist: sdk.tokens.siloWhitelist,
+  whitelist: sdk.tokens.siloWhitelist
 };
 
 // ------------------------------------------
@@ -182,8 +182,8 @@ describe("the Silo", () => {
       p.ingest({
         event: "AddDeposit",
         args: propArray({
-          token: "0xUNKNOWN",
-        }),
+          token: "0xUNKNOWN"
+        })
       } as AddDepositEvent)
     ).toThrow();
   });
@@ -201,13 +201,13 @@ describe("the Silo", () => {
         token: Bean.address,
         season: EBN.from(6074),
         amount: amount1, // Deposited 1,000 Bean
-        bdv: bdv1,
-      }),
+        bdv: bdv1
+      })
     } as AddDepositEvent);
 
     expect(p.deposits.get(Bean)?.["6074"]).toStrictEqual({
       amount: amount1,
-      bdv: bdv1,
+      bdv: bdv1
     });
 
     // Deposit: 500 Bean, Season 6074
@@ -220,13 +220,13 @@ describe("the Silo", () => {
         token: Bean.address,
         season: EBN.from(6074),
         amount: amount2,
-        bdv: bdv2,
-      }),
+        bdv: bdv2
+      })
     } as AddDepositEvent);
 
     expect(p.deposits.get(Bean)?.["6074"]).toStrictEqual({
       amount: amount1.add(amount2),
-      bdv: bdv1.add(bdv2),
+      bdv: bdv1.add(bdv2)
     });
 
     // Deposit: 1000 Bean:CRV3 LP, Season 6100
@@ -239,13 +239,13 @@ describe("the Silo", () => {
         token: BeanCrv3.address,
         season: EBN.from(6100),
         amount: amount3, // Deposited 1,000 Bean:CRV3
-        bdv: bdv3,
-      }),
+        bdv: bdv3
+      })
     } as AddDepositEvent);
 
     expect(p.deposits.get(BeanCrv3)?.["6100"]).toStrictEqual({
       amount: amount3,
-      bdv: bdv3,
+      bdv: bdv3
     });
   });
 
@@ -260,12 +260,12 @@ describe("the Silo", () => {
         account,
         token: Bean.address,
         season: EBN.from(6074),
-        amount: amount1,
-      }),
+        amount: amount1
+      })
     } as AddWithdrawalEvent);
 
     expect(p.withdrawals.get(Bean)?.["6074"]).toStrictEqual({
-      amount: amount1,
+      amount: amount1
     });
 
     // Withdrawal: 500 Bean, Season 6074
@@ -276,12 +276,12 @@ describe("the Silo", () => {
         account,
         token: Bean.address,
         season: EBN.from(6074),
-        amount: amount2,
-      }),
+        amount: amount2
+      })
     } as AddWithdrawalEvent);
 
     expect(p.withdrawals.get(Bean)?.["6074"]).toStrictEqual({
-      amount: amount1.add(amount2),
+      amount: amount1.add(amount2)
     });
 
     // Deposit: 1000 Bean:CRV3 LP, Season 6100
@@ -292,12 +292,12 @@ describe("the Silo", () => {
         account,
         token: BeanCrv3.address,
         season: EBN.from(6100),
-        amount: amount3, // Deposited 1,000 Bean:CRV3
-      }),
+        amount: amount3 // Deposited 1,000 Bean:CRV3
+      })
     } as AddWithdrawalEvent);
 
     expect(p.withdrawals.get(BeanCrv3)?.["6100"]).toStrictEqual({
-      amount: amount3,
+      amount: amount3
     });
   });
 
@@ -314,8 +314,8 @@ describe("the Silo", () => {
         token: Bean.address,
         season: EBN.from(6074),
         amount: amount1,
-        bdv: bdv1,
-      }),
+        bdv: bdv1
+      })
     } as AddDepositEvent);
 
     // Remove Deposit: 600 Bean, Season 6074
@@ -328,13 +328,13 @@ describe("the Silo", () => {
         token: Bean.address,
         season: EBN.from(6074),
         amount: amount2,
-        bdv: bdv2,
-      }),
+        bdv: bdv2
+      })
     } as RemoveDepositEvent);
 
     expect(p.deposits.get(Bean)?.["6074"]).toStrictEqual({
       amount: amount1.sub(amount2),
-      bdv: bdv1.sub(bdv2),
+      bdv: bdv1.sub(bdv2)
     });
 
     // Remove Deposit: 400 Bean, Season 6074
@@ -347,8 +347,8 @@ describe("the Silo", () => {
         token: Bean.address,
         season: EBN.from(6074),
         amount: amount3,
-        bdv: bdv3,
-      }),
+        bdv: bdv3
+      })
     } as RemoveDepositEvent);
 
     expect(p.deposits.get(Bean)?.["6074"]).toBeUndefined();
@@ -365,8 +365,8 @@ describe("the Silo", () => {
         account,
         token: Bean.address,
         season: EBN.from(6074),
-        amount: amount1,
-      }),
+        amount: amount1
+      })
     } as AddWithdrawalEvent);
 
     // Claim: 600 Bean from Withdrawal in Season 6074
@@ -376,8 +376,8 @@ describe("the Silo", () => {
         account,
         token: Bean.address,
         season: EBN.from(6074),
-        amount: amount1,
-      }),
+        amount: amount1
+      })
     } as RemoveWithdrawalEvent);
 
     // withdrawal should be deleted
@@ -395,12 +395,12 @@ describe("the Silo", () => {
         account,
         token: Bean.address,
         season: EBN.from(6074),
-        amount: amount1,
-      }),
+        amount: amount1
+      })
     } as AddWithdrawalEvent);
 
     expect(p.withdrawals.get(Bean)?.["6074"]).toStrictEqual({
-      amount: amount1,
+      amount: amount1
     });
 
     // Withdraw: 5000 Bean in Season 6100
@@ -411,12 +411,12 @@ describe("the Silo", () => {
         account,
         token: Bean.address,
         season: EBN.from(6100),
-        amount: amount2,
-      }),
+        amount: amount2
+      })
     } as AddWithdrawalEvent);
 
     expect(p.withdrawals.get(Bean)?.["6100"]).toStrictEqual({
-      amount: amount2,
+      amount: amount2
     });
 
     // Claim: 1000 from 6074, 5000 from 6100
@@ -427,8 +427,8 @@ describe("the Silo", () => {
         account,
         token: Bean.address,
         seasons: ["6074", "6100"],
-        amount: amount3,
-      }),
+        amount: amount3
+      })
     } as RemoveWithdrawalsEvent);
 
     expect(p.withdrawals.get(Bean)?.["6074"]).toBeUndefined();
@@ -445,8 +445,8 @@ describe("the Silo", () => {
           account,
           token: Bean.address,
           season: EBN.from(6074),
-          amount: EBN.from(0), // amount is empty is Withdrawal couldn't be processed
-        }),
+          amount: EBN.from(0) // amount is empty is Withdrawal couldn't be processed
+        })
       } as RemoveWithdrawalEvent)
     ).not.toThrow();
 

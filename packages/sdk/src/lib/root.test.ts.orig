@@ -1,6 +1,24 @@
-import { getTestUtils } from "src/utils/TestUtils/provider";
+<<<<<<< HEAD
+import { getTestUtils } from "../utils.tests/provider";
 
 const { sdk, account, utils } = getTestUtils();
+=======
+import { setupConnection } from "../utils/TestUtils/provider";
+import { BeanstalkSDK } from "./BeanstalkSDK";
+
+/// Setup
+let sdk: BeanstalkSDK;
+let account: string;
+beforeAll(async () => {
+  const { signer, provider, account: _account } = await setupConnection();
+  sdk = new BeanstalkSDK({
+    provider: provider,
+    signer: signer,
+    subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing"
+  });
+  account = _account;
+});
+>>>>>>> 2d4c1be (sdk cleanup)
 
 describe("mint function", () => {
   it("uses the right function", async () => {
@@ -15,6 +33,7 @@ describe("mint function", () => {
     // )
   });
 });
+<<<<<<< HEAD
 
 describe("estimateRoots", () => {
   it("test", async () => {
@@ -23,3 +42,5 @@ describe("estimateRoots", () => {
     expect(estimate.amount.gt(0)).toBe(true);
   });
 });
+=======
+>>>>>>> 2d4c1be (sdk cleanup)

@@ -1,6 +1,6 @@
-import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Clipboard, DataSource } from "@beanstalk/sdk";
+import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, TestUtils, Clipboard, DataSource } from "@beanstalk/sdk";
 import { ethers } from "ethers";
-import { sdk, test, account } from "../setup";
+import { sdk, chain, account } from "../setup";
 
 /**
  * Running this example (November 2022)
@@ -151,13 +151,13 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
   // console.log("Executing this transaction is expected to mint", mintResult.toString(), "ROOT");
 
   console.log("Executing...");
-  const txn = await farm.execute(amountIn, 0.1);
+  const txn = await farm.execute(amountIn, { slippage: 0.1 });
   console.log("Transaction submitted...", txn.hash);
 
   const receipt = await txn.wait();
   console.log("Transaction executed");
 
-  Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
+  TestUtils.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
 
   const accountBalanceOfBEAN = await sdk.tokens.getBalance(sdk.tokens.BEAN);
   const accountBalanceOfROOT = await sdk.tokens.getBalance(sdk.tokens.ROOT);
@@ -177,6 +177,6 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
 }
 
 (async () => {
-  await test.setBEANBalance(account, sdk.tokens.BEAN.amount(150));
+  await chain.setBEANBalance(account, sdk.tokens.BEAN.amount(150));
   await roots_from_circulating(sdk.tokens.BEAN, sdk.tokens.BEAN.amount(124));
 })();

@@ -1,6 +1,4 @@
 import { BeanstalkSDK, ERC20Token, FarmFromMode, FarmToMode, Token } from "@beanstalk/sdk";
-import { tokens } from "@beanstalk/sdk/dist/types/utils";
-// import { BeanstalkSDK } from "@sdk";
 import { signer } from "./setup";
 
 main()

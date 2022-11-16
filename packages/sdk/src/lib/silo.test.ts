@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import { DataSource } from "../types";
-import { getTestUtils, setupConnection } from "../utils.tests/provider";
+import { DataSource } from "src/lib/BeanstalkSDK";
+import { getTestUtils, setupConnection } from "../utils/TestUtils/provider";
 
 import { BeanstalkSDK } from "./BeanstalkSDK";
 import { Token } from "../classes/Token";
@@ -8,8 +8,7 @@ import { TokenSiloBalance } from "./silo";
 import { _parseWithdrawalCrates } from "./silo.utils";
 import { BigNumber, ethers } from "ethers";
 import { TokenValue } from "../classes/TokenValue";
-import { BF_MULTISIG } from "src/utils.tests/addresses";
-import { toArray } from "lodash";
+import { BF_MULTISIG } from "src/utils/TestUtils/addresses";
 
 /// Utilities
 const RUN_TIMER = false;

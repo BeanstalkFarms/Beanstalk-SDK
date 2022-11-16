@@ -1,1 +1,1 @@
-export { DecimalBigNumber } from "src/utils/DecimalBigNumber";
+export { DecimalBigNumber } from "src/classes/DecimalBigNumber";

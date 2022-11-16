@@ -1,4 +1,9 @@
-import { BaseContract, ethers, utils } from "ethers";
+<<<<<<< HEAD
+import { BaseContract, BigNumberish, ethers } from "ethers";
+import { ZERO_BN } from "../../constants";
+=======
+import { BaseContract, utils } from "ethers";
+>>>>>>> 2d4c1be (sdk cleanup)
 import type { BeanstalkSDK } from "../../lib/BeanstalkSDK";
 import { BigNumber } from "ethers";
 import { TokenValue } from "../TokenValue";
@@ -116,7 +121,13 @@ export abstract class Token {
 
   abstract getAllowance(account: string, spender: string): Promise<TokenValue | undefined>;
 
+<<<<<<< HEAD
   abstract hasEnoughAllowance(account: string, spender: string, amount: TokenValue | ethers.BigNumber): boolean | Promise<boolean>;
+=======
+  // TODO:
+  // setAllowance(amount, acount, spende)
+  // ensureAllowance(amount, acount, spender)
+>>>>>>> 2d4c1be (sdk cleanup)
 
   abstract getTotalSupply(): Promise<TokenValue> | undefined;
 
@@ -182,6 +193,7 @@ export abstract class Token {
    * @param value A BigNumber with a value of this token, for ex: 1000000 would be 1 BEAN
    * @returns string
    */
+
   toHuman(value: BigNumber): string {
     return utils.formatUnits(value, this.decimals);
   }
