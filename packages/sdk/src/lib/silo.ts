@@ -1,8 +1,7 @@
 import { ethers, BigNumber } from "ethers";
-import _ from "lodash";
 import { ERC20Token, Token } from "src/classes/Token";
-import { DataSource, StringMap } from "src/types";
-import { BeanstalkSDK } from "./BeanstalkSDK";
+import { StringMap } from "src/types";
+import { BeanstalkSDK, DataSource } from "./BeanstalkSDK";
 import EventProcessor from "./events/processor";
 import { EIP712Domain, EIP712TypedData, Permit } from "./permit";
 import {

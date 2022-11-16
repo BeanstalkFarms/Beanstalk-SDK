@@ -1,5 +1,5 @@
 import { Contract, ethers } from "ethers";
-import { setupConnection } from "../utils.tests/provider";
+import { setupConnection } from "../utils/TestUtils/provider";
 import { ERC20Token } from "../classes/Token";
 
 import { BeanstalkSDK } from "./BeanstalkSDK";

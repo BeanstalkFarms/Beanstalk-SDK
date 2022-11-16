@@ -1,9 +1,11 @@
 import { ethers } from "ethers";
 import { Step, Workflow } from "src/classes/Workflow";
 import { Beanstalk } from "src/constants/generated";
+import { AdvancedPipeStruct } from "src/constants/generated/Beanstalk/Pipeline";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { Clipboard } from "src/lib/depot/clipboard";
 import { AdvancedPipeCallStruct } from "src/lib/depot/depot";
+import { TokenValue } from "src/TokenValue";
 
 type AdvancedPipePreparedResult = {
   target: string;

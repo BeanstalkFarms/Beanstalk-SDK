@@ -1,9 +1,7 @@
 import { BaseContract, BigNumberish, ethers } from "ethers";
-import { ZERO_BN } from "../../constants";
 import type { BeanstalkSDK } from "../../lib/BeanstalkSDK";
 import { BigNumber } from "ethers";
 import { TokenValue } from "../TokenValue";
-import { toHuman } from "../../utils/Tokens";
 
 /**
  * A currency is any fungible financial instrument, including Ether, all ERC20 tokens, and other chain-native currencies
@@ -177,30 +175,6 @@ export abstract class Token {
     return this.fromHuman(amount);
   }
 
-  // /**
-  //  * Converts from a BigNumber amount to a TokenValue
-  //  *
-  //  * Ex: BEAN.fromBigNumberToTokenValue(BigNumber.from("3140000")) => TokenValue holding value "3140000" and decimals "6"
-  //  *
-  //  * @param amount human readable amout, ex: "3.14" ether
-  //  * @returns TokenValue
-  //  */
-  // fromBigNumberToTokenValue(amount: BigNumberish): TokenValue {
-  //   return TokenValue.fromBlockchain(BigNumber.from(amount), this.decimals);
-  // }
-
-  // /**
-  //  * Converts from a human amount to a TokenValue
-  //  *
-  //  * Ex: BEAN.fromHumanToTokenValue("3.14") => TokenValue holding value "3140000" and decimals "6"
-  //  *
-  //  * @param amount human readable amout, ex: "3.14" ether
-  //  * @returns TokenValue
-  //  */
-  // fromHumanToTokenValue(amount: string): TokenValue {
-  //   return TokenValue.fromHuman(amount, this.decimals);
-  // }
-
   /**
    * Converts from a blockchain value to a human readable form
    *
@@ -209,7 +183,7 @@ export abstract class Token {
    * @returns string
    */
   toHuman(value: BigNumber): string {
-    return toHuman(value, this.decimals);
+    return utils.formatUnits(value, this.decimals);
   }
 
   toTokenValue(value: BigNumber): TokenValue {

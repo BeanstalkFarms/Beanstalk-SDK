@@ -1,4 +1,4 @@
-import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, Test, Clipboard, DataSource } from "@beanstalk/sdk";
+import { ERC20Token, FarmFromMode, FarmToMode, TokenValue, TokenBalance, TestUtils, Clipboard, DataSource } from "@beanstalk/sdk";
 import { ethers } from "ethers";
 import { sdk, test, account } from "../setup";
 
@@ -157,7 +157,7 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
   const receipt = await txn.wait();
   console.log("Transaction executed");
 
-  Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
+  TestUtils.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
 
   const accountBalanceOfBEAN = await sdk.tokens.getBalance(sdk.tokens.BEAN);
   const accountBalanceOfROOT = await sdk.tokens.getBalance(sdk.tokens.ROOT);

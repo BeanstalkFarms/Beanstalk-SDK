@@ -1,5 +1,5 @@
 import { BigNumber } from "ethers";
-import { DecimalBigNumber as DBN } from "src/utils/DecimalBigNumber";
+import { DecimalBigNumber as DBN } from "src/classes/DecimalBigNumber";
 
 /**
  * @FIXME

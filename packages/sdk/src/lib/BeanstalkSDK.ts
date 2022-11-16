@@ -1,6 +1,5 @@
 import { GraphQLClient } from "graphql-request";
 import { ethers } from "ethers";
-import { BeanstalkConfig, DataSource, Provider, Reconfigurable, Signer } from "src/types";
 import { enumFromValue } from "src/utils";
 import { addresses, ChainId } from "src/constants";
 import { Tokens } from "./tokens";
@@ -14,6 +13,25 @@ import { Root } from "./root";
 import { Sdk as Queries, getSdk as getQueries } from "../constants/generated-gql/graphql";
 import { Swap } from "src/lib/swap/Swap";
 
+export type Provider = ethers.providers.JsonRpcProvider;
+export type Signer = ethers.Signer;
+export type BeanstalkConfig = Partial<{
+  provider: Provider;
+  signer: Signer;
+  rpcUrl: string;
+  subgraphUrl: string;
+  source: DataSource;
+  DEBUG: boolean;
+}>;
+
+type Reconfigurable = Pick<BeanstalkConfig, "source">;
+
+// FIXME: add tests to ensure the proper DataSource is used. Setting a value to 0 causes issues rn
+export enum DataSource {
+  LEDGER = 1,
+  SUBGRAPH = 2
+}
+
 export class BeanstalkSDK {
   public DEBUG: boolean;
   public signer?: Signer;
@@ -21,31 +39,25 @@ export class BeanstalkSDK {
   public providerOrSigner: Signer | Provider;
   public source: DataSource;
 
-  //
   public readonly chainId: ChainId;
 
-  //
   public readonly addresses: typeof addresses;
   public readonly contracts: Contracts;
   public readonly tokens: Tokens;
   public readonly graphql: GraphQLClient;
   public readonly queries: Queries;
 
-  //
   public readonly farm: Farm;
   public readonly silo: Silo;
   public readonly events: EventManager;
   public readonly sun: Sun;
   public readonly permit: Permit;
   public readonly root: Root;
-  // public readonly depot: Depot;
   public readonly swap: Swap;
 
   constructor(config?: BeanstalkConfig) {
     this.handleConfig(config);
 
-    // FIXME
-    // @ts-ignore
     this.chainId = enumFromValue(this.provider?.network?.chainId ?? 1, ChainId);
     this.source = config?.source || DataSource.SUBGRAPH;
 
@@ -63,7 +75,6 @@ export class BeanstalkSDK {
     // Facets
     this.silo = new Silo(this);
     this.sun = new Sun(this);
-    // this.depot = new Depot(this);
     this.farm = new Farm(this);
 
     // Ecosystem

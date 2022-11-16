@@ -1,6 +1,5 @@
 import { ethers } from "ethers";
-import { DataSource } from "src/types";
-import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
+import { BeanstalkSDK, DataSource } from "src/lib/BeanstalkSDK";
 
 class BaseError extends Error {
   constructor(message: string) {

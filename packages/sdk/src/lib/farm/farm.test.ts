@@ -1,6 +1,6 @@
 import { FarmWorkflow } from "./farm";
 // import { workflowTestSuite } from "src/classes/Workflow.test";
-import { setupConnection } from "src/utils.tests/provider";
+import { setupConnection } from "src/utils/TestUtils/provider";
 import { BeanstalkSDK } from "../BeanstalkSDK";
 import { ethers } from "ethers";
 

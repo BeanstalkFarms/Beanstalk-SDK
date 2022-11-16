@@ -1,8 +1,12 @@
 import { ethers } from "ethers";
-import { BeanstalkSDK, DataSource, ERC20Token, TokenSiloBalance, TokenValue } from "src/index";
-import { addr, logSiloBalance } from "src/utils.tests";
+import { ERC20Token } from "src/classes/Token";
+import { BeanstalkSDK, DataSource } from "src/lib/BeanstalkSDK";
+import { TokenSiloBalance } from "src/lib/silo";
+import { TokenValue } from "src/TokenValue";
+import * as addr from "./addresses";
+import { logSiloBalance } from "./log";
 
-export default class TestUtils {
+export class BlockchainUtils {
   sdk: BeanstalkSDK;
   provider: ethers.providers.JsonRpcProvider;
 

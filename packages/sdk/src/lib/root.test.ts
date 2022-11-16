@@ -1,4 +1,4 @@
-import { getTestUtils } from "../utils.tests/provider";
+import { setupConnection } from "../utils/TestUtils/provider";
 
 const { sdk, account, utils } = getTestUtils();
 

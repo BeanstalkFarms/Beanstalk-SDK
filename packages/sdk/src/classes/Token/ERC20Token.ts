@@ -9,16 +9,6 @@ import { TokenValue } from "src/classes/TokenValue";
 export class ERC20Token extends Token {
   public contract: ERC20Permit;
 
-  //////////////////////// Setup ////////////////////////
-
-  // @fixme this throws the following error:
-  // src/lib/tokens.ts(57,32): semantic error TS2345: Argument of type 'BeanstalkSDK' is not assignable to parameter of type 'never'.
-  //
-  // constructor(...args: ConstructorParameters<typeof Token>) {
-  //   super(...args);
-  //   if (!this.address) throw new Error('Address is required for ERC20 token instancess');
-  // }
-
   //////////////////////// Contract Instance ////////////////////////
 
   public getContract() {

@@ -48,8 +48,7 @@
     "graphql": "16.6.0",
     "graphql-request": "^4",
     "graphql-tag": "2.12.6",
-    "lodash": "^4.17.21",
-    "lodash-es": "^4.17.21"
+    "lodash.flattendeep": "4.4.0"
   },
   "devDependencies": {
     "@foundry-rs/hardhat-anvil": "^0.1.6",
@@ -69,8 +68,7 @@
     "@types/eslint": "^8",
     "@types/graphlib": "2.1.8",
     "@types/jest": "^29.1.2",
-    "@types/lodash": "^4.14.186",
-    "@types/lodash-es": "^4",
+    "@types/lodash.flattendeep": "^4",
     "@types/rimraf": "^3",
     "chai": "4.3.6",
     "dotenv": "^16.0.3",

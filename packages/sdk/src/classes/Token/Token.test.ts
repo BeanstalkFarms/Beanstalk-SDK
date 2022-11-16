@@ -1,5 +1,5 @@
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
-import { setupConnection } from "src/utils.tests";
+import { setupConnection } from "src/utils/TestUtils";
 
 let sdk: BeanstalkSDK;
 

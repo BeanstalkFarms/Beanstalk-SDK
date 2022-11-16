@@ -1,6 +1,6 @@
 import { Token } from "src/classes/Token";
 import { TokenValue } from "src/TokenValue";
-import { getTestUtils } from "src/utils.tests/provider";
+import { getTestUtils } from "src/utils/TestUtils/provider";
 import { FarmFromMode, FarmToMode } from "src/lib/farm/types";
 
 const { sdk, account, utils } = getTestUtils();
