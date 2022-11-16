@@ -73,7 +73,7 @@ export class ERC20Token extends Token {
 
   public async hasEnoughAllowance(account: string, spender: string, amount: TokenValue | BigNumber): Promise<boolean> {
     const allowance = await this.getAllowance(account, spender);
-    return allowance.gte(amount);
+    return allowance.toBigNumber().gte(amount instanceof TokenValue ? amount.toBigNumber() : amount);
   }
 
   public getTotalSupply(): Promise<TokenValue> {

@@ -45,7 +45,7 @@ export class FarmWorkflow<RunData extends { slippage: number } = { slippage: num
   encodeWorkflow() {
     const steps = this.encodeSteps();
     const encodedWorkflow = this.contract.interface.encodeFunctionData("farm", [steps]);
-    this.sdk.debug(`[Workflow][${this.name}][encodeWorkflow] RESULT`, encodedWorkflow);
+    this.sdk.debug(`[Workflow][${this.name}][encodeWorkflow]`, encodedWorkflow);
     return encodedWorkflow;
   }
 
@@ -57,19 +57,20 @@ export class FarmWorkflow<RunData extends { slippage: number } = { slippage: num
   ////////// Parent Behavior //////////
 
   async execute(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<ethers.ContractTransaction> {
-    const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.Execute, data);
-    this.sdk.debug("Execute data", encoded);
-    return this.contract.farm(encoded, { value: this.value });
+    const encodedSteps = await this.estimateAndEncodeSteps(amountIn, RunMode.Execute, data);
+    const overrides = { value: this.value };
+    this.sdk.debug(`[Workflow][${this.name}][execute]`, encodedSteps, overrides);
+    return this.contract.farm(encodedSteps, overrides);
   }
 
   async callStatic(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<string[]> {
-    const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.CallStatic, data);
-    return this.contract.callStatic.farm(encoded, { value: this.value });
+    const encodedSteps = await this.estimateAndEncodeSteps(amountIn, RunMode.CallStatic, data);
+    return this.contract.callStatic.farm(encodedSteps, { value: this.value });
   }
 
   async estimateGas(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<ethers.BigNumber> {
-    const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.EstimateGas, data);
-    return this.contract.estimateGas.farm(encoded, { value: this.value });
+    const encodedSteps = await this.estimateAndEncodeSteps(amountIn, RunMode.EstimateGas, data);
+    return this.contract.estimateGas.farm(encodedSteps, { value: this.value });
   }
 }
 
