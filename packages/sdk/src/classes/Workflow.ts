@@ -303,6 +303,7 @@ export abstract class Workflow<
         step = {
           name: input.name, // Match the Workflow's name
           amountOut: nextAmount, // The result of this Step is the final result of the Workflow.
+          value: input.value, // Grab value needed by this workflow
           prepare: () => input.prepare.bind(input)() as PreparedResult, // Encode the entire Workflow into one element.
           decode: () => undefined, // fixme
           decodeResult: (data: string[]) => input.decodeResult(data) // fixme
@@ -325,6 +326,7 @@ export abstract class Workflow<
           step = {
             name: input.name || "<unknown>",
             amountOut: amountInStep, // propagate amountOut
+            value: undefined,
             prepare: () =>
               ({
                 callData: fnResult
@@ -341,6 +343,7 @@ export abstract class Workflow<
           step = {
             name: input.name || "<unknown>",
             amountOut: amountInStep, // propagate amountOut
+            value: undefined,
             prepare: () => fnResult as PreparedResult,
             decode: () => undefined, //
             decodeResult: () => undefined //

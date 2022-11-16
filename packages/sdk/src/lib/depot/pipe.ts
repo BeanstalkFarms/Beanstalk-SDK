@@ -42,8 +42,11 @@ export class AdvancedPipeWorkflow<RunData extends { slippage: number } = { slipp
 
   encodeWorkflow() {
     const steps = this.encodeSteps();
-    const encodedWorkflow = this.contract.interface.encodeFunctionData("advancedPipe", [steps, "0"]);
-    this.sdk.debug(`[Workflow][${this.name}][encodeWorkflow] RESULT`, encodedWorkflow);
+    const encodedWorkflow = this.contract.interface.encodeFunctionData("advancedPipe", [
+      steps,
+      this.value.toString() // ether that this pipeline needs to consume
+    ]);
+    this.sdk.debug(`[Workflow][${this.name}][encodeWorkflow] advancedPipe(`, steps, this.value.toString(), `)`);
     return encodedWorkflow;
   }
 
@@ -87,6 +90,13 @@ export class AdvancedPipeWorkflow<RunData extends { slippage: number } = { slipp
     amountOut: ethers.BigNumber,
     clipboard: string = Clipboard.encode([])
   ): Step<AdvancedPipePreparedResult> {
+    this.sdk.debug(`[Workflow][${this.name}][wrap]`, {
+      contract: `${contract.address} ${contract.constructor.name}`,
+      method,
+      args,
+      clipboard,
+      amountOut
+    });
     return {
       name: `wrap<${method.toString()}>`,
       amountOut,

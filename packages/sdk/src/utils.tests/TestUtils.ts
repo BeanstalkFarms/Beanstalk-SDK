@@ -154,4 +154,8 @@ export default class TestUtils {
       _currentSeason || season + 100
     );
   }
+
+  ethersError(e: any) {
+    return `${(e as any).error?.reason || (e as any).toString()}`;
+  }
 }

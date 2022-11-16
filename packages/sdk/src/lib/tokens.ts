@@ -270,8 +270,10 @@ export class Tokens {
       const _token = this.findByAddress(value);
       if (!_token) throw new Error(`Unknown token: ${value}`);
       return [_token, value];
+    } else if (value?.address) {
+      return [value, value.address];
     }
-    return [value, value.address];
+    throw new Error(`Unable to derive token from ${value}`);
   }
 
   /**

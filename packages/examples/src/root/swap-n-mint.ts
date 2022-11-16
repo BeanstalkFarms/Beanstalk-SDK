@@ -13,14 +13,7 @@ import {
 } from "@beanstalk/sdk";
 import { ethers } from "ethers";
 import { sdk, test, account } from "../setup";
-
-// Determine if more external allowance is needed for this ERC20 token.
-const hasEnoughExternalAllowance = async (_token: Token, _account: string, _spender: string, _amount: ethers.BigNumber) => {
-  if (_token instanceof NativeToken) return true; // FIXME: ERC1155
-  if (!(_token instanceof ERC20Token)) throw new Error("Unsupported token type");
-  const allowance = await (_token as ERC20Token).getAllowance(_account, _spender);
-  return allowance.toBigNumber().gte(_amount);
-};
+import { logBalances } from "./log";
 
 /**
  * Running this example (November 2022)
@@ -44,23 +37,23 @@ const hasEnoughExternalAllowance = async (_token: Token, _account: string, _spen
  * 5. `yarn x ./src/root/from-circulating.ts`
  *
  */
-export async function roots_via_swap(inputToken: Token, amount: TokenValue): Promise<TokenBalance> {
+export async function roots_via_swap(inputToken: Token, amount: TokenValue) {
   ////////// Setup //////////
+
   const account = await sdk.getAccount();
+  const depositToken = sdk.tokens.BEAN;
   console.log("Using account:", account);
 
   // Check `account`' balance of `inputToken`, validate `amount`
-  const balance = await sdk.tokens.getBalance(inputToken);
-  console.log(`Account ${account} has balance ${balance.total.toHuman()} ${inputToken.symbol}`);
+  const balance = await logBalances(account, inputToken, depositToken, "BEFORE");
   if (amount.gt(balance.total)) {
     throw new Error(`Not enough ${inputToken.symbol}. Balance: ${balance.total.toHuman()} / Input: ${amount.toHuman()}`);
   }
 
   ////////// Prepare Swap //////////
 
-  const depositToken = sdk.tokens.BEAN;
   const swapTo = FarmToMode.INTERNAL;
-  const loadPipelineFrom = FarmFromMode.INTERNAL;
+  const loadPipelineFrom = FarmFromMode.INTERNAL_TOLERANT;
 
   // Swap from `inputToken` -> `depositToken` (BEAN)
   // If `swapDestination = INTERNAL`, and this is called via `beanstalk.farm()`,
@@ -83,7 +76,7 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
   //    `inputToken.allowance(account, beanstalk) > amountInStep`
   farm.add(new sdk.farm.actions.PermitERC20((context) => context.data.permit), {
     onlyExecute: true,
-    skip: (amountInStep) => hasEnoughExternalAllowance(inputToken, account, sdk.contracts.beanstalk.address, amountInStep)
+    skip: (amountInStep) => inputToken.hasEnoughAllowance(account, sdk.contracts.beanstalk.address, amountInStep)
   });
 
   ////////// Add Swap to Farm //////////
@@ -106,46 +99,63 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
   ////////// Setup Pipeline Approvals //////////
 
   pipe.add(
+    // Approve BEANSTALK to use PIPELINE's `depositToken`.
     function approveBean(amountInStep) {
-      return pipe.wrap(
-        sdk.tokens.BEAN.getContract(),
-        "approve",
-        [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
-        amountInStep // pass-thru
-      );
+      return pipe.wrap(depositToken.getContract(), "approve", [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256], amountInStep);
     },
     {
       skip: (amountInStep) =>
-        hasEnoughExternalAllowance(sdk.tokens.BEAN, sdk.contracts.pipeline.address, sdk.contracts.beanstalk.address, amountInStep)
+        sdk.tokens.BEAN.hasEnoughAllowance(sdk.contracts.pipeline.address, sdk.contracts.beanstalk.address, amountInStep)
     }
   );
 
   pipe.add(
-    (amountInStep) =>
-      pipe.wrap(
+    // Approve ROOT to use PIPELINE's `depositToken` Deposit.
+    function approveDeposit(amountInStep) {
+      return pipe.wrap(
         sdk.contracts.beanstalk,
         "approveDeposit",
         [sdk.contracts.root.address, depositToken.address, ethers.constants.MaxUint256],
-        amountInStep // pass-thru
-      ),
-    {
-      async skip(amountInStep) {
-        return false; // FIXME
-      }
+        amountInStep
+      );
     }
+  );
+
+  pipe.add(
+    // Get PIPELINE's current balance of `depositToken`.
+    async function getBalance() {
+      return {
+        target: sdk.contracts.beanstalk.address,
+        callData: sdk.contracts.beanstalk.interface.encodeFunctionData("getExternalBalance", [
+          sdk.contracts.pipeline.address,
+          depositToken.address
+        ])
+      };
+    },
+    // Tag this result for use in future steps.
+    { tag: "amountToDeposit" }
   );
 
   ////////// Deposit into Silo //////////
 
-  pipe.add(async function deposit(amountInStep, test) {
-    return pipe.wrap(sdk.contracts.beanstalk, "deposit", [depositToken.address, amountInStep, FarmFromMode.EXTERNAL], amountInStep);
-  });
+  pipe.add(
+    // Deposit `depositToken`; use the amount from the tagged `amountToDeposit` step.
+    async function deposit(amountInStep, context) {
+      return pipe.wrap(
+        sdk.contracts.beanstalk,
+        "deposit",
+        [/* 0 */ depositToken.address, /* 1 */ amountInStep, /* 2 */ FarmFromMode.EXTERNAL],
+        amountInStep,
+        Clipboard.encodeSlot(context.step.findTag("amountToDeposit"), 0, 1)
+      );
+    }
+  );
 
   ////////// Mint ROOT //////////
 
   pipe.add(
     // Notes:
-    // 1. amountInStep = amount from the `deposit()` in previous step
+    // 1. amountInStep = ESTIMATED amount from the `deposit()` in previous step
     // 2. To mint ROOT, we need to create a `DepositTransferStruct[]` which ROOT uses
     //    to transfer a deposit from PIPELINE -> itself. Since the deposit estimation returns
     //    the amount deposited (but not the corresponding `season`, `bdv`, etc.), we "mock"
@@ -187,20 +197,17 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
             {
               token: depositToken.address,
               seasons: [currentSeason],
-              amounts: [amountInStep]
+              amounts: ["0"] // overwritten by Clipboard
             }
           ],
-          FarmToMode.EXTERNAL,
-          Workflow.slip(amountOutRoot, context.data.slippage || 0)
+          FarmToMode.EXTERNAL, // deliver to EXTERNAL
+          Workflow.slip(amountOutRoot, context.data.slippage || 0) // minRootsOut
         ] as Parameters<typeof sdk.contracts.root["mint"]>,
-        amountOutRoot // pass to next step
+        amountOutRoot,
+        Clipboard.encodeSlot(context.step.findTag("amountToDeposit"), 0, 11) // slot 11 = `amounts[0]`
       );
     },
-    {
-      // Need to tag this because the "approve" step depends on the
-      // amountOut from this step, and may be skipped.
-      tag: "mint"
-    }
+    { tag: "mint" }
   );
 
   ////////// Transfer ROOT back to ACCOUNT //////////
@@ -214,10 +221,9 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
         amountInStep // pass-thru
       ),
     {
-      async skip(amountInStep) {
-        const allowance = await sdk.tokens.ROOT.getAllowance(sdk.contracts.pipeline.address, sdk.contracts.beanstalk.address);
-        return allowance.toBigNumber().gt(amountInStep);
-      }
+      // Only run this step if BEANSTALK doesn't have enough approval to transfer ROOT from PIPELINE.
+      skip: (amountInStep) =>
+        sdk.tokens.ROOT.hasEnoughAllowance(sdk.contracts.pipeline.address, sdk.contracts.beanstalk.address, amountInStep)
     }
   );
 
@@ -230,10 +236,9 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
         /*  68 1 */ account,
         /* 100 2 */ "0", // Will be overwritten by advancedData
         /* 132 3 */ FarmFromMode.EXTERNAL, // use PIPELINE's external balance
-        /* 164 4 */ FarmToMode.EXTERNAL // TOOD: make this a parameter
+        /* 164 4 */ FarmToMode.EXTERNAL // send to ACCOUNT's external balance
       ],
       amountInStep,
-      // Copy from previous step
       Clipboard.encodeSlot(context.step.findTag("mint"), 0, 2)
     );
   });
@@ -262,54 +267,49 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue): Pro
 
   ////////// Execute Transaction //////////
 
-  console.log("\n\nExecuting...");
-  let permit;
+  try {
+    console.log("\n\nExecuting...");
+    let permit;
 
-  const ready = await hasEnoughExternalAllowance(inputToken, account, sdk.contracts.beanstalk.address, amountIn);
-  if (!ready) {
-    permit = await sdk.permit.sign(
-      account,
-      sdk.tokens.permitERC2612(
+    const ready = await inputToken.hasEnoughAllowance(account, sdk.contracts.beanstalk.address, amountIn);
+    if (!ready) {
+      const data = await sdk.tokens.permitERC2612(
         account, // owner
         sdk.contracts.beanstalk.address, // spender
         inputToken as ERC20Token, // inputToken
         amountIn.toString() // amount
-      )
-    );
-    console.log("Signed a permit: ", permit);
+      );
+      permit = await sdk.permit.sign(account, data);
+      console.log("Signed a permit: ", JSON.stringify(data, null, 2), permit);
+    }
+
+    const txn = await farm.execute(amountIn, {
+      slippage: 0.1, // verify
+      permit // attach the permit if it's needed
+    });
+
+    console.log("Transaction submitted...", txn.hash);
+    const receipt = await txn.wait();
+    console.log("Transaction executed");
+
+    Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
+
+    await logBalances(account, inputToken, depositToken, "AFTER");
+  } catch (e) {
+    throw new Error(test.ethersError(e));
   }
-
-  const txn = await farm.execute(amountIn, {
-    slippage: 0.1, // verify
-    permit // attach the permit if it's needed
-  });
-
-  console.log("Transaction submitted...", txn.hash);
-  const receipt = await txn.wait();
-  console.log("Transaction executed");
-
-  Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
-
-  const accountBalanceOfBEAN = await sdk.tokens.getBalance(sdk.tokens.BEAN);
-  const accountBalanceOfROOT = await sdk.tokens.getBalance(sdk.tokens.ROOT);
-  const pipelineBalanceOfBEAN = await sdk.tokens.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address);
-  const pipelineBalanceOfROOT = await sdk.tokens.getBalance(sdk.tokens.ROOT, sdk.contracts.pipeline.address);
-  const pipelineSiloBalance = await sdk.silo.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address, { source: DataSource.LEDGER });
-
-  console.log(`(1) BEAN balance for Account :`, accountBalanceOfBEAN.total.toHuman());
-  console.log(`(2) ROOT balance for Account :`, accountBalanceOfROOT.total.toHuman());
-  console.log(`(3) BEAN balance for Pipeline:`, pipelineBalanceOfBEAN.total.toHuman());
-  console.log(`(4) ROOT balance for Pipeline:`, pipelineBalanceOfROOT.total.toHuman());
-  console.log("(5) BEAN deposits in Pipeline:", pipelineSiloBalance.deposited.crates.length);
-  console.log(` ^ 3-5 should be 0 if Pipeline was properly unloaded.`);
-
-  return accountBalanceOfROOT;
 }
 
 (async () => {
   //await (await (sdk.tokens.USDC as ERC20Token).approve(sdk.contracts.beanstalk.address, sdk.tokens.USDC.amount(101).toBigNumber())).wait();
-  const tokenIn = sdk.tokens.ETH;
-  const amountIn = tokenIn.amount(1);
-  // await test[`set${tokenIn.symbol}Balance`](account, amountIn);
+  const tokenIn = sdk.tokens.DAI;
+  const amountIn = tokenIn.amount(100);
+
+  await test.setDAIBalance(account, amountIn);
+  await sdk.tokens.DAI.approve(sdk.contracts.beanstalk.address, amountIn.toBigNumber()).then((r) => r.wait());
+  // await test.setDAIBalance(account, amountIn);
+
+  console.log(`Approved and set initial balance to ${amountIn.toHuman()} ${tokenIn.symbol}.`);
+
   await roots_via_swap(tokenIn, amountIn);
 })();

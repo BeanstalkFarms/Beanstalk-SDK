@@ -10,13 +10,16 @@ export class NativeToken extends Token {
   }
 
   public getBalance(account: string): Promise<TokenValue> {
-    return Token.sdk.provider.getBalance(account)
-    .then(result => TokenValue.fromBlockchain(result, this.decimals))
+    return Token.sdk.provider.getBalance(account).then((result) => TokenValue.fromBlockchain(result, this.decimals));
   }
 
   // eslint-disable-next-line class-methods-use-this
   public getAllowance(): Promise<TokenValue | undefined> {
     return Promise.resolve(TokenValue.MAX_UINT256);
+  }
+
+  public hasEnoughAllowance(): boolean {
+    return true;
   }
 
   // eslint-disable-next-line class-methods-use-this
