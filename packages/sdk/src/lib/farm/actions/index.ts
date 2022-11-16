@@ -5,6 +5,19 @@ import { UnwrapEth } from "./UnwrapEth";
 import { AddLiquidity } from "./AddLiquidity";
 import { RemoveLiquidityOneToken } from "./RemoveLiquidityOneToken";
 import { TransferToken } from "./TransferToken";
+import { WithdrawDeposits } from "./WithdrawDeposits";
+import { ClaimWithdrawals } from "./ClaimWithdrawals";
 import { PermitERC20 } from "./PermitERC20";
 
-export { Exchange, ExchangeUnderlying, WrapEth, UnwrapEth, AddLiquidity, RemoveLiquidityOneToken, TransferToken, PermitERC20 };
+export {
+  Exchange,
+  ExchangeUnderlying,
+  WrapEth,
+  UnwrapEth,
+  AddLiquidity,
+  RemoveLiquidityOneToken,
+  TransferToken,
+  PermitERC20,
+  WithdrawDeposits,
+  ClaimWithdrawals
+};

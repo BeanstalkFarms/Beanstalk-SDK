@@ -74,7 +74,7 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue) {
   // We can skip this step if:
   //    `inputToken` = ETH
   //    `inputToken.allowance(account, beanstalk) > amountInStep`
-  farm.add(new sdk.farm.actions.PermitERC20(inputToken as ERC20Token, sdk.contracts.beanstalk.address, "permit"), {
+  farm.add(new sdk.farm.actions.PermitERC20((context) => context.data.permit), {
     onlyExecute: true,
     skip: (amountInStep) => inputToken.hasEnoughAllowance(account, sdk.contracts.beanstalk.address, amountInStep)
   });
