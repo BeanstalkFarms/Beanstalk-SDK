@@ -122,7 +122,6 @@ export class AdvancedFarmWorkflow<RunData extends { slippage: number } = { slipp
 
   async execute(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<ethers.ContractTransaction> {
     const encoded = await this.estimateAndEncodeSteps(amountIn, RunMode.Execute, data);
-    this.sdk.debug("Execute data", encoded);
     return this.contract.advancedFarm(encoded, { value: this.value });
   }
 
