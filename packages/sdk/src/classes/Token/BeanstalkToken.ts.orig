@@ -1,0 +1,29 @@
+import { Token } from "./Token";
+import { TokenValue } from "src/classes/TokenValue";
+import { BigNumber } from "ethers";
+
+export class BeanstalkToken extends Token {
+  public getContract() {
+    return null;
+  }
+
+  public getBalance() {
+    return Promise.resolve(TokenValue.NEGATIVE_ONE);
+  }
+
+  public getAllowance() {
+    return Promise.resolve(TokenValue.MAX_UINT256);
+  }
+
+<<<<<<< HEAD
+  public hasEnoughAllowance(): boolean {
+    return false; // FIXME
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+=======
+>>>>>>> 2d4c1be (sdk cleanup)
+  public getTotalSupply() {
+    return undefined;
+  }
+}

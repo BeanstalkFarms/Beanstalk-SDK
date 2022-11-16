@@ -52,7 +52,7 @@ async function run(sdk: BeanstalkSDK) {
   const estimate = await work.estimate(amountIn);
   console.log("Estimated BEAN: ", sdk.tokens.BEAN.toHuman(estimate));
 
-  const tx = await work.execute(amountIn, 0.1);
+  const tx = await work.execute(amountIn, { slippage: 0.1 });
   await tx.wait();
   console.log("tx done");
 }
@@ -76,7 +76,7 @@ async function runWithPresets(sdk: BeanstalkSDK) {
   const estimate = await work.estimate(amountIn);
   console.log("Estimated BEAN: ", sdk.tokens.BEAN.toHuman(estimate));
 
-  const tx = await work.execute(amountIn, 0.1);
+  const tx = await work.execute(amountIn, { slippage: 0.1 });
   await tx.wait();
   console.log("tx done");
 }
@@ -108,7 +108,7 @@ async function buyAndDeposit(sdk: BeanstalkSDK) {
   // const test = await work.callStatic(amountIn, 0.1);
   // console.log(test);
 
-  const tx = await work.execute(amountIn, 0.1);
+  const tx = await work.execute(amountIn, { slippage: 0.1 });
   await tx.wait();
   console.log("tx done");
 }
@@ -139,7 +139,7 @@ async function runReverse(sdk: BeanstalkSDK) {
 
   console.log("Estimated ETH: ", sdk.tokens.ETH.toHuman(estimate));
 
-  const tx = await work.execute(estimate, 0.1);
+  const tx = await work.execute(estimate, { slippage: 0.1 });
   await tx.wait();
   console.log("tx done");
 }

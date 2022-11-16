@@ -1,8 +1,10 @@
 import { ethers } from "ethers";
 import { Step, Workflow } from "src/classes/Workflow";
 import { Beanstalk } from "src/constants/generated";
+import { AdvancedPipeStruct } from "src/constants/generated/Beanstalk/Pipeline";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { Clipboard } from "src/lib/depot/clipboard";
+<<<<<<< HEAD
 import { AdvancedPipeCallStruct } from "src/lib/depot/depot";
 
 type AdvancedPipePreparedResult = {
@@ -10,6 +12,10 @@ type AdvancedPipePreparedResult = {
   callData: string;
   clipboard?: string;
 };
+=======
+// import { AdvancedPipeStruct } from "src/lib/depot/depot";
+import { TokenValue } from "src/TokenValue";
+>>>>>>> 2d4c1be (sdk cleanup)
 
 /**
  * The "AdvancedPipe" is a Workflow that encodes a call to `beanstalk.advancedPipe()`.

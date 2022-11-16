@@ -151,7 +151,7 @@ export async function roots_from_circulating(token: ERC20Token, amount: TokenVal
   // console.log("Executing this transaction is expected to mint", mintResult.toString(), "ROOT");
 
   console.log("Executing...");
-  const txn = await farm.execute(amountIn, 0.1);
+  const txn = await farm.execute(amountIn, { slippage: 0.1 });
   console.log("Transaction submitted...", txn.hash);
 
   const receipt = await txn.wait();

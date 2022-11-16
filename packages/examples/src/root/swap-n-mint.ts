@@ -1,18 +1,6 @@
-import {
-  FarmFromMode,
-  FarmToMode,
-  TokenValue,
-  TokenBalance,
-  Test,
-  Clipboard,
-  DataSource,
-  Token,
-  Workflow,
-  ERC20Token,
-  NativeToken
-} from "@beanstalk/sdk";
+import { FarmFromMode, FarmToMode, TokenValue, Clipboard, Token, Workflow, ERC20Token, TestUtils } from "@beanstalk/sdk";
 import { ethers } from "ethers";
-import { sdk, test, account } from "../setup";
+import { sdk, account, chain } from "../setup";
 import { logBalances } from "./log";
 
 /**
@@ -292,11 +280,11 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue) {
     const receipt = await txn.wait();
     console.log("Transaction executed");
 
-    Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
+    TestUtils.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
 
     await logBalances(account, inputToken, depositToken, "AFTER");
   } catch (e) {
-    throw new Error(test.ethersError(e));
+    throw new Error(chain.ethersError(e));
   }
 }
 
@@ -305,9 +293,9 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue) {
   const tokenIn = sdk.tokens.DAI;
   const amountIn = tokenIn.amount(100);
 
-  await test.setDAIBalance(account, amountIn);
+  await chain.setDAIBalance(account, amountIn);
   await sdk.tokens.DAI.approve(sdk.contracts.beanstalk.address, amountIn.toBigNumber()).then((r) => r.wait());
-  // await test.setDAIBalance(account, amountIn);
+  // await chain.setDAIBalance(account, amountIn);
 
   console.log(`Approved and set initial balance to ${amountIn.toHuman()} ${tokenIn.symbol}.`);
 

@@ -1,7 +1,5 @@
-import { DataSource } from "src/lib/BeanstalkSDK";
-
 // Core
-export { BeanstalkSDK, DataSource } from "src/lib/BeanstalkSDK";
+export { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 
 // Constants
 export { ChainId } from "src/constants/chains";
@@ -9,8 +7,9 @@ export { ChainId } from "src/constants/chains";
 // Classes
 export { Token, NativeToken, ERC20Token, BeanstalkToken } from "src/classes/Token";
 export { TokenValue } from "src/classes/TokenValue";
+<<<<<<< HEAD
 export { Workflow } from "src/classes/Workflow";
-export { DecimalBigNumber } from "src/classes/DecimalBigNumber";
+export { DecimalBigNumber } from "src/utils/DecimalBigNumber";
 
 // Modules
 export { FarmWorkflow, FarmFromMode, FarmToMode } from "src/lib/farm";
@@ -18,6 +17,15 @@ export type { TokenSiloBalance } from "src/lib/silo";
 export type { TokenBalance } from "src/lib/tokens";
 export { AdvancedPipeWorkflow, Clipboard } from "src/lib/depot";
 export type { PipeCallStruct as PipeStruct, AdvancedPipeCallStruct as AdvancedPipeStruct } from "src/lib/depot";
+=======
+export { DecimalBigNumber } from "src/classes/DecimalBigNumber";
+
+// Modules
+export { FarmFromMode, FarmToMode } from "src/lib/farm/types";
+export type { TokenSiloBalance } from "src/lib/silo";
+export type { TokenBalance } from "src/lib/tokens";
+export { Clipboard } from "src/lib/depot";
+>>>>>>> 2d4c1be (sdk cleanup)
 
 // Utilities
 export * as TestUtils from "./utils/TestUtils";
