@@ -36,10 +36,6 @@ describe("Workflow", () => {
         // @ts-ignore testing private value
         expect(farm.steps).not.toBe(farm._steps);
       });
-      it("getters freeze returned objects", () => {
-        expect(Object.isFrozen(farm.generators)).toBe(true);
-        expect(Object.isFrozen(farm.value)).toBe(true);
-      });
     });
 
     describe("add StepGenerators", () => {
@@ -71,9 +67,9 @@ describe("Workflow", () => {
         // @ts-ignore testing private value
         expect(farm._steps.length).toBe(3); // haven't yet estimated, so no steps
         // @ts-ignore testing private value
-        expect(farm._steps[1].prepare(ethers.BigNumber.from(0))).toBe("0xCALLDATA1");
+        expect(farm._steps[1].prepare(ethers.BigNumber.from(0))).toMatchObject({ callData: "0xCALLDATA1" });
         // @ts-ignore testing private value
-        expect(farm._steps[2].prepare(ethers.BigNumber.from(0))).toBe("0xCALLDATA2");
+        expect(farm._steps[2].prepare(ethers.BigNumber.from(0))).toMatchObject({ callData: "0xCALLDATA2" });
       });
       it("recurses through nested arrays of StepGenerators", async () => {
         // Setup
@@ -94,11 +90,17 @@ describe("Workflow", () => {
         // Estimation
         await farm.estimate(ethers.BigNumber.from(1000_000000));
         // @ts-ignore testing private value
-        expect(farm._steps[1].prepare(ethers.BigNumber.from(0))).toBe("0xCALLDATA100000000000000000000000000000000000000");
+        expect(farm._steps[1].prepare(ethers.BigNumber.from(0))).toMatchObject({
+          callData: "0xCALLDATA100000000000000000000000000000000000000"
+        });
         // @ts-ignore testing private value
-        expect(farm._steps[2].prepare(ethers.BigNumber.from(0))).toBe("0xCALLDATA200000000000000000000000000000000000000");
+        expect(farm._steps[2].prepare(ethers.BigNumber.from(0))).toMatchObject({
+          callData: "0xCALLDATA200000000000000000000000000000000000000"
+        });
         // @ts-ignore testing private value
-        expect(farm._steps[5].prepare(ethers.BigNumber.from(0))).toBe("0xCALLDATA200000000000000000000000000000000000000");
+        expect(farm._steps[5].prepare(ethers.BigNumber.from(0))).toMatchObject({
+          callData: "0xCALLDATA200000000000000000000000000000000000000"
+        });
       });
       it.todo("works when adding another Workflow");
       it("chains", () => {

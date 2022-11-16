@@ -1,5 +1,3 @@
-import { DataSource } from "src/lib/BeanstalkSDK";
-
 // Core
 export { BeanstalkSDK, DataSource } from "src/lib/BeanstalkSDK";
 
