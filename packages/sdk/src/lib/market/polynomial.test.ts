@@ -1,6 +1,6 @@
-import { Polynomial } from "./polynomial"
+import { Polynomial } from "./polynomial";
 
-describe('initialization', () => {
+describe("initialization", () => {
   it.skip("creates a polynomial from points", () => {
     // TODO: fix broken tests
     // const fn = Polynomial.fromPoints(
@@ -13,4 +13,4 @@ describe('initialization', () => {
     // expect(fn.signs).toBe(...);
     // expect(fn.pack()).toBe('0xWHATEVER');
   });
-})
+});

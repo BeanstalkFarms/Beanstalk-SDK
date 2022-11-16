@@ -16,7 +16,7 @@ export class ActionTemplate extends StepClass {
       amountOut,
       encode: (minAmountOut: ethers.BigNumber) => {},
       decode: (data: string) => {},
-      data,
+      data
     };
   }
 }

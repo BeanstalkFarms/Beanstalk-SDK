@@ -1,12 +1,7 @@
 {
   "extends": "../../tsconfig.json",
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "./src/generated/**/*",
-    "dist"
-  ],
+  "include": ["src"],
+  "exclude": ["./src/generated/**/*", "dist"],
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "dist/js",
@@ -15,9 +10,7 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "src/*": [
-        "src/*"
-      ]
+      "src/*": ["src/*"]
     }
   }
 }

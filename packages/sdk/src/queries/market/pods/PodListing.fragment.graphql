@@ -6,9 +6,9 @@ fragment PodListing on PodListing {
   updatedAt
   status
   # Listing data
-  originalIndex   # 
-  amount          # amount currently `active`
-  totalAmount     # amount from the original listing
+  originalIndex #
+  amount # amount currently `active`
+  totalAmount # amount from the original listing
   remainingAmount # `totalAmount - amount`
   start
   pricePerPod

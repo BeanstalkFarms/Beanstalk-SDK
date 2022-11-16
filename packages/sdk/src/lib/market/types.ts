@@ -1,4 +1,4 @@
 export enum MarketPriceTypes {
   Fixed = 0,
-  Dynamic = 1,
+  Dynamic = 1
 }
