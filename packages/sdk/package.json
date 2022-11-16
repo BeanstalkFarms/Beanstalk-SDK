@@ -1,11 +1,26 @@
 {
   "name": "@beanstalk/sdk",
   "version": "0.1.0-beta.0",
+  "description": "Beanstalk protocol SDK",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BeanstalkFarms/Beanstalk-SDK.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://bean.money",
+  "keywords": [
+    "stablecoin",
+    "eth",
+    "ethereum",
+    "dapps",
+    "web3"
+  ],
   "main": "./dist/sdk/sdk.cjs.js",
   "module": "./dist/sdk/sdk.esm.js",
   "browser": "./dist/sdk/sdk.udm.js",
   "typings": "./dist/types/index.d.ts",
+  "licenses": [],
   "files": [
     "/dist",
     "README.md"
