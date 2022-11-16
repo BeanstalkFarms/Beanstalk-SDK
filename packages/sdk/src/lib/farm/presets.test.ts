@@ -14,7 +14,7 @@ beforeAll(async () => {
   sdk = new BeanstalkSDK({
     provider,
     signer,
-    subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing",
+    subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing"
   });
   test = new TestUtils(sdk);
 });
@@ -41,7 +41,7 @@ describe("Facet: Pipeline", () => {
 
       // Execute
       expect(async () => {
-        await farm.execute(amount.toBigNumber(), 0.1).then((r) => r.wait());
+        await farm.execute(amount.toBigNumber(), { slippage: 0.1 }).then((r) => r.wait());
       }).toThrow();
 
       // Estimate
@@ -78,17 +78,17 @@ describe("Facet: Pipeline", () => {
       // Estimate
       await farm.estimate(amount.toBigNumber());
       // @ts-ignore
-      const encoded0 = farm._steps[0].encode();
+      const encoded0 = farm._steps[0].prepare();
       // @ts-ignore
-      const encoded1 = farm._steps[1].encode();
+      const encoded1 = farm._steps[1].prepare();
       expect(farm.length).toBe(2);
-      expect(encoded0.slice(0, 10)).toBe(sdk.contracts.beanstalk.interface.getSighash("permitERC20"));
-      expect(encoded1.slice(0, 10)).toBe(sdk.contracts.beanstalk.interface.getSighash("transferToken"));
+      expect(encoded0.callData.slice(0, 10)).toBe(sdk.contracts.beanstalk.interface.getSighash("permitERC20"));
+      expect(encoded1.callData.slice(0, 10)).toBe(sdk.contracts.beanstalk.interface.getSighash("transferToken"));
 
       console.log("Permit", permit, permit.typedData.types);
 
       // Execute
-      await farm.execute(amount.toBigNumber(), 0.1).then((r) => r.wait());
+      await farm.execute(amount.toBigNumber(), { slippage: 0.1 }).then((r) => r.wait());
 
       const pipelineBalance = await sdk.tokens.getBalance(sdk.tokens.BEAN, sdk.contracts.pipeline.address);
       expect(pipelineBalance.total.eq(amount)).toBe(true);

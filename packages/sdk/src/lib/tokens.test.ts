@@ -16,8 +16,6 @@ const timer = async (fn: Promise<any>, label: string) => {
 
 /// Constants
 const account1 = "0x9a00beffa3fc064104b71f6b7ea93babdc44d9da"; // whale
-const account2 = "0x0"; // zero addy
-const account3 = "0x21DE18B6A8f78eDe6D16C50A167f6B222DC08DF7"; // BF Multisig
 
 /// Setup
 let sdk: BeanstalkSDK;

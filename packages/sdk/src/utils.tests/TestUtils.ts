@@ -75,9 +75,9 @@ export default class TestUtils {
     await this.sdk.provider.send("anvil_reset", [
       {
         forking: {
-          jsonRpcUrl: "https://eth-mainnet.g.alchemy.com/v2/f6piiDvMBMGRYvCOwLJFMD7cUjIvI1TP",
-        },
-      },
+          jsonRpcUrl: "https://eth-mainnet.g.alchemy.com/v2/f6piiDvMBMGRYvCOwLJFMD7cUjIvI1TP"
+        }
+      }
     ]);
   }
 
@@ -103,7 +103,7 @@ export default class TestUtils {
       this.setUSDTBalance(account, this.sdk.tokens.USDT.amount(amount)),
       this.setCRV3Balance(account, this.sdk.tokens.CRV3.amount(amount)),
       this.setWETHBalance(account, this.sdk.tokens.WETH.amount(amount)),
-      this.setBEANBalance(account, this.sdk.tokens.BEAN.amount(amount)),
+      this.setBEANBalance(account, this.sdk.tokens.BEAN.amount(amount))
     ]);
   }
   async setDAIBalance(account: string, balance: TokenValue) {
@@ -140,5 +140,22 @@ export default class TestUtils {
   }
   private toBytes32(bn: ethers.BigNumber) {
     return ethers.utils.hexlify(ethers.utils.zeroPad(bn.toHexString(), 32));
+  }
+
+  //
+  mockDepositCrate(token: ERC20Token, season: number, _amount: string, _currentSeason?: number) {
+    const amount = token.amount(_amount);
+    // @ts-ignore use private method
+    return this.sdk.silo.makeDepositCrate(
+      token,
+      season,
+      amount.toBlockchain(), // amount
+      amount.toBlockchain(), // bdv
+      _currentSeason || season + 100
+    );
+  }
+
+  ethersError(e: any) {
+    return `${(e as any).error?.reason || (e as any).toString()}`;
   }
 }

@@ -1,4 +1,4 @@
-import { BaseContract, BigNumberish } from "ethers";
+import { BaseContract, BigNumberish, ethers } from "ethers";
 import { ZERO_BN } from "../../constants";
 import type { BeanstalkSDK } from "../../lib/BeanstalkSDK";
 import { BigNumber } from "ethers";
@@ -100,7 +100,7 @@ export abstract class Token {
   public getStalk(bdv?: TokenValue): TokenValue {
     if (!this.rewards?.stalk) return Token.sdk.tokens.STALK.amount(0);
     if (!bdv) return this.rewards.stalk;
-    
+
     return this.rewards.stalk.mul(bdv);
   }
 
@@ -108,7 +108,7 @@ export abstract class Token {
   public getSeeds(bdv?: TokenValue): TokenValue {
     if (!this.rewards?.seeds) return Token.sdk.tokens.SEEDS.amount(0);
     if (!bdv) return this.rewards.seeds;
-    
+
     return this.rewards.seeds.mul(bdv);
   }
 
@@ -117,6 +117,8 @@ export abstract class Token {
   abstract getBalance(account: string): Promise<TokenValue>;
 
   abstract getAllowance(account: string, spender: string): Promise<TokenValue | undefined>;
+
+  abstract hasEnoughAllowance(account: string, spender: string, amount: TokenValue | ethers.BigNumber): boolean | Promise<boolean>;
 
   abstract getTotalSupply(): Promise<TokenValue> | undefined;
 

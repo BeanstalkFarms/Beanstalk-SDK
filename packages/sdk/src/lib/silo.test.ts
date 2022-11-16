@@ -23,7 +23,6 @@ const timer = async (fn: Promise<any>, label: string) => {
 /// Constants
 const account1 = "0x9a00beffa3fc064104b71f6b7ea93babdc44d9da"; // whale
 const account2 = "0x0"; // zero addy
-const account3 = "0x21DE18B6A8f78eDe6D16C50A167f6B222DC08DF7"; // BF Multisig
 
 /// Setup
 const { sdk, account, utils } = getTestUtils();
@@ -55,54 +54,113 @@ describe("Utilities", function () {
   });
 });
 
-describe("getBalance", function () {
-  it("returns an empty object", async () => {
-    const balance = await sdk.silo.getBalance(sdk.tokens.BEAN, account2, { source: DataSource.SUBGRAPH });
-    expect(balance.deposited.amount.eq(0)).to.be.true;
-    expect(balance.withdrawn.amount.eq(0)).to.be.true;
-    expect(balance.claimable.amount.eq(0)).to.be.true;
-  });
-  it("loads an account with deposits (fuzzy)", async () => {
-    const balance = await sdk.silo.getBalance(sdk.tokens.BEAN, account3, { source: DataSource.SUBGRAPH });
-    expect(balance.deposited.amount.gt(10_000)).to.be.true; // FIXME
-    expect(balance.withdrawn.amount.eq(0)).to.be.true;
-    expect(balance.claimable.amount.eq(0)).to.be.true;
-  });
-  it("source: ledger === subgraph", async function () {
-    const [ledger, subgraph] = await Promise.all([
-      timer(sdk.silo.getBalance(sdk.tokens.BEAN, account1, { source: DataSource.LEDGER }), "Ledger result time"),
-      timer(sdk.silo.getBalance(sdk.tokens.BEAN, account1, { source: DataSource.SUBGRAPH }), "Subgraph result time")
-    ]);
-    expect(ledger).to.deep.eq(subgraph);
-  });
-});
-
-describe("getBalances", function () {
-  let ledger: Map<Token, TokenSiloBalance>;
-  let subgraph: Map<Token, TokenSiloBalance>;
-
-  // Pulled an account with some large positions for testing
-  // @todo pick several accounts and loop
-  beforeAll(async () => {
-    [ledger, subgraph] = await Promise.all([
-      timer(sdk.silo.getBalances(account1, { source: DataSource.LEDGER }), "Ledger result time"),
-      timer(sdk.silo.getBalances(account1, { source: DataSource.SUBGRAPH }), "Subgraph result time")
-    ]);
+describe("Silo Balance loading", () => {
+  describe("getBalance", function () {
+    it("returns an empty object", async () => {
+      const balance = await sdk.silo.getBalance(sdk.tokens.BEAN, account2, { source: DataSource.SUBGRAPH });
+      expect(balance.deposited.amount.eq(0)).to.be.true;
+      expect(balance.withdrawn.amount.eq(0)).to.be.true;
+      expect(balance.claimable.amount.eq(0)).to.be.true;
+    });
+    it("loads an account with deposits (fuzzy)", async () => {
+      const balance = await sdk.silo.getBalance(sdk.tokens.BEAN, BF_MULTISIG, { source: DataSource.SUBGRAPH });
+      expect(balance.deposited.amount.gt(10_000)).to.be.true; // FIXME
+      expect(balance.withdrawn.amount.eq(0)).to.be.true;
+      expect(balance.claimable.amount.eq(0)).to.be.true;
+    });
+    it("source: ledger === subgraph", async function () {
+      const [ledger, subgraph] = await Promise.all([
+        timer(sdk.silo.getBalance(sdk.tokens.BEAN, account1, { source: DataSource.LEDGER }), "Ledger result time"),
+        timer(sdk.silo.getBalance(sdk.tokens.BEAN, account1, { source: DataSource.SUBGRAPH }), "Subgraph result time")
+      ]);
+      expect(ledger).to.deep.eq(subgraph);
+    });
   });
 
-  it("source: ledger === subgraph", async function () {
-    for (let [token, value] of ledger.entries()) {
-      expect(subgraph.has(token)).to.be.true;
-      try {
-        // received              expected
-        expect(value).to.deep.eq(subgraph.get(token));
-      } catch (e) {
-        console.log(`Token: ${token.name}`);
-        console.log(`Expected (subgraph):`, subgraph.get(token));
-        console.log(`Received (ledger):`, value);
-        throw e;
+  describe("getBalances", function () {
+    let ledger: Map<Token, TokenSiloBalance>;
+    let subgraph: Map<Token, TokenSiloBalance>;
+
+    // Pulled an account with some large positions for testing
+    // @todo pick several accounts and loop
+    beforeAll(async () => {
+      [ledger, subgraph] = await Promise.all([
+        timer(sdk.silo.getBalances(account1, { source: DataSource.LEDGER }), "Ledger result time"),
+        timer(sdk.silo.getBalances(account1, { source: DataSource.SUBGRAPH }), "Subgraph result time")
+      ]);
+    });
+
+    it("source: ledger === subgraph", async function () {
+      for (let [token, value] of ledger.entries()) {
+        expect(subgraph.has(token)).to.be.true;
+        try {
+          // received              expected
+          expect(value).to.deep.eq(subgraph.get(token));
+        } catch (e) {
+          console.log(`Token: ${token.name}`);
+          console.log(`Expected (subgraph):`, subgraph.get(token));
+          console.log(`Received (ledger):`, value);
+          throw e;
+        }
       }
-    }
+    });
+  });
+
+  describe("stalk calculations for each crate", () => {
+    let balance: TokenSiloBalance;
+    beforeAll(async () => {
+      balance = await sdk.silo.getBalance(sdk.tokens.BEAN, BF_MULTISIG, { source: DataSource.SUBGRAPH });
+    });
+
+    it("stalk = baseStalk + grownStalk", () => {
+      // Note that this does not verify that the stalk values themselves
+      // are as expected, just that their additive properties hold.
+      balance.deposited.crates.forEach((crate) => {
+        expect(crate.baseStalk.add(crate.grownStalk).eq(crate.stalk)).to.be.true;
+      });
+    });
+
+    it("correctly instantiates baseStalk using getStalk()", () => {
+      // Note that this does not verify that `getStalk()` itself is correct;
+      // this is the responsibility of Tokens.test.
+      balance.deposited.crates.forEach((crate) => {
+        expect(crate.baseStalk.eq(sdk.tokens.BEAN.getStalk(crate.bdv))).to.be.true;
+      });
+    });
+  });
+
+  describe("balanceOfStalk", () => {
+    it("Returns a TokenValue with STALK decimals", async () => {
+      const result = await sdk.silo.balanceOfStalk(BF_MULTISIG);
+      expect(result).to.be.instanceOf(TokenValue);
+      expect(result.decimals).to.eq(10);
+    });
+    it.todo("Adds grown stalk when requested");
+  });
+
+  describe("balanceOfSeeds", () => {
+    it("Returns a TokenValue with SEEDS decimals", async () => {
+      const result = await sdk.silo.balanceOfSeeds(BF_MULTISIG);
+      expect(result).to.be.instanceOf(TokenValue);
+      expect(result.decimals).to.eq(6);
+    });
+  });
+
+  describe("Grown Stalk calculations", () => {
+    const seeds = sdk.tokens.SEEDS.amount(1);
+    it("returns zero when deltaSeasons = 0", () => {
+      expect(sdk.silo.calculateGrownStalk(6074, 6074, seeds).toHuman()).to.eq("0");
+    });
+    it("throws if currentSeason < depositSeason", () => {
+      expect(() => sdk.silo.calculateGrownStalk(5000, 6074, seeds).toHuman()).to.throw();
+    });
+    it("works when deltaSeasons > 0", () => {
+      // 1 seed grows 1/10_000 STALK per Season
+      expect(sdk.silo.calculateGrownStalk(6075, 6074, seeds).toHuman()).to.eq((1 / 10_000).toString());
+      expect(sdk.silo.calculateGrownStalk(6075, 6074, seeds.mul(10)).toHuman()).to.eq((10 / 10_000).toString());
+      expect(sdk.silo.calculateGrownStalk(6076, 6074, seeds).toHuman()).to.eq((2 / 10_000).toString());
+      expect(sdk.silo.calculateGrownStalk(6076, 6074, seeds.mul(10)).toHuman()).to.eq((20 / 10_000).toString());
+    });
   });
 });
 
@@ -149,23 +207,6 @@ describe("Deposit Permits", function () {
     // Verify
     const allowance = await sdk.contracts.beanstalk.depositAllowance(owner, spender, token);
     expect(allowance.toString()).to.be.eq(amount);
-  });
-});
-
-describe("balanceOfStalk", () => {
-  it("Returns a TokenValue with STALK decimals", async () => {
-    const result = await sdk.silo.balanceOfStalk(BF_MULTISIG);
-    expect(result).to.be.instanceOf(TokenValue);
-    expect(result.decimals).to.eq(10);
-  });
-  it.todo("Adds grown stalk when requested");
-});
-
-describe("balanceOfSeeds", () => {
-  it("Returns a TokenValue with SEEDS decimals", async () => {
-    const result = await sdk.silo.balanceOfSeeds(BF_MULTISIG);
-    expect(result).to.be.instanceOf(TokenValue);
-    expect(result.decimals).to.eq(6);
   });
 });
 

@@ -4,7 +4,7 @@ import { defaultAbiCoder } from "ethers/lib/utils";
 enum ClipboardType {
   STATIC = 0, // no bytes are copied; static call
   SINGLE = 1, // 1 bytes32 pasted from previous call
-  MULTI = 2, // n bytes32 pasted from previous call
+  MULTI = 2 // n bytes32 pasted from previous call
 }
 
 type PasteParams = Readonly<
@@ -54,6 +54,22 @@ export class Clipboard {
     return defaultAbiCoder.encode(types, encodeData);
   }
 
+  /**
+   * @fixme assert all params are integers
+   * @param returnDataIndex
+   * @param copySlot
+   * @param pasteSlot
+   * @returns
+   */
+  public static encodeSlot(
+    returnDataIndex: number,
+    copySlot: number,
+    pasteSlot: number,
+    etherValue: ethers.BigNumber = ethers.BigNumber.from(0)
+  ) {
+    return Clipboard.encode([returnDataIndex, 32 + copySlot * 32, 4 + 32 + pasteSlot * 32], etherValue);
+  }
+
   //////////////////////// INTERNAL ////////////////////////
 
   /**
@@ -95,7 +111,7 @@ export class Clipboard {
         encodeData = encodeData.concat([
           typeBytes,
           // `typeBytes` held in independent slot, pack empty bytes for items in array
-          (pasteParams as PasteParams[]).map((d) => Clipboard.pack(d)),
+          (pasteParams as PasteParams[]).map((d) => Clipboard.pack(d))
         ]);
         break;
       }

@@ -98,7 +98,7 @@ export class SwapOperation {
   async execute(amountIn: BigNumber | TokenValue, slippage: number): Promise<ContractTransaction> {
     if (!this.isValid()) throw new Error("Invalid swap configuration");
 
-    return this.workflow.execute(amountIn, slippage);
+    return this.workflow.execute(amountIn, { slippage });
   }
 
   getFarm() {

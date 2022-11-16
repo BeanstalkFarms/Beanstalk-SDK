@@ -1,9 +1,9 @@
 import { ethers } from "ethers";
-import { EncodeContext, Step, StepClass, Workflow } from "src/classes/Workflow";
+import { BasicPreparedResult, RunContext, StepClass, Workflow } from "src/classes/Workflow";
 import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { FarmFromMode, FarmToMode } from "../types";
 
-export class RemoveLiquidityOneToken extends StepClass<string> {
+export class RemoveLiquidityOneToken extends StepClass<BasicPreparedResult> {
   public name: string = "RemoveLiquidityOneToken";
 
   constructor(
@@ -16,15 +16,15 @@ export class RemoveLiquidityOneToken extends StepClass<string> {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<Step<string>> {
+  async run(_amountInStep: ethers.BigNumber, context: RunContext) {
     RemoveLiquidityOneToken.sdk.debug(`[${this.name}.run()]`, {
       pool: this._pool,
       registry: this._registry,
       tokenOut: this._tokenOut,
       amountInStep: _amountInStep,
-      forward: _forward,
       fromMode: this._fromMode,
-      toMode: this._toMode
+      toMode: this._toMode,
+      context
     });
     const registry = RemoveLiquidityOneToken.sdk.contracts.curve.registries.metaFactory;
     const coins = await registry.callStatic.get_coins(this._pool, { gasLimit: 10000000 });
@@ -61,8 +61,8 @@ export class RemoveLiquidityOneToken extends StepClass<string> {
       name: this.name,
       amountOut,
       data: {},
-      encode: (context: EncodeContext) => {
-        const minAmountOut = Workflow.slip(amountOut!, context.slippage);
+      prepare: () => {
+        const minAmountOut = Workflow.slip(amountOut!, context.data.slippage || 0);
         RemoveLiquidityOneToken.sdk.debug(`[${this.name}.encode()]`, {
           pool: this._pool,
           registry: this._registry,
@@ -70,21 +70,23 @@ export class RemoveLiquidityOneToken extends StepClass<string> {
           amountInStep: _amountInStep,
           amountOut,
           minAmountOut,
-          forward: _forward,
           fromMode: this._fromMode,
           toMode: this._toMode,
           context
         });
         if (!minAmountOut) throw new Error("RemoveLiquidityOneToken: missing minAmountOut");
-        return RemoveLiquidityOneToken.sdk.contracts.beanstalk.interface.encodeFunctionData("removeLiquidityOneToken", [
-          this._pool,
-          this._registry,
-          this._tokenOut,
-          _amountInStep,
-          minAmountOut,
-          this._fromMode,
-          this._toMode
-        ]);
+        return {
+          target: RemoveLiquidityOneToken.sdk.contracts.beanstalk.address,
+          callData: RemoveLiquidityOneToken.sdk.contracts.beanstalk.interface.encodeFunctionData("removeLiquidityOneToken", [
+            this._pool,
+            this._registry,
+            this._tokenOut,
+            _amountInStep,
+            minAmountOut,
+            this._fromMode,
+            this._toMode
+          ])
+        };
       },
       decode: (data: string) =>
         RemoveLiquidityOneToken.sdk.contracts.beanstalk.interface.decodeFunctionData("removeLiquidityOneToken", data),

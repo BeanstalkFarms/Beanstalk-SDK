@@ -1,10 +1,10 @@
 import { ethers } from "ethers";
-import { EncodeContext, Step, StepClass, Workflow } from "src/classes/Workflow";
+import { BasicPreparedResult, RunContext, Step, StepClass, Workflow } from "src/classes/Workflow";
 import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { assert } from "src/utils";
 import { FarmFromMode, FarmToMode } from "../types";
 
-export class AddLiquidity extends StepClass {
+export class AddLiquidity extends StepClass<BasicPreparedResult> {
   public name: string = "addLiquidity";
 
   constructor(
@@ -17,7 +17,7 @@ export class AddLiquidity extends StepClass {
     super();
   }
 
-  async run(_amountInStep: ethers.BigNumber, _forward: boolean = true): Promise<Step<string>> {
+  async run(_amountInStep: ethers.BigNumber, context: RunContext): Promise<Step<BasicPreparedResult>> {
     AddLiquidity.sdk.debug(`[${this.name}.run()]`, {
       pool: this._pool,
       registry: this._registry,
@@ -90,9 +90,9 @@ export class AddLiquidity extends StepClass {
         fromMode: this._fromMode,
         toMode: this._toMode
       },
-      encode: (context) => {
-        const minAmountOut = Workflow.slip(_amountInStep, context.slippage);
-        AddLiquidity.sdk.debug(`[${this.name}.encode()]`, {
+      prepare: () => {
+        const minAmountOut = Workflow.slip(_amountInStep, context.data.slippage || 0);
+        AddLiquidity.sdk.debug(`[${this.name}.prepare()]`, {
           pool: this._pool,
           registry: this._registry,
           amountInStep: _amountInStep,
@@ -101,14 +101,17 @@ export class AddLiquidity extends StepClass {
           toMode: this._toMode
         });
         if (!minAmountOut) throw new Error("AddLiquidity: missing minAmountOut");
-        return AddLiquidity.sdk.contracts.beanstalk.interface.encodeFunctionData("addLiquidity", [
-          this._pool,
-          this._registry,
-          amountInStep as any[], // could be 2 or 3 elems
-          minAmountOut,
-          this._fromMode,
-          this._toMode
-        ]);
+        return {
+          target: AddLiquidity.sdk.contracts.beanstalk.address,
+          callData: AddLiquidity.sdk.contracts.beanstalk.interface.encodeFunctionData("addLiquidity", [
+            this._pool,
+            this._registry,
+            amountInStep as any[], // could be 2 or 3 elems
+            minAmountOut,
+            this._fromMode,
+            this._toMode
+          ])
+        };
       },
       decode: (data: string) => AddLiquidity.sdk.contracts.beanstalk.interface.decodeFunctionData("addLiquidity", data),
       decodeResult: (result: string) => AddLiquidity.sdk.contracts.beanstalk.interface.decodeFunctionResult("addLiquidity", result)
