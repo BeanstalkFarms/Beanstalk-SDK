@@ -1,4 +1,5 @@
 import { FarmFromMode, FarmToMode, TokenValue, Test, Clipboard, DataSource, Token, Workflow, ERC20Token } from "@beanstalk/sdk";
+import { ERC20 } from "@beanstalk/sdk/dist/types/constants/generated";
 import { ethers } from "ethers";
 import { sdk, test, account } from "../setup";
 import { logBalances } from "./log";
@@ -38,7 +39,7 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue) {
     throw new Error(`Not enough ${inputToken.symbol}. Balance: ${balance.total.toHuman()} / Input: ${amount.toHuman()}`);
   }
 
-  if (!(inputToken instanceof ERC20Token)) throw new Error("not supported");
+  // if (!(inputToken instanceof ERC20Token)) throw new Error("not supported");
 
   ////////// Prepare Swap //////////
 
@@ -87,13 +88,14 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue) {
     // This is needed to start the Swap process.
     function approveBean(amountInStep) {
       return pipe.wrap(
-        inputToken.getContract(),
+        (inputToken as ERC20Token).getContract(),
         "approve",
         [sdk.contracts.beanstalk.address, ethers.constants.MaxUint256],
         amountInStep // pass-thru
       );
     },
     {
+      // hasEnoughAllowance will return true if `inputToken instance
       skip: (amountInStep) => inputToken.hasEnoughAllowance(sdk.contracts.pipeline.address, sdk.contracts.beanstalk.address, amountInStep)
     }
   );
@@ -314,12 +316,12 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue) {
 
 (async () => {
   //await (await (sdk.tokens.USDC as ERC20Token).approve(sdk.contracts.beanstalk.address, sdk.tokens.USDC.amount(101).toBigNumber())).wait();
-  const tokenIn = sdk.tokens.DAI;
-  const amountIn = tokenIn.amount(100);
+  const tokenIn = sdk.tokens.ETH;
+  const amountIn = tokenIn.amount(1);
 
-  await test.setDAIBalance(account, amountIn);
-  await sdk.tokens.DAI.approve(sdk.contracts.beanstalk.address, tokenIn.amount(500).toBigNumber()).then((r) => r.wait());
-  await sdk.tokens.DAI.approve(sdk.contracts.depot.address, tokenIn.amount(500).toBigNumber()).then((r) => r.wait());
+  // await test.setDAIBalance(account, amountIn);
+  // await sdk.tokens.DAI.approve(sdk.contracts.beanstalk.address, tokenIn.amount(500).toBigNumber()).then((r) => r.wait());
+  // await sdk.tokens.DAI.approve(sdk.contracts.depot.address, tokenIn.amount(500).toBigNumber()).then((r) => r.wait());
   // await test.setDAIBalance(account, amountIn);
 
   console.log(`Approved and set initial balance to ${amountIn.toHuman()} ${tokenIn.symbol}.`);

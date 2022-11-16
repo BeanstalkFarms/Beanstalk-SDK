@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { BasicPreparedResult, RunContext, Step, StepClass } from "src/classes/Workflow";
+import { Clipboard } from "src/lib/depot";
 import { FarmToMode } from "../types";
 
 export class WrapEth extends StepClass<BasicPreparedResult> {
@@ -22,7 +23,11 @@ export class WrapEth extends StepClass<BasicPreparedResult> {
           callData: WrapEth.sdk.contracts.beanstalk.interface.encodeFunctionData("wrapEth", [
             _amountInStep, // ignore minAmountOut since there is no slippage
             this.toMode
-          ])
+          ]),
+          // When encoding WrapEth in a Pipeline call, we need to include
+          // the Ether amount in the Clipboard. If this action is extended somehow,
+          // the developer will need to make sure to include this value.
+          clipboard: Clipboard.encode([], _amountInStep)
         };
       },
       decode: (data: string) => WrapEth.sdk.contracts.beanstalk.interface.decodeFunctionData("wrapEth", data),

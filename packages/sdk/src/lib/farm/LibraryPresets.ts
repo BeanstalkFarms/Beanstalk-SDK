@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { ERC20Token } from "src/classes/Token";
+import { ERC20Token, NativeToken } from "src/classes/Token";
 import { BasicPreparedResult, RunContext, StepGenerator } from "src/classes/Workflow";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { FarmFromMode, FarmToMode } from "../farm/types";
@@ -32,6 +32,10 @@ export class LibraryPresets {
     let generators: StepGenerator[] = [];
 
     // FIXME: use permitToken if _from === INTERNAL
+    if (_token instanceof NativeToken) {
+      console.warn("!! WARNING: Skipping loadPipeline with expectation that ether is passed through { value }.");
+      return generators;
+    }
 
     // give beanstalk permission to send this ERC-20 token from my balance -> pipeline
     if (_permit) {
