@@ -1,6 +1,6 @@
 {
   "name": "@beanstalk/sdk",
-  "version": "0.1.0-beta.0",
+  "version": "0.1.0-beta.1",
   "description": "Beanstalk protocol SDK",
   "license": "MIT",
   "repository": {
@@ -106,5 +106,6 @@
       "default": "./dist/TokenValue/TokenValue.cjs.js",
       "browser": "./dist/TokenValue/TokenValue.umd.js"
     }
-  }
+  },
+  "stableVersion": "0.1.0-beta.0"
 }
