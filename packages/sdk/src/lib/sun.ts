@@ -1,4 +1,4 @@
-import { BeanstalkSDK } from './BeanstalkSDK';
+import { BeanstalkSDK } from "./BeanstalkSDK";
 
 export class Sun {
   static sdk: BeanstalkSDK;

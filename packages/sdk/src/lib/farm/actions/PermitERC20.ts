@@ -38,7 +38,7 @@ export class PermitERC20 extends StepClass<BasicPreparedResult> {
             }`
           );
         }
-        
+
         return {
           target: PermitERC20.sdk.contracts.beanstalk.address,
           callData: PermitERC20.sdk.contracts.beanstalk.interface.encodeFunctionData("permitERC20", [

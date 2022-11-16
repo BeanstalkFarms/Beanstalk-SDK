@@ -1,12 +1,11 @@
-
-import { ethers } from 'ethers';
-import { Event } from './processor';
+import { ethers } from "ethers";
+import { Event } from "./processor";
 
 export enum EventType {
-  SILO = 'silo',
-  FIELD = 'filed',
-  FERTILIER = 'fertilizer',
-  MARKET = 'market'
+  SILO = "silo",
+  FIELD = "filed",
+  FERTILIER = "fertilizer",
+  MARKET = "market"
 }
 
 export const sortEvents = (a: Event, b: Event) => {
@@ -14,7 +13,6 @@ export const sortEvents = (a: Event, b: Event) => {
   if (diff !== 0) return diff;
   return a.logIndex - b.logIndex;
 };
-
 
 export const reduceEvent = (prev: Event[], e: ethers.Event) => {
   try {
@@ -24,7 +22,7 @@ export const reduceEvent = (prev: Event[], e: ethers.Event) => {
       blockNumber: e.blockNumber,
       logIndex: e.logIndex,
       transactionHash: e.transactionHash,
-      transactionIndex: e.transactionIndex,
+      transactionIndex: e.transactionIndex
     });
   } catch (err) {
     console.error(`Failed to parse event ${e.event} ${e.transactionHash}`, err, e);

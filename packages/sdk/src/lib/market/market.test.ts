@@ -1,7 +1,7 @@
-import {utils} from "ethers"
+import { utils } from "ethers";
 
 describe("Market", () => {
-  it('works', () => {
+  it("works", () => {
     expect(true).toBe(true);
-  })
-})
+  });
+});
