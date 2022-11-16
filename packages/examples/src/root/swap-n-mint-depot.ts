@@ -26,7 +26,7 @@ import { logBalances } from "./log";
  * 5. `yarn x ./src/root/from-circulating.ts`
  *
  */
-export async function roots_via_swap(inputToken: Token, amount: TokenValue) {
+export async function roots_via_swap(inputToken: Token, spender: string, amount: TokenValue) {
   ////////// Setup //////////
 
   const account = await sdk.getAccount();
@@ -63,9 +63,9 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue) {
   // We can skip this step if:
   //    `inputToken` = ETH
   //    `inputToken.allowance(account, beanstalk) > amountInStep`
-  depotFarm.add(new sdk.farm.actions.PermitERC20(inputToken as ERC20Token, sdk.contracts.depot.address, "permit"), {
+  depotFarm.add(new sdk.farm.actions.PermitERC20(inputToken as ERC20Token, spender, "permit"), {
     onlyExecute: true,
-    skip: (amountInStep) => inputToken.hasEnoughAllowance(account, sdk.contracts.depot.address, amountInStep)
+    skip: (amountInStep) => inputToken.hasEnoughAllowance(account, spender, amountInStep)
   });
 
   ////////// Load Pipeline //////////
@@ -100,10 +100,15 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue) {
     }
   );
 
-  pipe.add([
-    // Swap from `inputToken` -> `depositToken`.
-    ...(swap.getFarm().generators as unknown as any) // FIXME
-  ]);
+  pipe.add(
+    [
+      // Swap from `inputToken` -> `depositToken`.
+      ...(swap.getFarm().generators as unknown as any) // FIXME
+    ],
+    {
+      skip: inputToken === sdk.tokens.BEAN
+    }
+  );
 
   pipe.add(
     // Get PIPELINE's current balance of `depositToken`.
@@ -284,11 +289,12 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue) {
   console.log("\n\nExecuting...");
   let permit;
 
-  const ready = await inputToken.hasEnoughAllowance(account, sdk.contracts.beanstalk.address, amountIn);
+  const ready = await inputToken.hasEnoughAllowance(account, spender, amountIn);
   if (!ready) {
+    console.log("Signing a permit...");
     const data = await sdk.tokens.permitERC2612(
       account, // owner
-      sdk.contracts.beanstalk.address, // spender
+      spender, // spender
       inputToken as ERC20Token, // inputToken
       amountIn.toString() // amount
     );
@@ -308,23 +314,24 @@ export async function roots_via_swap(inputToken: Token, amount: TokenValue) {
 
     Test.Logger.printReceipt([sdk.contracts.beanstalk, sdk.tokens.BEAN.getContract(), sdk.contracts.root], receipt);
 
-    const balance = await logBalances(account, inputToken, depositToken, "AFTER");
+    await logBalances(account, inputToken, depositToken, "AFTER");
   } catch (e) {
     throw new Error(test.ethersError(e));
+    e;
   }
 }
 
 (async () => {
   //await (await (sdk.tokens.USDC as ERC20Token).approve(sdk.contracts.beanstalk.address, sdk.tokens.USDC.amount(101).toBigNumber())).wait();
-  const tokenIn = sdk.tokens.ETH;
-  const amountIn = tokenIn.amount(1);
+  const tokenIn = sdk.tokens.BEAN;
+  const amountIn = tokenIn.amount(100);
 
-  // await test.setDAIBalance(account, amountIn);
+  // await test.setUSDTBalance(account, amountIn);
   // await sdk.tokens.DAI.approve(sdk.contracts.beanstalk.address, tokenIn.amount(500).toBigNumber()).then((r) => r.wait());
-  // await sdk.tokens.DAI.approve(sdk.contracts.depot.address, tokenIn.amount(500).toBigNumber()).then((r) => r.wait());
-  // await test.setDAIBalance(account, amountIn);
+  await test.setBEANBalance(account, amountIn);
+  await sdk.tokens.BEAN.approve(sdk.contracts.depot.address, tokenIn.amount(500).toBigNumber()).then((r) => r.wait());
 
   console.log(`Approved and set initial balance to ${amountIn.toHuman()} ${tokenIn.symbol}.`);
 
-  await roots_via_swap(tokenIn, amountIn);
+  await roots_via_swap(tokenIn, sdk.contracts.depot.address, amountIn);
 })();
