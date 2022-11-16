@@ -2,9 +2,7 @@
   "name": "@beanstalk/examples",
   "main": "src/index.ts",
   "dependencies": {
-    "@beanstalk/sdk": "workspace:*",
-    "@typechain/ethers-v5": "10.1.1",
-    "typechain": "8.1.1"
+    "@beanstalk/sdk": "workspace:*"
   },
   "scripts": {
     "x": "node run.js"
