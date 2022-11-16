@@ -22,7 +22,7 @@ export class AttachPermitERC20 extends StepClass<BasicPreparedResult> {
             this.permit.typedData.domain.verifyingContract, // token address
             this.permit.owner, // owner
             this.permit.typedData.message.spender, // spender
-            _amountInStep.toString(), // value
+            this.permit.typedData.message.value, // value
             this.permit.typedData.message.deadline, // deadline
             this.permit.split.v,
             this.permit.split.r,
