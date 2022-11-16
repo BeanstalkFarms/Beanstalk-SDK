@@ -225,9 +225,13 @@ export abstract class Workflow<
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "Workflow") {}
 
+  /**
+   * @param _amount an amount to apply slippage to
+   * @param _slippage percent slippage. 0.1 = 0.1%.
+   */
   static slip(_amount: ethers.BigNumber, _slippage: number) {
     if (_slippage < 0) throw new Error("Slippage must be positive");
-    return _amount.mul(Math.floor(Workflow.SLIPPAGE_PRECISION * (1 - _slippage))).div(Workflow.SLIPPAGE_PRECISION);
+    return _amount.mul(Math.floor(Workflow.SLIPPAGE_PRECISION * (1 - _slippage / 100))).div(Workflow.SLIPPAGE_PRECISION);
   }
 
   static direction(_x1: Token, _x2: Token, _forward: boolean): Token[] {
