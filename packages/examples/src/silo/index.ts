@@ -10,13 +10,15 @@ main().catch((e) => {
 
 async function main() {
   const account = process.argv[3] || _account;
-  console.log(`Silo Data for: ${chalk.green(account)}`);
+  console.log(`${chalk.bold.whiteBright("Account:")} ${chalk.greenBright(account)}`);
 
-  await showSomething(account);
+  await showSummary(account);
   await showSiloBalances(account);
 }
 
-async function showSomething(account: string) {
+async function showSummary(account: string) {
+  const price = await sdk.getPrice();
+  console.log(`${chalk.bold.whiteBright("BEAN price:")} ${chalk.greenBright(price.toHuman())}`);
   const total = "tbd"; // (await sdk.silo.getDeposits(account)).toString();
   const stalk = (await sdk.silo.getStalk(account)).toHuman();
   const seeds = (await sdk.silo.getSeeds(account)).toHuman();
