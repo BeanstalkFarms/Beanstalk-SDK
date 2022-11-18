@@ -4,7 +4,7 @@ import { LibraryPresets } from "./LibraryPresets";
 import { BasicPreparedResult, RunMode, Step, Workflow } from "src/classes/Workflow";
 import { Beanstalk, Depot } from "src/constants/generated";
 import { TokenValue } from "src/TokenValue";
-import { ethers } from "ethers";
+import { CallOverrides, ethers } from "ethers";
 import { AdvancedPipeWorkflow } from "src/lib/depot/pipe";
 import { AdvancedFarmCallStruct } from "src/constants/generated/Beanstalk/Beanstalk";
 import { Clipboard } from "src/lib/depot";
@@ -56,9 +56,13 @@ export class FarmWorkflow<RunData extends { slippage: number } = { slippage: num
 
   ////////// Parent Behavior //////////
 
-  async execute(amountIn: ethers.BigNumber | TokenValue, data: RunData): Promise<ethers.ContractTransaction> {
+  async execute(amountIn: ethers.BigNumber | TokenValue, data: RunData, overrides?: CallOverrides): Promise<ethers.ContractTransaction> {
     const encodedSteps = await this.estimateAndEncodeSteps(amountIn, RunMode.Execute, data);
-    const overrides = { value: this.value };
+    if (overrides) {
+      overrides.value = this.value;
+    } else {
+      overrides = { value: this.value };
+    }
     this.sdk.debug(`[Workflow][${this.name}][execute]`, encodedSteps, overrides);
     return this.contract.farm(encodedSteps, overrides);
   }
