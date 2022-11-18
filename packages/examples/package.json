@@ -2,7 +2,9 @@
   "name": "@beanstalk/examples",
   "main": "src/index.ts",
   "dependencies": {
-    "@beanstalk/sdk": "workspace:*"
+    "@beanstalk/sdk": "workspace:*",
+    "chalk": "4",
+    "table": "6.8.1"
   },
   "scripts": {
     "x": "node run.js"
