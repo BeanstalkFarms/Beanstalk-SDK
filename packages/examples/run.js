@@ -6,21 +6,16 @@ process.env.MM_DEV = 1;
 require("@swc/register")({
   jsc: {
     parser: {
-      syntax: "typescript",
+      syntax: "typescript"
     },
     paths: {
-      "@sdk/*": ["../sdk/src/*"],
+      "@sdk/*": ["../sdk/src/*"]
     },
-    baseUrl: ".",
-    // transform: {
-    //   react: {
-    //     runtime: "automatic",
-    //   },
-    // },
+    baseUrl: "."
   },
   module: {
-    type: "commonjs",
-  },
+    type: "commonjs"
+  }
 });
 
 const arg = process.argv[2];

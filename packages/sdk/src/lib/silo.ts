@@ -271,6 +271,8 @@ export class Silo {
     );
   }
 
+  //////////////////////// Balances & Amounts ////////////////////////
+
   /**
    * Return the Farmer's balance of a single whitelisted token.
    */
@@ -483,6 +485,75 @@ export class Silo {
     throw new Error(`Unsupported source: ${source}`);
   }
 
+  /**
+   * Get a Farmer's active Stalk. Does not include earned or revitalized Stalk. Can
+   * @param _account
+   * @param includeGrown
+   * @returns
+   */
+  async getStalk(_account?: string, includeGrown: boolean = false) {
+    const account = await Silo.sdk.getAccount(_account);
+    const [active, grown] = await Promise.all([
+      // includes active stalk & earned stalk
+      Silo.sdk.contracts.beanstalk.balanceOfStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v)),
+      includeGrown
+        ? Silo.sdk.contracts.beanstalk.balanceOfGrownStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v))
+        : Promise.resolve(null)
+    ]);
+
+    if (!includeGrown) return active;
+    return active.add(grown as TokenValue);
+  }
+
+  async getSeeds(_account?: string) {
+    const account = await Silo.sdk.getAccount(_account);
+    return Silo.sdk.contracts.beanstalk.balanceOfSeeds(account).then((v) => Silo.sdk.tokens.SEEDS.fromBlockchain(v));
+  }
+
+  async getEarnedBeans(_account?: string) {
+    const account = await Silo.sdk.getAccount(_account);
+    return Silo.sdk.contracts.beanstalk.balanceOfEarnedBeans(account).then((v) => Silo.sdk.tokens.BEAN.fromBlockchain(v));
+  }
+
+  async getEarnedStalk(_account?: string) {
+    const account = await Silo.sdk.getAccount(_account);
+    return Silo.sdk.contracts.beanstalk.balanceOfEarnedStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v));
+  }
+
+  async getPlantableSeeds(_account?: string) {
+    const account = await Silo.sdk.getAccount(_account);
+    // TODO: this is wrong
+    return Silo.sdk.contracts.beanstalk.balanceOfEarnedSeeds(account).then((v) => Silo.sdk.tokens.SEEDS.fromBlockchain(v));
+  }
+
+  async getGrownStalk(_account?: string) {
+    const account = await Silo.sdk.getAccount(_account);
+    return Silo.sdk.contracts.beanstalk.balanceOfGrownStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v));
+  }
+
+  // TODO: implement
+  async getRevitalizedStalk(_account?: string) {
+    const account = await Silo.sdk.getAccount(_account);
+    // return Silo.sdk.contracts.beanstalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v));
+    return Silo.sdk.tokens.STALK.amount(-999);
+  }
+
+  // TODO: implement
+  async getRevitalizedSeeds(_account?: string) {
+    const account = await Silo.sdk.getAccount(_account);
+    // return Silo.sdk.contracts.beanstalk(account).then((v) => Silo.sdk.tokens.SEEDS.fromBlockchain(v));
+    return Silo.sdk.tokens.SEEDS.amount(-999);
+  }
+
+  // TODO: implement
+  async getDeposits(_account?: string) {
+    throw new Error("not implemented");
+    // const tokenBalances = await this.getBalances(_account);
+    // for (const [token, balance] of tokenBalances) {
+
+    // }
+  }
+
   //////////////////////// Crates ////////////////////////
 
   pickCrates(
@@ -523,25 +594,6 @@ export class Silo {
         bdv: Silo.sdk.tokens.BEAN.amount(0)
       }
     );
-  }
-
-  async balanceOfStalk(_account?: string, includeGrown: boolean = false) {
-    const account = await Silo.sdk.getAccount(_account);
-    const [active, grown] = await Promise.all([
-      // includes active stalk & earned stalk
-      Silo.sdk.contracts.beanstalk.balanceOfStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v)),
-      includeGrown
-        ? Silo.sdk.contracts.beanstalk.balanceOfGrownStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v))
-        : Promise.resolve(null)
-    ]);
-
-    if (!includeGrown) return active;
-    return active.add(grown as TokenValue);
-  }
-
-  async balanceOfSeeds(_account?: string) {
-    const account = await Silo.sdk.getAccount(_account);
-    return Silo.sdk.contracts.beanstalk.balanceOfSeeds(account).then((v) => Silo.sdk.tokens.SEEDS.fromBlockchain(v));
   }
 
   async bdv(_token: Token, _amount?: TokenValue) {

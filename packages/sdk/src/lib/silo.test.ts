@@ -130,7 +130,7 @@ describe("Silo Balance loading", () => {
 
   describe("balanceOfStalk", () => {
     it("Returns a TokenValue with STALK decimals", async () => {
-      const result = await sdk.silo.balanceOfStalk(BF_MULTISIG);
+      const result = await sdk.silo.getStalk(BF_MULTISIG);
       expect(result).to.be.instanceOf(TokenValue);
       expect(result.decimals).to.eq(10);
     });
@@ -139,7 +139,7 @@ describe("Silo Balance loading", () => {
 
   describe("balanceOfSeeds", () => {
     it("Returns a TokenValue with SEEDS decimals", async () => {
-      const result = await sdk.silo.balanceOfSeeds(BF_MULTISIG);
+      const result = await sdk.silo.getSeeds(BF_MULTISIG);
       expect(result).to.be.instanceOf(TokenValue);
       expect(result.decimals).to.eq(6);
     });

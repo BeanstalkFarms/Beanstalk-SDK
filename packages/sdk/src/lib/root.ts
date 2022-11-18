@@ -94,8 +94,8 @@ export class Root {
     const [rootTotalSupply, rootUnderlyingBdvBefore, rootStalkBefore, rootSeedsBefore] = await Promise.all([
       Root.sdk.tokens.ROOT.getTotalSupply(), // automaticaly pulls as TokenValue
       this.underlyingBdv(),
-      Root.sdk.silo.balanceOfStalk(Root.sdk.contracts.root.address, true), // include grown
-      Root.sdk.silo.balanceOfSeeds(Root.sdk.contracts.root.address)
+      Root.sdk.silo.getStalk(Root.sdk.contracts.root.address, true), // include grown
+      Root.sdk.silo.getSeeds(Root.sdk.contracts.root.address)
     ]);
 
     console.log("root total supply", rootTotalSupply.toHuman());
