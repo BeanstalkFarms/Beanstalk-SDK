@@ -12,6 +12,7 @@ import { Permit } from "./permit";
 import { Root } from "./root";
 import { Sdk as Queries, getSdk as getQueries } from "../constants/generated-gql/graphql";
 import { Swap } from "src/lib/swap/Swap";
+import { TokenValue } from "src/classes/TokenValue";
 
 export type Provider = ethers.providers.JsonRpcProvider;
 export type Signer = ethers.Signer;
@@ -82,6 +83,22 @@ export class BeanstalkSDK {
     this.swap = new Swap(this);
   }
 
+  /**
+   * Returns the current BEAN price
+   */
+  async getPrice() {
+    const [price, totalSupply, deltaB] = await this.contracts.beanstalkPrice.price();
+
+    return TokenValue.fromBlockchain(price, 6);
+  }
+
+  debug(...args: any[]) {
+    if (!this.DEBUG) return;
+    console.debug(...args);
+  }
+
+  ////// Configuration //////
+
   handleConfig(config: BeanstalkConfig = {}) {
     if (config.rpcUrl) {
       config.provider = this.getProviderFromUrl(config.rpcUrl);
@@ -100,12 +117,17 @@ export class BeanstalkSDK {
     this.source = DataSource.LEDGER; // FIXME
   }
 
-  debug(...args: any[]) {
-    if (!this.DEBUG) return;
-    console.debug(...args);
+  deriveSource<T extends { source?: DataSource }>(config?: T): DataSource {
+    return config?.source || this.source;
   }
 
-  getProviderFromUrl(url: string): Provider {
+  deriveConfig<T extends BeanstalkConfig>(key: keyof Reconfigurable, _config?: T): BeanstalkConfig[typeof key] {
+    return _config?.[key] || this[key];
+  }
+
+  ////// Private
+
+  private getProviderFromUrl(url: string): Provider {
     if (url.startsWith("ws")) {
       return new ethers.providers.WebSocketProvider(url);
     }
@@ -122,13 +144,5 @@ export class BeanstalkSDK {
     const account = await this.signer.getAddress();
     if (!account) throw new Error("Failed to get account from signer");
     return account.toLowerCase();
-  }
-
-  deriveSource<T extends { source?: DataSource }>(config?: T): DataSource {
-    return config?.source || this.source;
-  }
-
-  deriveConfig<T extends BeanstalkConfig>(key: keyof Reconfigurable, _config?: T): BeanstalkConfig[typeof key] {
-    return _config?.[key] || this[key];
   }
 }
