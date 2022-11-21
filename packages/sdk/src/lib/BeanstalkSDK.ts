@@ -110,10 +110,10 @@ export class BeanstalkSDK {
       return new ethers.providers.WebSocketProvider(url);
     }
     if (url.startsWith("http")) {
-      return new ethers.providers.JsonRpcProvider();
+      return new ethers.providers.JsonRpcProvider(url);
     }
 
-    throw new Error("rpcUrl is invalid");
+    throw new Error("Invalid rpcUrl");
   }
 
   async getAccount(_account?: string): Promise<string> {
