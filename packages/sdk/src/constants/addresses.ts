@@ -2,18 +2,19 @@ import { Address } from "src/classes/Address";
 
 export const addresses = {
   // ----------------------------------------
-  // Beanstalk Contracts
+  // Beanstalk Core Contracts
   // ----------------------------------------
   BEANSTALK: Address.make("0xC1E088fC1323b20BCBee9bd1B9fC9546db5624C5"),
-  BEANSTALK_PRICE: Address.make("0xA57289161FF18D67A68841922264B317170b0b81"),
   BEANSTALK_FERTILIZER: Address.make("0x402c84De2Ce49aF88f5e2eF3710ff89bFED36cB6"),
   BARNRAISE_CUSTODIAN: Address.make("0xa9bA2C40b263843C04d344727b954A545c81D043"),
 
   // ----------------------------------------
   // Ecosystem Contracts
   // ----------------------------------------
-  PIPELINE: Address.make("0xb1bE0000bFdcDDc92A8290202830C4Ef689dCeaa"),
+  BEANSTALK_PRICE: Address.make("0xA57289161FF18D67A68841922264B317170b0b81"),
+  MATH: Address.make("0x16a903b66403d3de69db50e6d1ad0b07490b740a"),
   DEPOT: Address.make("0xDEb0f000082fD56C10f449d4f8497682494da84D"),
+  PIPELINE: Address.make("0xb1bE0000bFdcDDc92A8290202830C4Ef689dCeaa"),
   ROOT: Address.make("0x77700005BEA4DE0A78b956517f099260C2CA9a26"),
 
   // ----------------------------------------
