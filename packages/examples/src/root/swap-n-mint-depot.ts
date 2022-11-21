@@ -271,19 +271,6 @@ export async function roots_via_swap(inputToken: Token, spender: string, amount:
   const amountOut = await depotFarm.estimate(amountIn);
   console.log("Estimated amountOut:", amountOut.toString());
 
-  // const gas = await farm.estimateGas(amountIn, 0.1);
-  // console.log("Estimated gas:", gas.toString());
-
-  // const callStatic = await farm.callStatic(amountIn, 0.1);
-  // const results = farm.decodeStatic(callStatic);
-
-  // Farm item #3   (advancedPipe)
-  // Pipe item #5   (mint)
-  // Get first return value
-  // const mintResult = results[2][4][0];
-
-  // console.log("Executing this transaction is expected to mint", mintResult.toString(), "ROOT");
-
   ////////// Execute Transaction //////////
 
   console.log("\n\nExecuting...");
@@ -316,8 +303,7 @@ export async function roots_via_swap(inputToken: Token, spender: string, amount:
 
     await logBalances(account, inputToken, depositToken, "AFTER");
   } catch (e) {
-    throw new Error(chain.ethersError(e));
-    e;
+    throw new Error(test.ethersError(e));
   }
 }
 
@@ -328,8 +314,8 @@ export async function roots_via_swap(inputToken: Token, spender: string, amount:
 
   // await chain.setUSDTBalance(account, amountIn);
   // await sdk.tokens.DAI.approve(sdk.contracts.beanstalk.address, tokenIn.amount(500).toBigNumber()).then((r) => r.wait());
-  await chain.setBEANBalance(account, amountIn);
-  await sdk.tokens.BEAN.approve(sdk.contracts.depot.address, tokenIn.amount(500).toBigNumber()).then((r) => r.wait());
+  await test.setBEANBalance(account, amountIn);
+  // await sdk.tokens.BEAN.approve(sdk.contracts.depot.address, tokenIn.amount(500).toBigNumber()).then((r) => r.wait());
 
   console.log(`Approved and set initial balance to ${amountIn.toHuman()} ${tokenIn.symbol}.`);
 
