@@ -23,7 +23,9 @@ import {
   Pipeline__factory,
   BeanstalkFertilizer,
   Depot__factory,
-  Depot
+  Depot,
+  Math,
+  Math__factory
 } from "src/constants/generated";
 import { BaseContract } from "ethers";
 
@@ -52,6 +54,7 @@ export class Contracts {
   public readonly pipeline: Pipeline;
   public readonly depot: Depot; // temp
   public readonly root: Root;
+  public readonly math: Math;
 
   public readonly curve: CurveContracts;
 
@@ -66,6 +69,7 @@ export class Contracts {
 
     const pipelineAddress = sdk.addresses.PIPELINE.get(sdk.chainId);
     const depotAddress = sdk.addresses.DEPOT.get(sdk.chainId);
+    const mathAddress = sdk.addresses.MATH.get(sdk.chainId);
     const rootAddress = sdk.addresses.ROOT.get(sdk.chainId);
 
     const beancrv3Address = sdk.addresses.BEAN_CRV3.get(sdk.chainId);
@@ -82,6 +86,7 @@ export class Contracts {
 
     this.pipeline = Pipeline__factory.connect(pipelineAddress, sdk.providerOrSigner);
     this.depot = Depot__factory.connect(depotAddress, sdk.providerOrSigner);
+    this.math = Math__factory.connect(mathAddress, sdk.providerOrSigner);
     this.root = Root__factory.connect(rootAddress, sdk.providerOrSigner);
 
     const beanCrv3 = CurveMetaPool__factory.connect(beancrv3Address, sdk.providerOrSigner);
