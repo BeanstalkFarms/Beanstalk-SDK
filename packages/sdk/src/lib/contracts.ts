@@ -24,6 +24,8 @@ import {
   BeanstalkFertilizer,
   Depot__factory,
   Depot,
+  BeanstalkPrice__factory,
+  BeanstalkPrice,
   Math,
   Math__factory
 } from "src/constants/generated";
@@ -49,6 +51,7 @@ export class Contracts {
   static sdk: BeanstalkSDK;
 
   public readonly beanstalk: Beanstalk;
+  public readonly beanstalkPrice: BeanstalkPrice;
   public readonly fertilizer: BeanstalkFertilizer;
 
   public readonly pipeline: Pipeline;
@@ -66,6 +69,7 @@ export class Contracts {
     // Addressses
     const beanstalkAddress = sdk.addresses.BEANSTALK.get(sdk.chainId);
     const beanstalkFertilizerAddress = sdk.addresses.BEANSTALK_FERTILIZER.get(sdk.chainId);
+    const beanstalkPriceAddress = sdk.addresses.BEANSTALK_PRICE.get(sdk.chainId);
 
     const pipelineAddress = sdk.addresses.PIPELINE.get(sdk.chainId);
     const depotAddress = sdk.addresses.DEPOT.get(sdk.chainId);
@@ -82,6 +86,7 @@ export class Contracts {
 
     // Instances
     this.beanstalk = Beanstalk__factory.connect(beanstalkAddress, sdk.providerOrSigner);
+    this.beanstalkPrice = BeanstalkPrice__factory.connect(beanstalkPriceAddress, sdk.providerOrSigner);
     this.fertilizer = BeanstalkFertilizer__factory.connect(beanstalkFertilizerAddress, sdk.providerOrSigner);
 
     this.pipeline = Pipeline__factory.connect(pipelineAddress, sdk.providerOrSigner);
