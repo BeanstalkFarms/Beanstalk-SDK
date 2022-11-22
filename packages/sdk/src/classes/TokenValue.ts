@@ -10,6 +10,8 @@ export class TokenValue {
   static MAX_UINT32 = TokenValue.fromHuman(4294967295, 0);
   static MAX_UINT256 = TokenValue.fromBlockchain(constants.MaxUint256, 0);
 
+  public humanString: string;
+  public blockchainString: string;
   public decimals: number;
   public value: DecimalBigNumber;
 
@@ -105,6 +107,8 @@ export class TokenValue {
 
     this.decimals = decimals;
     this.value = new DecimalBigNumber(_bigNumber, decimals);
+    this.humanString = this.toHuman();
+    this.blockchainString = this.toBlockchain();
 
     // make values immutable
     Object.defineProperty(this, "decimals", { configurable: false, writable: false });
