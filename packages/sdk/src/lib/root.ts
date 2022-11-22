@@ -91,13 +91,16 @@ export class Root {
    */
   async estimateRoots(token: ERC20Token, deposits: TokenSiloBalance["deposited"]["crates"], isDeposit: boolean) {
     // @dev note that sdk.tokens.ROOT.getContract() == sdk.contracts.root.
-    const [rootTotalSupply, rootUnderlyingBdvBefore, rootStalkBefore, rootSeedsBefore] = await Promise.all([
+    const [rootTotalSupply, rootUnderlyingBdvBefore, rootAllStalk, rootSeedsBefore] = await Promise.all([
       Root.sdk.tokens.ROOT.getTotalSupply(), // automaticaly pulls as TokenValue
       this.underlyingBdv(),
-      Root.sdk.silo.getStalk(Root.sdk.contracts.root.address, true), // include grown
+      Root.sdk.silo.getAllStalk(Root.sdk.contracts.root.address), // include grown
       Root.sdk.silo.getSeeds(Root.sdk.contracts.root.address)
     ]);
 
+    const rootStalkBefore = rootAllStalk.active.add(rootAllStalk.grown);
+
+    // TODO: move these to an example
     console.log("root total supply", rootTotalSupply.toHuman());
     console.log("root underlying bdv before", rootUnderlyingBdvBefore.toHuman());
     console.log("root stalk before", rootStalkBefore.toHuman());
