@@ -116,7 +116,9 @@ export class BlockchainUtils {
       this.setUSDTBalance(account, this.sdk.tokens.USDT.amount(amount)),
       this.setCRV3Balance(account, this.sdk.tokens.CRV3.amount(amount)),
       this.setWETHBalance(account, this.sdk.tokens.WETH.amount(amount)),
-      this.setBEANBalance(account, this.sdk.tokens.BEAN.amount(amount))
+      this.setBEANBalance(account, this.sdk.tokens.BEAN.amount(amount)),
+      this.seturBEANBalance(account, this.sdk.tokens.UNRIPE_BEAN.amount(amount)),
+      this.seturBEAN3CRVBalance(account, this.sdk.tokens.UNRIPE_BEAN_CRV3.amount(amount))
     ]);
   }
   async setDAIBalance(account: string, balance: TokenValue) {
@@ -139,6 +141,12 @@ export class BlockchainUtils {
   }
   async setROOTBalance(account: string, balance: TokenValue) {
     this.setBalance(this.sdk.tokens.ROOT.address, account, balance, 9);
+  }
+  async seturBEANBalance(account: string, balance: TokenValue) {
+    this.setBalance(this.sdk.tokens.UNRIPE_BEAN.address, account, balance, 0);
+  }
+  async seturBEAN3CRVBalance(account: string, balance: TokenValue) {
+    this.setBalance(this.sdk.tokens.UNRIPE_BEAN_CRV3.address, account, balance, 0);
   }
 
   private async setBalance(tokenAddress: string, account: string, balance: TokenValue, slot: number, reverse: boolean = false) {
