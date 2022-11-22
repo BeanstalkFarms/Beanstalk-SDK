@@ -13,6 +13,7 @@ import { Root } from "./root";
 import { Sdk as Queries, getSdk as getQueries } from "../constants/generated-gql/graphql";
 import { Swap } from "src/lib/swap/Swap";
 import { TokenValue } from "src/classes/TokenValue";
+import { Bean } from "./bean";
 
 export type Provider = ethers.providers.JsonRpcProvider;
 export type Signer = ethers.Signer;
@@ -55,12 +56,16 @@ export class BeanstalkSDK {
   public readonly permit: Permit;
   public readonly root: Root;
   public readonly swap: Swap;
+  public readonly bean: Bean;
 
   constructor(config?: BeanstalkConfig) {
     this.handleConfig(config);
 
     this.chainId = enumFromValue(this.provider?.network?.chainId ?? 1, ChainId);
     this.source = config?.source || DataSource.SUBGRAPH;
+
+    // Beanstalk
+    this.bean = new Bean(this);
 
     // Globals
     this.addresses = addresses;
@@ -81,15 +86,6 @@ export class BeanstalkSDK {
     // Ecosystem
     this.root = new Root(this);
     this.swap = new Swap(this);
-  }
-
-  /**
-   * Returns the current BEAN price
-   */
-  async getPrice() {
-    const [price, totalSupply, deltaB] = await this.contracts.beanstalkPrice.price();
-
-    return TokenValue.fromBlockchain(price, 6);
   }
 
   debug(...args: any[]) {

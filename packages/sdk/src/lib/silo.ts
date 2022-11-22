@@ -1,4 +1,4 @@
-import { ethers, BigNumber } from "ethers";
+import { ethers, BigNumber, ContractTransaction } from "ethers";
 import { ERC20Token, Token } from "src/classes/Token";
 import { StringMap } from "src/types";
 import { BeanstalkSDK, DataSource } from "./BeanstalkSDK";
@@ -486,72 +486,81 @@ export class Silo {
   }
 
   /**
-   * Get a Farmer's active Stalk. Does not include earned or revitalized Stalk. Can
-   * @param _account
-   * @param includeGrown
-   * @returns
+   * Get a Farmer's stalk, grown stalk, earned stalk.
+   * Does NOT currently include revitalized stalk
    */
-  async getStalk(_account?: string, includeGrown: boolean = false) {
-    const account = await Silo.sdk.getAccount(_account);
-    const [active, grown] = await Promise.all([
-      // includes active stalk & earned stalk
-      Silo.sdk.contracts.beanstalk.balanceOfStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v)),
-      includeGrown
-        ? Silo.sdk.contracts.beanstalk.balanceOfGrownStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v))
-        : Promise.resolve(null)
+  async getAllStalk(_account?: string) {
+    const [active, earned, grown] = await Promise.all([
+      this.getStalk(_account),
+      this.getEarnedStalk(_account),
+      this.getGrownStalk(_account)
     ]);
-
-    if (!includeGrown) return active;
-    return active.add(grown as TokenValue);
+    // TODO: add revitalized
+    return {
+      active,
+      earned,
+      grown
+    };
   }
 
+  /**
+   * Get a Farmer's current Stalk. This already includes Earned Stalk
+   * @param _account
+   * @returns
+   */
+  async getStalk(_account?: string) {
+    const account = await Silo.sdk.getAccount(_account);
+    return Silo.sdk.contracts.beanstalk.balanceOfStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v));
+  }
+
+  /**
+   * Get a Farmer's current Seeds. Does not include Plantable or Revitalized Seeds
+   * @param _account
+   * @returns
+   */
   async getSeeds(_account?: string) {
     const account = await Silo.sdk.getAccount(_account);
     return Silo.sdk.contracts.beanstalk.balanceOfSeeds(account).then((v) => Silo.sdk.tokens.SEEDS.fromBlockchain(v));
   }
 
+  /**
+   * Get a Farmer's Earned Beans since last Plant.
+   *
+   * @param _account
+   * @returns
+   */
   async getEarnedBeans(_account?: string) {
     const account = await Silo.sdk.getAccount(_account);
     return Silo.sdk.contracts.beanstalk.balanceOfEarnedBeans(account).then((v) => Silo.sdk.tokens.BEAN.fromBlockchain(v));
   }
 
+  /**
+   * Get a Farmer's Earned Stalk since last Plant. This is already included in getStalk() balance
+   */
   async getEarnedStalk(_account?: string) {
     const account = await Silo.sdk.getAccount(_account);
     return Silo.sdk.contracts.beanstalk.balanceOfEarnedStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v));
   }
 
+  /**
+   * Get a Farmer's Plantable Seeds since last Plant. These are seeds earned from current Earned Stalk.
+   * @param _account
+   * @returns
+   */
   async getPlantableSeeds(_account?: string) {
     const account = await Silo.sdk.getAccount(_account);
     // TODO: this is wrong
     return Silo.sdk.contracts.beanstalk.balanceOfEarnedSeeds(account).then((v) => Silo.sdk.tokens.SEEDS.fromBlockchain(v));
   }
 
+  /**
+   * Get a Farmer's Grown Stalk since last Mow.
+   * @param _account
+   * @returns
+   */
   async getGrownStalk(_account?: string) {
     const account = await Silo.sdk.getAccount(_account);
     return Silo.sdk.contracts.beanstalk.balanceOfGrownStalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v));
-  }
-
-  // TODO: implement
-  async getRevitalizedStalk(_account?: string) {
-    const account = await Silo.sdk.getAccount(_account);
-    // return Silo.sdk.contracts.beanstalk(account).then((v) => Silo.sdk.tokens.STALK.fromBlockchain(v));
-    return Silo.sdk.tokens.STALK.amount(-999);
-  }
-
-  // TODO: implement
-  async getRevitalizedSeeds(_account?: string) {
-    const account = await Silo.sdk.getAccount(_account);
-    // return Silo.sdk.contracts.beanstalk(account).then((v) => Silo.sdk.tokens.SEEDS.fromBlockchain(v));
-    return Silo.sdk.tokens.SEEDS.amount(-999);
-  }
-
-  // TODO: implement
-  async getDeposits(_account?: string) {
-    throw new Error("not implemented");
-    // const tokenBalances = await this.getBalances(_account);
-    // for (const [token, balance] of tokenBalances) {
-
-    // }
   }
 
   //////////////////////// Crates ////////////////////////
@@ -609,6 +618,23 @@ export class Silo {
   // $plant = Silo.sdk.contracts.beanstalk.plant;
   // $update = Silo.sdk.contracts.beanstalk.update;
   // $lastUpdate = Silo.sdk.contracts.beanstalk.lastUpdate;
+
+  //////////////////////// ACTION: Claim Rewards ////////////////////////
+  /**
+   * Mowing adds Grown Stalk to stalk balance
+   * @param _account
+   */
+  async mow(_account?: string): Promise<ContractTransaction> {
+    const account = _account ? _account : await Silo.sdk.getAccount();
+    return Silo.sdk.contracts.beanstalk.update(account);
+  }
+
+  /**
+   * Claims Earned Beans, Earned Stalk, Plantable Seeds and also mows any Grown Stalk
+   */
+  async plant(): Promise<ContractTransaction> {
+    return Silo.sdk.contracts.beanstalk.plant();
+  }
 
   //////////////////////// Permits ////////////////////////
 
