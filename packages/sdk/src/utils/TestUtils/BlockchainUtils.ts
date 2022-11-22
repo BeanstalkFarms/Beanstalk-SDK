@@ -89,6 +89,15 @@ export class BlockchainUtils {
     await this.sdk.provider.send("evm_mine", []); // Just mines to the next block
   }
 
+  async impersonate(account: string) {
+    await this.provider.send("anvil_impersonateAccount", [account]);
+    return () => this.stopImpersonating(account);
+  }
+
+  async stopImpersonating(account: string) {
+    await this.provider.send("anvil_stopImpersonatingAccount", [account]);
+  }
+
   /**
    * To add more erc20 tokens later, you need the slot number. Get it with this:
    * npx slot20 balanceOf TOKENADDRESS RANDOM_HOLDER_ADDRESS -v
