@@ -262,12 +262,10 @@ TODO
 
 ```javascript
 sdk.silo.deposit();
-sdk.silo.getDeposits();
 sdk.silo.convert();
 sdk.silo.transfer();
 sdk.silo.withdraw();
 sdk.silo.getWithdrawals();
-sdk.silo.claim();
 ```
 
 ## Farm
