@@ -1,10 +1,10 @@
 import { Address } from "src/classes/Address";
-
 export const addresses = {
   // ----------------------------------------
   // Beanstalk Core Contracts
   // ----------------------------------------
   BEANSTALK: Address.make("0xC1E088fC1323b20BCBee9bd1B9fC9546db5624C5"),
+  BEANSTALK_PRICE: Address.make("0xF2C2b7eabcB353bF6f2128a7f8e1e32Eeb112530"),
   BEANSTALK_FERTILIZER: Address.make("0x402c84De2Ce49aF88f5e2eF3710ff89bFED36cB6"),
   BARNRAISE_CUSTODIAN: Address.make("0xa9bA2C40b263843C04d344727b954A545c81D043"),
 
