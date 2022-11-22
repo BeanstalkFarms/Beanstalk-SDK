@@ -1,4 +1,6 @@
-import { sdk, account } from "./setup";
+import { sdk, account as _account } from "./setup";
+import { table } from "table";
+import chalk from "chalk";
 
 main().catch((e) => {
   console.log("FAILED:");
@@ -6,20 +8,33 @@ main().catch((e) => {
 });
 
 async function main() {
-  const arg = process.argv[3];
-  if (arg) {
-    await getBal(arg);
+  const account = process.argv[3] || _account;
+  console.log(`${chalk.bold.whiteBright("Account:")} ${chalk.greenBright(account)}`);
+  let res = [[chalk.bold("Token"), chalk.bold("Internal"), chalk.bold("External"), chalk.bold("Total")]];
+  if (account) {
+    res.push(await getBal(account));
   } else {
-    await Promise.all(["ETH", "WETH", "BEAN", "USDT", "USDC", "DAI", "CRV3", "ROOT"].map(getBal));
+    const bals = await Promise.all(
+      ["ETH", "WETH", "BEAN", "USDT", "USDC", "DAI", "CRV3", "UNRIPE_BEAN", "UNRIPE_BEAN_CRV3", "ROOT"].map(getBal)
+    );
+    res.push(...bals);
   }
+  console.log(table(res));
 }
 
 async function getBal(t: string) {
   const token = sdk.tokens[t];
   if (!token) throw new Error(`No token found: ${t}`);
-  const bal = await sdk.tokens.getBalance(token, account);
-  console.log(token.symbol);
-  console.log(`\tinternal: ${bal.internal.toHuman()}`);
-  console.log(`\texternal: ${bal.external.toHuman()}`);
-  console.log(`\ttotal: ${bal.total.toHuman()}`);
+
+  try {
+    const bal = await sdk.tokens.getBalance(token, account);
+    return [
+      chalk.grey(token.symbol),
+      chalk.green(bal.internal.toHuman()),
+      chalk.green(bal.external.toHuman()),
+      chalk.greenBright(bal.total.toHuman())
+    ];
+  } catch (e) {
+    return [chalk.red(token.symbol), " -- ", " -- ", " -- "];
+  }
 }
