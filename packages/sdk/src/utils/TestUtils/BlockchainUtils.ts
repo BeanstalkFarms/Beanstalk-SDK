@@ -101,8 +101,8 @@ export class BlockchainUtils {
   /**
    * To add more erc20 tokens later, you need the slot number. Get it with this:
    * npx slot20 balanceOf TOKENADDRESS RANDOM_HOLDER_ADDRESS -v
-   * npx slot20 balanceOf 0x3d5965EB520E53CC1A6AEe3A44E5c1De406E028F 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 -v
-   * set reverse to true if mapping format is (key, slot)
+   * npx slot20 balanceOf 0x77700005BEA4DE0A78b956517f099260C2CA9a26 0x735cab9b02fd153174763958ffb4e0a971dd7f29 -v --rpc $RPC
+   * set reverse to true if mapping format is (slot, key)
    *
    * From this article: https://kndrck.co/posts/local_erc20_bal_mani_w_hh/
    *
@@ -111,15 +111,21 @@ export class BlockchainUtils {
    */
   async setAllBalances(account: string, amount: string) {
     return Promise.allSettled([
+      this.setETHBalance(account, this.sdk.tokens.ETH.amount(amount)),
       this.setDAIBalance(account, this.sdk.tokens.DAI.amount(amount)),
       this.setUSDCBalance(account, this.sdk.tokens.USDC.amount(amount)),
       this.setUSDTBalance(account, this.sdk.tokens.USDT.amount(amount)),
       this.setCRV3Balance(account, this.sdk.tokens.CRV3.amount(amount)),
       this.setWETHBalance(account, this.sdk.tokens.WETH.amount(amount)),
       this.setBEANBalance(account, this.sdk.tokens.BEAN.amount(amount)),
+      this.setROOTBalance(account, this.sdk.tokens.ROOT.amount(amount)),
       this.seturBEANBalance(account, this.sdk.tokens.UNRIPE_BEAN.amount(amount)),
-      this.seturBEAN3CRVBalance(account, this.sdk.tokens.UNRIPE_BEAN_CRV3.amount(amount))
+      this.seturBEAN3CRVBalance(account, this.sdk.tokens.UNRIPE_BEAN_CRV3.amount(amount)),
+      this.setBEAN3CRVBalance(account, this.sdk.tokens.BEAN_CRV3_LP.amount(amount))
     ]);
+  }
+  async setETHBalance(account: string, balance: TokenValue) {
+    await this.sdk.provider.send("hardhat_setBalance", [account, balance.toHex()]);
   }
   async setDAIBalance(account: string, balance: TokenValue) {
     this.setBalance(this.sdk.tokens.DAI.address, account, balance, 2);
@@ -140,13 +146,16 @@ export class BlockchainUtils {
     this.setBalance(this.sdk.tokens.BEAN.address, account, balance, 0);
   }
   async setROOTBalance(account: string, balance: TokenValue) {
-    this.setBalance(this.sdk.tokens.ROOT.address, account, balance, 9);
+    this.setBalance(this.sdk.tokens.ROOT.address, account, balance, 151);
   }
   async seturBEANBalance(account: string, balance: TokenValue) {
     this.setBalance(this.sdk.tokens.UNRIPE_BEAN.address, account, balance, 0);
   }
   async seturBEAN3CRVBalance(account: string, balance: TokenValue) {
     this.setBalance(this.sdk.tokens.UNRIPE_BEAN_CRV3.address, account, balance, 0);
+  }
+  async setBEAN3CRVBalance(account: string, balance: TokenValue) {
+    this.setBalance(this.sdk.tokens.BEAN_CRV3_LP.address, account, balance, 15, true);
   }
 
   private async setBalance(tokenAddress: string, account: string, balance: TokenValue, slot: number, reverse: boolean = false) {
