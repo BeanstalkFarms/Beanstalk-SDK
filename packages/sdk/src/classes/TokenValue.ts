@@ -134,6 +134,10 @@ export class TokenValue {
     return this.toBlockchain();
   }
 
+  toHex(): string {
+    return this.value.toBigNumber()._hex;
+  }
+
   /**
    * Returns a human readable string, for example "3.14"
    * @returns string

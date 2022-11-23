@@ -1,6 +1,9 @@
 import { sdk, account as _account } from "./setup";
 import { table } from "table";
 import chalk from "chalk";
+import { TokenValue } from "@beanstalk/sdk";
+
+let account: string = _account;
 
 main().catch((e) => {
   console.log("FAILED:");
@@ -8,23 +11,39 @@ main().catch((e) => {
 });
 
 async function main() {
-  const account = process.argv[3] || _account;
+  const arg = process.argv[3];
+  let symbol: string | undefined = undefined;
+
+  let v = sdk.tokens.ETH.amount(2);
+  console.log(v);
+  console.log(v.toBlockchain());
+
+  if (arg) {
+    if (arg.startsWith("0x")) {
+      account = arg;
+    } else {
+      symbol = arg;
+    }
+  }
   console.log(`${chalk.bold.whiteBright("Account:")} ${chalk.greenBright(account)}`);
   let res = [[chalk.bold("Token"), chalk.bold("Internal"), chalk.bold("External"), chalk.bold("Total")]];
-  if (account) {
-    res.push(await getBal(account));
+
+  if (symbol) {
+    res.push(await getBal(symbol, account));
   } else {
     const bals = await Promise.all(
-      ["ETH", "WETH", "BEAN", "USDT", "USDC", "DAI", "CRV3", "UNRIPE_BEAN", "UNRIPE_BEAN_CRV3", "ROOT"].map(getBal)
+      ["ETH", "WETH", "BEAN", "USDT", "USDC", "DAI", "CRV3", "UNRIPE_BEAN", "UNRIPE_BEAN_CRV3", "BEAN_CRV3_LP", "ROOT"].map((s) =>
+        getBal(s, account)
+      )
     );
     res.push(...bals);
   }
   console.log(table(res));
 }
 
-async function getBal(t: string) {
-  const token = sdk.tokens[t];
-  if (!token) throw new Error(`No token found: ${t}`);
+async function getBal(symbol: string, account: string) {
+  const token = sdk.tokens[symbol];
+  if (!token) throw new Error(`No token found: ${symbol}`);
 
   try {
     const bal = await sdk.tokens.getBalance(token, account);
