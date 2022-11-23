@@ -76,7 +76,7 @@ export abstract class Token {
     Token.sdk = sdk;
 
     /// Basic
-    this.address = address ?? "";
+    this.address = address?.toLowerCase() ?? "";
     this.decimals = decimals;
     this.chainId = sdk.chainId;
 
