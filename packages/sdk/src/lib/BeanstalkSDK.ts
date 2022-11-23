@@ -14,6 +14,7 @@ import { Sdk as Queries, getSdk as getQueries } from "../constants/generated-gql
 import { Swap } from "src/lib/swap/Swap";
 import { TokenValue } from "src/classes/TokenValue";
 import { Bean } from "./bean";
+import { Pools } from "./pools";
 
 export type Provider = ethers.providers.JsonRpcProvider;
 export type Signer = ethers.Signer;
@@ -46,6 +47,7 @@ export class BeanstalkSDK {
   public readonly addresses: typeof addresses;
   public readonly contracts: Contracts;
   public readonly tokens: Tokens;
+  public readonly pools: Pools;
   public readonly graphql: GraphQLClient;
   public readonly queries: Queries;
 
@@ -71,6 +73,7 @@ export class BeanstalkSDK {
     this.addresses = addresses;
     this.contracts = new Contracts(this);
     this.tokens = new Tokens(this);
+    this.pools = new Pools(this);
     this.graphql = new GraphQLClient(config?.subgraphUrl || "https://graph.node.bean.money/subgraphs/name/beanstalk");
     this.queries = getQueries(this.graphql);
 
