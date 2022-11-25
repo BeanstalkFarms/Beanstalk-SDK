@@ -14,6 +14,8 @@ import {
 import { TokenValue } from "src/classes/TokenValue";
 import { MAX_UINT256 } from "src/constants";
 import { assert } from "src/utils";
+import { DepositBuilder } from "./silo/DepositBuilder";
+import { DepositOperation } from "./silo/DepositOperation";
 
 /**
  * A Crate is an `amount` of a token Deposited or
@@ -77,7 +79,7 @@ export type UpdateFarmerSiloBalancesPayload = StringMap<Partial<TokenSiloBalance
 
 export class Silo {
   static sdk: BeanstalkSDK;
-
+  private depositBuilder: DepositBuilder;
   // 1 Seed grows 1 / 10_000 Stalk per Season.
   // 1/10_000 = 1E-4
   // FIXME
@@ -85,6 +87,7 @@ export class Silo {
 
   constructor(sdk: BeanstalkSDK) {
     Silo.sdk = sdk;
+    this.depositBuilder = new DepositBuilder(sdk);
   }
 
   //////////////////////// UTILITIES ////////////////////////
@@ -618,6 +621,15 @@ export class Silo {
   // $plant = Silo.sdk.contracts.beanstalk.plant;
   // $update = Silo.sdk.contracts.beanstalk.update;
   // $lastUpdate = Silo.sdk.contracts.beanstalk.lastUpdate;
+
+  /**
+   * Create a DepositOperation helper object
+   * @param targetToken The token we want to deposit. Must be a white-listed token
+   * @returns DepositOperation
+   */
+  createDeposit(targetToken: Token): DepositOperation {
+    return this.depositBuilder.create(targetToken);
+  }
 
   //////////////////////// ACTION: Claim Rewards ////////////////////////
   /**
