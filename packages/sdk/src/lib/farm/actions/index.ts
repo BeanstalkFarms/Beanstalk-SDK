@@ -8,6 +8,7 @@ import { TransferToken } from "./TransferToken";
 import { WithdrawDeposits } from "./WithdrawDeposits";
 import { ClaimWithdrawals } from "./ClaimWithdrawals";
 import { PermitERC20 } from "./PermitERC20";
+import { DevDebug } from "./_DevDebug";
 
 export {
   Exchange,
@@ -19,5 +20,6 @@ export {
   TransferToken,
   PermitERC20,
   WithdrawDeposits,
-  ClaimWithdrawals
+  ClaimWithdrawals,
+  DevDebug
 };
