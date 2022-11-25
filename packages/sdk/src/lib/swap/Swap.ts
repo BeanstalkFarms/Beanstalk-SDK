@@ -1,8 +1,10 @@
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { Token } from "src/classes/Token";
 import { FarmFromMode, FarmToMode } from "src/lib/farm/types";
-import { Router } from "./Router";
+import { Router, RouterResult } from "src/classes/Router";
 import { SwapOperation } from "./SwapOperation";
+import { getSwapGraph } from "./graph";
+import { StepClass } from "src/classes/Workflow";
 
 export class Swap {
   private static sdk: BeanstalkSDK;
@@ -10,7 +12,17 @@ export class Swap {
 
   constructor(sdk: BeanstalkSDK) {
     Swap.sdk = sdk;
-    this.router = new Router(sdk);
+    const graph = getSwapGraph(sdk);
+    const selfEdgeBuilder = (token: Token): RouterResult => {
+      return {
+        step: (account: string, from?: FarmFromMode, to?: FarmToMode): StepClass => {
+          return new sdk.farm.actions.TransferToken(token.address, account, from, to);
+        },
+        from: token.symbol,
+        to: token.symbol
+      };
+    };
+    this.router = new Router(sdk, graph, selfEdgeBuilder);
   }
 
   public buildSwap(tokenIn: Token, tokenOut: Token, account: string, _from?: FarmFromMode, _to?: FarmToMode) {
