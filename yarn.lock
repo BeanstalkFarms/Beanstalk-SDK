@@ -808,6 +808,7 @@ __metadata:
     "@types/rimraf": ^3
     chalk: 5.1.2
     command-line-args: 5.2.1
+    command-line-usage: 6.1.3
     ethers: 5.7.2
     rimraf: 3.0.2
     table: 6.8.1
@@ -3945,7 +3946,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"command-line-usage@npm:^6.1.0":
+"command-line-usage@npm:6.1.3, command-line-usage@npm:^6.1.0":
   version: 6.1.3
   resolution: "command-line-usage@npm:6.1.3"
   dependencies:

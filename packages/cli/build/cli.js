@@ -4,6 +4,7 @@ import { BeanstalkSDK, TestUtils, DataSource } from "@beanstalk/sdk";
 import { ethers } from "ethers";
 import { balance } from "./commands/balance.js";
 import { setbalance } from "./commands/setbalance.js";
+import { help } from "./commands/help.js";
 // const accountOption = { name: "account", alias: "a" };
 // const tokenOption = { name: "token", alias: "t" };
 // const amountOption = { name: "amount", alias: "m" };
@@ -14,6 +15,7 @@ main().catch((e) => {
 async function main() {
   const commands = [
     { name: "command", defaultOption: true },
+    { name: "help", alias: "h" },
     { name: "account", alias: "a", defaultValue: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" },
     { name: "token", alias: "t" },
     { name: "amount", alias: "m", defaultValue: "50000" },
@@ -30,8 +32,9 @@ async function main() {
       // args = commandLineArgs(def, { argv });
       await setbalance(sdk, chain, { account: args.account, symbol: args.token, amount: args.amount });
       break;
+    case "help":
     default:
-      console.log("Sorry, what...?");
+      await help();
   }
   await stop();
 }
