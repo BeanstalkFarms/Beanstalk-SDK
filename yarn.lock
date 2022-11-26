@@ -798,6 +798,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@beanstalk/cli@workspace:packages/cli":
+  version: 0.0.0-use.local
+  resolution: "@beanstalk/cli@workspace:packages/cli"
+  dependencies:
+    "@beanstalk/sdk": "workspace:*"
+    "@types/command-line-args": ^5
+    "@types/node": 18.11.9
+    "@types/rimraf": ^3
+    chalk: 5.1.2
+    command-line-args: 5.2.1
+    ethers: 5.7.2
+    rimraf: 3.0.2
+    table: 6.8.1
+    ts-node: 10.9.1
+    typescript: 4.9.3
+  bin:
+    bean: build/cli.js
+  languageName: unknown
+  linkType: soft
+
 "@beanstalk/examples@workspace:packages/examples":
   version: 0.0.0-use.local
   resolution: "@beanstalk/examples@workspace:packages/examples"
@@ -2711,6 +2731,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/command-line-args@npm:^5":
+  version: 5.2.0
+  resolution: "@types/command-line-args@npm:5.2.0"
+  checksum: 423121d2d083765f5b78d090115f3be82d53a39cec9de63719cbd07021e6330fab19b75e2290af1f7dda84efd7964dc498eb10b2b465991de27045db95aa1eef
+  languageName: node
+  linkType: hard
+
 "@types/eslint@npm:^8":
   version: 8.4.9
   resolution: "@types/eslint@npm:8.4.9"
@@ -2846,6 +2873,13 @@ __metadata:
   version: 18.11.5
   resolution: "@types/node@npm:18.11.5"
   checksum: ac54e9287dd4549ea3dc8aabc0cf7bfa04c52f02925d7fd68414789617ec770f034c8ae2e111e8bd00d446a46fcac42587b5a316a1303e2f6ea094854248c9ff
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:18.11.9":
+  version: 18.11.9
+  resolution: "@types/node@npm:18.11.9"
+  checksum: cc0aae109e9b7adefc32eecb838d6fad931663bb06484b5e9cbbbf74865c721b03d16fd8d74ad90e31dbe093d956a7c2c306ba5429ba0c00f3f7505103d7a496
   languageName: node
   linkType: hard
 
@@ -3635,6 +3669,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"chalk@npm:5.1.2":
+  version: 5.1.2
+  resolution: "chalk@npm:5.1.2"
+  checksum: 804d7485e33531abe45b14e91026ceb5615974a8c04259ab0806f214a7666f6ea03e39ab124f7d5a0c78a83fda89005f236db3c5f10c2abe9ae875f7aa56bcb5
+  languageName: node
+  linkType: hard
+
 "chalk@npm:^2.0.0, chalk@npm:^2.4.2":
   version: 2.4.2
   resolution: "chalk@npm:2.4.2"
@@ -3892,7 +3933,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"command-line-args@npm:^5.1.1":
+"command-line-args@npm:5.2.1, command-line-args@npm:^5.1.1":
   version: 5.2.1
   resolution: "command-line-args@npm:5.2.1"
   dependencies:
@@ -8218,6 +8259,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:4.9.3":
+  version: 4.9.3
+  resolution: "typescript@npm:4.9.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 17b8f816050b412403e38d48eef0e893deb6be522d6dc7caf105e54a72e34daf6835c447735fd2b28b66784e72bfbf87f627abb4818a8e43d1fa8106396128dc
+  languageName: node
+  linkType: hard
+
 "typescript@patch:typescript@4.8.4#~builtin<compat/typescript>":
   version: 4.8.4
   resolution: "typescript@patch:typescript@npm%3A4.8.4#~builtin<compat/typescript>::version=4.8.4&hash=a1c5e5"
@@ -8225,6 +8276,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 563a0ef47abae6df27a9a3ab38f75fc681f633ccf1a3502b1108e252e187787893de689220f4544aaf95a371a4eb3141e4a337deb9895de5ac3c1ca76430e5f0
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@4.9.3#~builtin<compat/typescript>":
+  version: 4.9.3
+  resolution: "typescript@patch:typescript@npm%3A4.9.3#~builtin<compat/typescript>::version=4.9.3&hash=a1c5e5"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: ef65c22622d864497d0a0c5db693523329b3284c15fe632e93ad9aa059e8dc38ef3bd767d6f26b1e5ecf9446f49bd0f6c4e5714a2eeaf352805dc002479843d1
   languageName: node
   linkType: hard
 
