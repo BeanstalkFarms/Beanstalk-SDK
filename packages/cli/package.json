@@ -1,6 +1,6 @@
 {
   "name": "@beanstalk/cli",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Beanstalk protocol development cli tool",
   "license": "MIT",
   "repository": {
@@ -29,6 +29,7 @@
     "@beanstalk/sdk": "workspace:*",
     "chalk": "5.1.2",
     "command-line-args": "5.2.1",
+    "command-line-usage": "6.1.3",
     "ethers": "5.7.2",
     "table": "6.8.1"
   }
