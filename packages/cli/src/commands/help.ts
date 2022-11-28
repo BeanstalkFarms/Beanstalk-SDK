@@ -27,6 +27,12 @@ export const help = () => {
           alias: "m",
           typeLabel: "{underline number}",
           description: "A human readable value specifying an amount. Ex: '5' for five ETH\n{gray Default: 50000}"
+        },
+        {
+          name: "rpcUrl",
+          alias: "r",
+          typeLabel: "{underline url}",
+          description: "http[s] RPC url to connect with. \n{gray Default: http://localhost:8545}"
         }
       ]
     },
