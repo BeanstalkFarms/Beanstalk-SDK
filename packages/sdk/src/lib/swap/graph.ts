@@ -22,49 +22,49 @@ export const getSwapGraph = (sdk: BeanstalkSDK): Graph => {
 
   // ETH<>WETH
   graph.setEdge("ETH", "WETH", {
-    step: (_: string, _2: FarmFromMode, to: FarmToMode) => new sdk.farm.actions.WrapEth(to),
+    build: (_: string, _2: FarmFromMode, to: FarmToMode) => new sdk.farm.actions.WrapEth(to),
     from: "ETH",
     to: "WETH"
   });
   graph.setEdge("WETH", "ETH", {
-    step: (_: string, from: FarmFromMode, _2: FarmToMode) => new sdk.farm.actions.UnwrapEth(from),
+    build: (_: string, from: FarmFromMode, _2: FarmToMode) => new sdk.farm.actions.UnwrapEth(from),
     from: "WETH",
     to: "ETH"
   });
 
   // WETH<>USDT
   graph.setEdge("WETH", "USDT", {
-    step: (_: string, from: FarmFromMode, to: FarmToMode) => sdk.farm.presets.weth2usdt(from, to),
+    build: (_: string, from: FarmFromMode, to: FarmToMode) => sdk.farm.presets.weth2usdt(from, to),
     from: "WETH",
     to: "USDT"
   });
   graph.setEdge("USDT", "WETH", {
-    step: (_: string, from: FarmFromMode, to: FarmToMode) => sdk.farm.presets.usdt2weth(from, to),
+    build: (_: string, from: FarmFromMode, to: FarmToMode) => sdk.farm.presets.usdt2weth(from, to),
     from: "USDT",
     to: "WETH"
   });
 
   // USDT<>BEAN
   graph.setEdge("USDT", "BEAN", {
-    step: (_: string, from: FarmFromMode, to: FarmToMode) => sdk.farm.presets.usdt2bean(from, to),
+    build: (_: string, from: FarmFromMode, to: FarmToMode) => sdk.farm.presets.usdt2bean(from, to),
     from: "USDT",
     to: "BEAN"
   });
   graph.setEdge("BEAN", "USDT", {
-    step: (_: string, from: FarmFromMode, to: FarmToMode) => sdk.farm.presets.bean2usdt(from, to),
+    build: (_: string, from: FarmFromMode, to: FarmToMode) => sdk.farm.presets.bean2usdt(from, to),
     from: "BEAN",
     to: "USDT"
   });
 
   // USDC<>BEAN
   graph.setEdge("USDC", "BEAN", {
-    step: (_: string, from: FarmFromMode, to: FarmToMode) =>
+    build: (_: string, from: FarmFromMode, to: FarmToMode) =>
       new sdk.farm.actions.ExchangeUnderlying(sdk.contracts.curve.pools.beanCrv3.address, sdk.tokens.USDC, sdk.tokens.BEAN, from, to),
     from: "USDC",
     to: "BEAN"
   });
   graph.setEdge("BEAN", "USDC", {
-    step: (_: string, from: FarmFromMode, to: FarmToMode) =>
+    build: (_: string, from: FarmFromMode, to: FarmToMode) =>
       new sdk.farm.actions.ExchangeUnderlying(sdk.contracts.curve.pools.beanCrv3.address, sdk.tokens.BEAN, sdk.tokens.USDC, from, to),
     from: "BEAN",
     to: "USDC"
@@ -72,13 +72,13 @@ export const getSwapGraph = (sdk: BeanstalkSDK): Graph => {
 
   // DAI<>BEAN
   graph.setEdge("DAI", "BEAN", {
-    step: (_: string, from: FarmFromMode, to: FarmToMode) =>
+    build: (_: string, from: FarmFromMode, to: FarmToMode) =>
       new sdk.farm.actions.ExchangeUnderlying(sdk.contracts.curve.pools.beanCrv3.address, sdk.tokens.DAI, sdk.tokens.BEAN, from, to),
     from: "DAI",
     to: "BEAN"
   });
   graph.setEdge("BEAN", "DAI", {
-    step: (_: string, from: FarmFromMode, to: FarmToMode) =>
+    build: (_: string, from: FarmFromMode, to: FarmToMode) =>
       new sdk.farm.actions.ExchangeUnderlying(sdk.contracts.curve.pools.beanCrv3.address, sdk.tokens.BEAN, sdk.tokens.DAI, from, to),
     from: "BEAN",
     to: "DAI"
@@ -86,7 +86,7 @@ export const getSwapGraph = (sdk: BeanstalkSDK): Graph => {
 
   // CRV3<>BEAN
   graph.setEdge("3CRV", "BEAN", {
-    step: (_: string, from: FarmFromMode, to: FarmToMode) =>
+    build: (_: string, from: FarmFromMode, to: FarmToMode) =>
       new sdk.farm.actions.Exchange(
         sdk.contracts.curve.pools.beanCrv3.address,
         sdk.contracts.curve.registries.metaFactory.address,
@@ -99,7 +99,7 @@ export const getSwapGraph = (sdk: BeanstalkSDK): Graph => {
     to: "BEAN"
   });
   graph.setEdge("BEAN", "3CRV", {
-    step: (_: string, from: FarmFromMode, to: FarmToMode) =>
+    build: (_: string, from: FarmFromMode, to: FarmToMode) =>
       new sdk.farm.actions.Exchange(
         sdk.contracts.curve.pools.beanCrv3.address,
         sdk.contracts.curve.registries.metaFactory.address,
