@@ -1,4 +1,4 @@
-import { Router, RouterResult } from "src/classes/Router";
+import { Router, RouteStep } from "src/classes/Router";
 import { Token } from "src/classes/Token/Token";
 import { StepClass } from "src/classes/Workflow";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
@@ -13,10 +13,13 @@ export class DepositBuilder {
   constructor(sdk: BeanstalkSDK) {
     DepositBuilder.sdk = sdk;
     const graph = getDepositGraph(sdk);
-    const selfEdgeBuilder = (token: Token): RouterResult => {
+    const selfEdgeBuilder = (symbol: string): RouteStep => {
+      const token = sdk.tokens.findBySymbol(symbol);
+      if (!token) throw new Error(`Could not find a token with symbol "${symbol}"`);
+
       return {
-        step: (account: string, from?: FarmFromMode, to?: FarmToMode): StepClass => {
-          return new sdk.farm.actions.DevDebug(`${token.symbol} -> ${token.symbol}`);
+        build: (account: string, from?: FarmFromMode, to?: FarmToMode): StepClass => {
+          return new sdk.farm.actions.DevDebug(`${token.symbol} -> ${token.symbol} default`);
         },
         from: token.symbol,
         to: token.symbol
@@ -26,8 +29,8 @@ export class DepositBuilder {
     this.router = new Router(sdk, graph, selfEdgeBuilder);
   }
 
-  create(targetToken: Token): DepositOperation {
-    let op = new DepositOperation(DepositBuilder.sdk, this.router, targetToken);
+  buildDeposit(targetToken: Token, account: string): DepositOperation {
+    let op = new DepositOperation(DepositBuilder.sdk, this.router, targetToken, account);
 
     return op;
   }

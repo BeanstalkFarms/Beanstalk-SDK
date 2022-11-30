@@ -627,8 +627,8 @@ export class Silo {
    * @param targetToken The token we want to deposit. Must be a white-listed token
    * @returns DepositOperation
    */
-  createDeposit(targetToken: Token): DepositOperation {
-    return this.depositBuilder.create(targetToken);
+  buildDeposit(targetToken: Token, account: string): DepositOperation {
+    return this.depositBuilder.buildDeposit(targetToken, account);
   }
 
   //////////////////////// ACTION: Claim Rewards ////////////////////////
