@@ -4,13 +4,54 @@ import { Token } from "src/classes/Token";
 import { FarmFromMode, FarmToMode } from "src/lib/farm/types";
 import { StepClass } from "src/classes/Workflow";
 
-export type RouterResult = {
-  step: (account: string, fromMode?: FarmFromMode, toMode?: FarmToMode) => StepClass;
+export type RouteStep = {
+  build: (account: string, fromMode?: FarmFromMode, toMode?: FarmToMode) => StepClass;
   from: string;
   to: string;
 };
 
-type SelfEdgeBuilder = (token: Token) => RouterResult;
+type SelfEdgeBuilder = (token: string) => RouteStep;
+
+export class Route {
+  private readonly steps: RouteStep[] = [];
+
+  addStep(step: RouteStep) {
+    this.steps.push(step);
+  }
+
+  getStep(index: number): RouteStep {
+    return this.steps[index];
+  }
+
+  toArray(): string[] {
+    return this.steps.reduce<string[]>((s, curr, i) => {
+      if (i == 0) {
+        return [curr.from, curr.to];
+      } else {
+        s.push(curr.to);
+        return s;
+      }
+    }, []);
+  }
+
+  toString(separator: string = " -> ") {
+    return this.steps.reduce<string>((s, curr, i) => {
+      if (i == 0) {
+        return `${curr.from}${separator}${curr.to}`;
+      } else {
+        return `${s}${separator}${curr.to}`;
+      }
+    }, "");
+  }
+
+  get length() {
+    return this.steps.length;
+  }
+
+  [Symbol.iterator]() {
+    return this.steps[Symbol.iterator]();
+  }
+}
 
 export class Router {
   private static sdk: BeanstalkSDK;
@@ -23,21 +64,20 @@ export class Router {
     this.buildSelfEdge = selfEdgeBuilder;
   }
 
-  public findPath(tokenIn: Token, tokenOut: Token): RouterResult[] {
-    const a = tokenIn.symbol;
-    const b = tokenOut.symbol;
+  public getRoute(tokenIn: string, tokenOut: string): Route {
+    const route = new Route();
 
-    let path = this.searchGraph(a, b);
+    let path = this.searchGraph(tokenIn, tokenOut);
     // At this point, path is an array of strings, for ex:
     // [ 'A', 'B', 'C', 'D' ]
-    // We need to conver this to an array of edges, by getting the edgets of these pairs
-    // them. ex:
+    // We need to conver this to an array of edges (aka steps) (wrapped in Route class),
+    // by getting the edges of these pairs. ex:
     // [ A/B, B/C, C/D]
 
     // Length of 0 means there was no path found
     if (path.length === 0) {
-      Router.sdk.debug(`Router.findPath: No path found from ${a}->${b}`);
-      return [];
+      Router.sdk.debug(`Router.getRoute: No path found from ${tokenIn}->${tokenOut}`);
+      return route;
     }
 
     // Length of 1 means the source and target are the same node,
@@ -47,17 +87,27 @@ export class Router {
     // in a deposit graph, we use addLiquidity. We refer to this as the "selfEdge"
     // and it must be passed in during Router instantiation.
     if (path.length === 1) {
-      Router.sdk.debug(`Router.findPath: Self transfer ${path[0]}`);
-      return [this.buildSelfEdge(tokenIn)];
+      // If there's a "self edge" use it, otherwise default to generic
+      // sanity check, tokenIn should be tokenOut
+      if (path[0] !== tokenIn && tokenIn !== tokenOut) {
+        throw new Error("Router graph error; path has length of 1 but tokens are not the same");
+      }
+      const edge = this.graph.edge(path[0], path[0]);
+      if (edge) {
+        route.addStep(edge);
+      } else {
+        route.addStep(this.buildSelfEdge(tokenIn));
+      }
+      Router.sdk.debug(`Router.getRoute: ${route}`);
+      return route;
     }
 
     // Get the edges
-    const results: RouterResult[] = [];
     for (let i = 0; i < path.length - 1; i++) {
-      results.push(this.graph.edge(path[i], path[i + 1]));
+      route.addStep(this.graph.edge(path[i], path[i + 1]));
     }
-
-    return results;
+    Router.sdk.debug(`Router.getRoute: ${route}`);
+    return route;
   }
 
   private searchGraph(start: string, end: string): string[] {
