@@ -249,10 +249,20 @@ export class Tokens {
   }
 
   /**
-   * Find a Token by address
+   * Get a Token by address
    */
   findByAddress(address: string): Token | undefined {
     return this.map.get(address.toLowerCase());
+  }
+
+  /**
+   * Get a Token by symbol
+   */
+  findBySymbol(symbol: string): Token | undefined {
+    for (const [_, token] of this.map) {
+      if (token.symbol === symbol) return token;
+    }
+    return undefined;
   }
 
   /**
