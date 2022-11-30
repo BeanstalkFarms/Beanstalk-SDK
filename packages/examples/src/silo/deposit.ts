@@ -16,16 +16,16 @@ async function main() {
   // and work off of msg.sender, so we need to impersonate the passed account.
   const { sdk, stop } = await impersonate(account);
 
-  // Mow
-  const deposit = await sdk.silo.createDeposit(sdk.tokens.BEAN_CRV3_LP);
+  const target = sdk.tokens.BEAN_CRV3_LP;
+  const input = sdk.tokens.BEAN_CRV3_LP;
+  const amount = input.amount(400);
+  await input.approveBeanstalk(amount);
 
-  const t1 = sdk.tokens.BEAN_CRV3_LP;
-  const t2 = sdk.tokens.CRV3;
-  deposit.addToken(t1, t1.amount(3));
-  deposit.addToken(t2, t2.amount(3));
+  const deposit = await sdk.silo.buildDeposit(target, account);
+  deposit.setInputToken(input);
 
-  const est = await deposit.estimate();
-
-  console.log(est);
+  const tx = await deposit.execute(amount, 0.1);
+  await tx.wait();
+  console.log("done");
   await stop();
 }
