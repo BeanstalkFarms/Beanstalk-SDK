@@ -1,6 +1,5 @@
 import { Token } from "./Token";
 import { TokenValue } from "src/classes/TokenValue";
-import { BigNumber } from "ethers";
 
 export class BeanstalkToken extends Token {
   public getContract() {

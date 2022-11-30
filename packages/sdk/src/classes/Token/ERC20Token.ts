@@ -72,7 +72,11 @@ export class ERC20Token extends Token {
       .then((result) => TokenValue.fromBlockchain(result, this.decimals));
   }
 
-  public approve(spender: PromiseOrValue<string>, value: PromiseOrValue<BigNumber>): Promise<ContractTransaction> {
-    return this.getContract().approve(spender, value.toString());
+  public approve(spenderContract: PromiseOrValue<string>, amount: TokenValue | BigNumber): Promise<ContractTransaction> {
+    return this.getContract().approve(spenderContract, amount instanceof TokenValue ? amount.toBigNumber() : amount);
+  }
+
+  public approveBeanstalk(amount: TokenValue | BigNumber): Promise<ContractTransaction> {
+    return this.approve(Token.sdk.contracts.beanstalk.address, amount);
   }
 }
