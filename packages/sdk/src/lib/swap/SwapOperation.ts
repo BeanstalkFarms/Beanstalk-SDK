@@ -3,6 +3,7 @@ import { Workflow } from "src/classes/Workflow";
 import { TokenValue } from "src/TokenValue";
 import { Token } from "src/classes/Token";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
+import { Route } from "src/classes/Router";
 
 type PathSegment = {
   from: string;
@@ -17,7 +18,7 @@ export class SwapOperation {
     private readonly tokenIn: Token,
     private readonly tokenOut: Token,
     private readonly workflow: Workflow,
-    private readonly metadata: PathSegment[]
+    private readonly route: Route
   ) {
     SwapOperation.sdk = sdk;
     sdk.debug(`new SwapOperation(): ${this.getDisplay()}`);
@@ -27,33 +28,12 @@ export class SwapOperation {
     return this.workflow.length > 0;
   }
 
-  getPath(): PathSegment[] {
-    return this.metadata;
-  }
-
   getSimplePath(): string[] {
-    let simplePath = this.metadata.reduce<string[]>((s, curr, i) => {
-      if (i == 0) {
-        return [curr.from, curr.to];
-      } else {
-        s.push(curr.to);
-        return s;
-      }
-    }, []);
-
-    return simplePath;
+    return this.route.toArray();
   }
 
-  getDisplay(separator: string = " -> ") {
-    let s = this.metadata.reduce((s, curr, i) => {
-      if (i == 0) {
-        return `${curr.from}${separator}${curr.to}`;
-      } else {
-        return `${s}${separator}${curr.to}`;
-      }
-    }, "");
-
-    return s;
+  getDisplay(separator?: string) {
+    return this.route.toString(separator);
   }
 
   // TODO: Convert to TokenValue
