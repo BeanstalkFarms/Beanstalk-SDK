@@ -136,8 +136,14 @@ export class Router {
 
   getGraphCode() {
     let code = "// http://www.webgraphviz.com\ndigraph G {\n";
+    Router.sdk.tokens.siloWhitelist.forEach((t) => {
+      code += `\t"${t.symbol}:SILO" [fillColor="#afb8ff" style="filled"]\n`;
+    });
     this.graph.edges().forEach((e) => {
-      code += `\t"${e.v}" -> "${e.w}"\n`;
+      const edge = this.graph.edge(e.v, e.w);
+      const label = edge.label;
+      const labelString = label ? ` [label="${label}"]` : "";
+      code += `\t"${e.v}" -> "${e.w}"${labelString}\n`;
     });
     code += "}";
 
