@@ -1,4 +1,6 @@
 import { Graph } from "graphlib";
+import { Token } from "src/classes/Token";
+import { CurveMetaPool } from "src/classes/Pool/CurveMetaPool";
 import { BeanstalkSDK } from "src/lib/BeanstalkSDK";
 import { FarmFromMode, FarmToMode } from "src/lib/farm";
 
@@ -67,12 +69,13 @@ export const getDepositGraph = (sdk: BeanstalkSDK): Graph => {
    * Add other "nodes", aka Tokens that we allow as input
    * for deposit
    */
-  graph.setNode("ETH");
-  graph.setNode("WETH");
   graph.setNode("DAI");
   graph.setNode("USDC");
   graph.setNode("USDT");
   graph.setNode("3CRV");
+
+  // graph.setNode("ETH");
+  // graph.setNode("WETH");
 
   /**
    * ********** EDGES ***************
@@ -90,9 +93,61 @@ export const getDepositGraph = (sdk: BeanstalkSDK): Graph => {
     const from = token.symbol;
     const to = `${from}:SILO`;
     graph.setEdge(from, to, {
-      build: (_: string, from: FarmFromMode) => new sdk.farm.actions.Deposit(token, from),
+      build: (_: string, fromMode: FarmFromMode, toMode: FarmToMode) => new sdk.farm.actions.Deposit(token, fromMode),
       from,
-      to
+      to,
+      label: "deposit"
+    });
+  }
+
+  /**
+   * Setup edges to addLiquidity to BEAN:3CRV pool.
+   *
+   * [ BEAN, 3CRV ] => BEAN_CRV3_LP
+   */
+  {
+    const targetToken = sdk.tokens.BEAN_CRV3_LP;
+    const pool = sdk.pools.BEAN_CRV3;
+    if (!pool) throw new Error(`Pool not found for LP token: ${targetToken.symbol}`);
+    const registry = sdk.contracts.curve.registries.metaFactory.address;
+
+    [sdk.tokens.BEAN, sdk.tokens.CRV3].forEach((from: Token) => {
+      const indexes: [number, number] = [0, 0];
+      const tokenIndex = (pool as CurveMetaPool).getTokenIndex(from);
+      if (tokenIndex === -1) throw new Error(`Unable to find index for token ${from.symbol}`);
+      indexes[tokenIndex] = 1;
+      graph.setEdge(from.symbol, targetToken.symbol, {
+        build: (_: string, fromMode: FarmFromMode, toMode: FarmToMode) =>
+          new sdk.farm.actions.AddLiquidity(pool.address, registry, indexes, fromMode, toMode),
+        from: from.symbol,
+        to: targetToken.symbol,
+        label: "addLiquidity"
+      });
+    });
+  }
+
+  /**
+   * Setup edges to addLiquidity to Curve 3pool.
+   *
+   * [ DAI, USDC, USDT ] => 3CRV
+   */
+  {
+    const targetToken = sdk.tokens.CRV3;
+    const pool = sdk.contracts.curve.pools.pool3;
+    const registry = sdk.contracts.curve.registries.poolRegistry.address;
+
+    [sdk.tokens.DAI, sdk.tokens.USDC, sdk.tokens.USDT].forEach((from: Token) => {
+      const indexes: [number, number, number] = [0, 0, 0];
+      const tokenIndex = sdk.pools.BEAN_CRV3.getTokenIndex(from);
+      if (tokenIndex === -1) throw new Error(`Unable to find index for token ${from.symbol}`);
+      indexes[tokenIndex - 1] = 1;
+      graph.setEdge(from.symbol, targetToken.symbol, {
+        build: (_: string, fromMode: FarmFromMode, toMode: FarmToMode) =>
+          new sdk.farm.actions.AddLiquidity(pool.address, registry, indexes, fromMode, toMode),
+        from: from.symbol,
+        to: targetToken.symbol,
+        label: "addLiquidity"
+      });
     });
   }
 
