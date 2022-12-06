@@ -1,7 +1,8 @@
-import { BaseContract, ethers, utils } from "ethers";
+import { BaseContract, ContractTransaction, ethers, utils } from "ethers";
 import type { BeanstalkSDK } from "../../lib/BeanstalkSDK";
 import { BigNumber } from "ethers";
 import { TokenValue } from "../TokenValue";
+import { PromiseOrValue } from "src/constants/generated/common";
 
 /**
  * A currency is any fungible financial instrument, including Ether, all ERC20 tokens, and other chain-native currencies
@@ -188,5 +189,15 @@ export abstract class Token {
 
   toTokenValue(value: BigNumber): TokenValue {
     return TokenValue.fromBlockchain(value, this.decimals);
+  }
+
+  public approve(spenderContract: PromiseOrValue<string>, amount: TokenValue | BigNumber): Promise<ContractTransaction> {
+    // @ts-ignore
+    return;
+  }
+
+  public approveBeanstalk(amount: TokenValue | BigNumber): Promise<ContractTransaction> {
+    // @ts-ignore
+    return;
   }
 }

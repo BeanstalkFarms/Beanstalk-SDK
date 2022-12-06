@@ -73,9 +73,9 @@ export const getDepositGraph = (sdk: BeanstalkSDK): Graph => {
   graph.setNode("USDC");
   graph.setNode("USDT");
   graph.setNode("3CRV");
+  graph.setNode("WETH");
 
   // graph.setNode("ETH");
-  // graph.setNode("WETH");
 
   /**
    * ********** EDGES ***************
@@ -151,5 +151,23 @@ export const getDepositGraph = (sdk: BeanstalkSDK): Graph => {
     });
   }
 
+  /**
+   * Handle WETH / ETH
+   */
+  {
+    graph.setEdge("WETH", "USDT", {
+      build: (_: string, from: FarmFromMode, to: FarmToMode) => sdk.farm.presets.weth2usdt(from, to),
+      from: "WETH",
+      to: "USDT",
+      label: "exchange"
+    });
+
+    graph.setEdge("ETH", "WETH", {
+      build: (_: string, _2: FarmFromMode, to: FarmToMode) => new sdk.farm.actions.WrapEth(to),
+      from: "ETH",
+      to: "WETH",
+      label: "wrapEth"
+    });
+  }
   return graph;
 };
