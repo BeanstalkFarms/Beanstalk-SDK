@@ -210,6 +210,7 @@ export abstract class Workflow<
   PreparedResult extends BasicPreparedResult = BasicPreparedResult, // the value returned from prepare() in each step
   RunData extends Record<string, any> = {} // RunData passed into context
 > {
+  static sdk: BeanstalkSDK;
   abstract readonly FUNCTION_NAME: string;
 
   //
@@ -223,7 +224,9 @@ export abstract class Workflow<
 
   static SLIPPAGE_PRECISION = 10 ** 6;
 
-  constructor(protected sdk: BeanstalkSDK, public name: string = "Workflow") {}
+  constructor(sdk: BeanstalkSDK, public name: string = "Workflow") {
+    Workflow.sdk = sdk;
+  }
 
   /**
    * @param _amount an amount to apply slippage to
@@ -245,7 +248,7 @@ export abstract class Workflow<
   }
 
   protected _copy<T extends Workflow<EncodedResult>>(WorkflowConstructor: new (...args: ConstructorParameters<typeof Workflow>) => T) {
-    const copy = new WorkflowConstructor(this.sdk, this.name);
+    const copy = new WorkflowConstructor(Workflow.sdk, this.name);
     copy.add(this._generators);
     return copy;
   }
@@ -273,9 +276,9 @@ export abstract class Workflow<
         this.add(elem, options); // recurse
       }
     } else {
-      this.sdk.debug(`[Workflow][${this.name}][add] ${input.name || "<unknown>"}`);
+      Workflow.sdk.debug(`[Workflow][${this.name}][add] ${input.name || "<unknown>"}`);
       if (input instanceof StepClass) {
-        input.setSDK(this.sdk);
+        input.setSDK(Workflow.sdk);
       }
       this._generators.push(input);
       this._options.push(options || null); // null = no options set
@@ -355,7 +358,7 @@ export abstract class Workflow<
         }
       }
     } catch (e) {
-      this.sdk.debug(`[Workflow][${this.name}] Failed to build step ${input.name}`, e);
+      Workflow.sdk.debug(`[Workflow][${this.name}] Failed to build step ${input.name}`, e);
       console.error(e);
       throw e;
     }
@@ -438,16 +441,16 @@ export abstract class Workflow<
       const skip = options?.skip ? (typeof options.skip === "function" ? await options.skip(nextAmount, context) : options.skip) : false;
 
       if (onlyExecute || skip) {
-        this.sdk.debug(`${prefix} SKIP`, { onlyExecute, skip });
+        Workflow.sdk.debug(`${prefix} SKIP`, { onlyExecute, skip });
       } else {
-        this.sdk.debug(`${prefix} BUILD`);
+        Workflow.sdk.debug(`${prefix} BUILD`);
         const step = await this.buildStep(generator, nextAmount, context);
         nextAmount = step.amountOut;
 
         // use stepIndex from before `buildStep()`
         if (options?.tag) this.addTag(options.tag, stepIndex);
 
-        this.sdk.debug(prefix, "RESULT", {
+        Workflow.sdk.debug(prefix, "RESULT", {
           amountOut: step.amountOut.toString(),
           value: step.value?.toString() || "0"
         });
@@ -469,6 +472,15 @@ export abstract class Workflow<
     }
 
     return nextAmount;
+  }
+
+  summarizeSteps() {
+    return this._steps.map((step) => {
+      return {
+        name: step.name,
+        amountOut: step.amountOut
+      };
+    });
   }
 
   /**
@@ -512,9 +524,9 @@ export abstract class Workflow<
    * @fixme collapse `runMode` and `data` into one struct?
    */
   protected async estimateAndEncodeSteps(amountIn: ethers.BigNumber | TokenValue, runMode: RunMode, data: RunData) {
-    this.sdk.debug(`[Workflow][${this.name}][estimateAndEncodeSteps] building...`, { amountIn, runMode, data });
+    Workflow.sdk.debug(`[Workflow][${this.name}][estimateAndEncodeSteps] building...`, { amountIn, runMode, data });
     await this.buildSteps(amountIn instanceof TokenValue ? amountIn.toBigNumber() : amountIn, { runMode, data });
-    this.sdk.debug(`[Workflow][${this.name}][estimateAndEncodeSteps] encoding...`, { count: this._steps.length });
+    Workflow.sdk.debug(`[Workflow][${this.name}][estimateAndEncodeSteps] encoding...`, { count: this._steps.length });
     return this.encodeSteps();
   }
 
@@ -536,7 +548,7 @@ export abstract class Workflow<
   protected encodeSteps() {
     if (this._steps.length === 0) throw new Error("Work: must run estimate() before encoding");
     const encodedSteps = this._steps.map((step) => this.encodeStep(step.prepare()));
-    this.sdk.debug(`[Workflow][${this.name}][encodeSteps] RESULT`, encodedSteps);
+    Workflow.sdk.debug(`[Workflow][${this.name}][encodeSteps] RESULT`, encodedSteps);
     return encodedSteps;
   }
 
