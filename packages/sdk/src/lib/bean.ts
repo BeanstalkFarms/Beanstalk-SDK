@@ -42,4 +42,18 @@ export class Bean {
 
     return result;
   }
+
+  /**
+   * Returns the "Bean Denominated Value" of the specified token amount
+   * @param token
+   * @param amount
+   * @returns TokenValue of BDV, with 6 decimals
+   * @todo cache these results?
+   */
+  async getBDV(token: Token, amount: TokenValue): Promise<TokenValue> {
+    const bdv = await Bean.sdk.contracts.beanstalk.bdv(token.address, amount.toBigNumber());
+
+    // We treat BDV as a TokenValue with 6 decimals, like BEAN
+    return TokenValue.fromBlockchain(bdv, 6);
+  }
 }
