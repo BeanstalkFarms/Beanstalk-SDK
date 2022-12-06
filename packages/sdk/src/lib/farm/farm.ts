@@ -24,9 +24,9 @@ export class FarmWorkflow<RunData extends { slippage: number } = { slippage: num
   public readonly FUNCTION_NAME = "farm";
   private contract: Beanstalk | Depot;
 
-  constructor(protected sdk: BeanstalkSDK, public name: string = "Farm", using: "beanstalk" | "depot" = "beanstalk") {
+  constructor(sdk: BeanstalkSDK, public name: string = "Farm", using: "beanstalk" | "depot" = "beanstalk") {
     super(sdk, name);
-    this.contract = this.sdk.contracts[using]; // use beanstalk or depot
+    this.contract = Workflow.sdk.contracts[using]; // use beanstalk or depot
   }
 
   copy() {
@@ -45,7 +45,7 @@ export class FarmWorkflow<RunData extends { slippage: number } = { slippage: num
   encodeWorkflow() {
     const steps = this.encodeSteps();
     const encodedWorkflow = this.contract.interface.encodeFunctionData("farm", [steps]);
-    this.sdk.debug(`[Workflow][${this.name}][encodeWorkflow]`, encodedWorkflow);
+    Workflow.sdk.debug(`[Workflow][${this.name}][encodeWorkflow]`, encodedWorkflow);
     return encodedWorkflow;
   }
 
@@ -63,7 +63,7 @@ export class FarmWorkflow<RunData extends { slippage: number } = { slippage: num
     } else {
       overrides = { value: this.value };
     }
-    this.sdk.debug(`[Workflow][${this.name}][execute]`, encodedSteps, overrides);
+    Workflow.sdk.debug(`[Workflow][${this.name}][execute]`, encodedSteps, overrides);
     return this.contract.farm(encodedSteps, overrides);
   }
 
@@ -96,7 +96,7 @@ export class AdvancedFarmWorkflow<RunData extends { slippage: number } = { slipp
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "Farm") {
     super(sdk, name);
-    this.contract = this.sdk.contracts.beanstalk; // ?
+    this.contract = Workflow.sdk.contracts.beanstalk; // ?
   }
 
   copy() {

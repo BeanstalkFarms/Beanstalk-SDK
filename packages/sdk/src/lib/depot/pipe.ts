@@ -24,7 +24,7 @@ export class AdvancedPipeWorkflow<RunData extends { slippage: number } = { slipp
 
   constructor(protected sdk: BeanstalkSDK, public name: string = "AdvancedPipe") {
     super(sdk, name);
-    this.contract = this.sdk.contracts.beanstalk;
+    this.contract = Workflow.sdk.contracts.beanstalk;
   }
 
   copy() {
@@ -46,7 +46,7 @@ export class AdvancedPipeWorkflow<RunData extends { slippage: number } = { slipp
       steps,
       this.value.toString() // ether that this pipeline needs to consume
     ]);
-    this.sdk.debug(`[Workflow][${this.name}][encodeWorkflow] advancedPipe(`, steps, this.value.toString(), `)`);
+    Workflow.sdk.debug(`[Workflow][${this.name}][encodeWorkflow] advancedPipe(`, steps, this.value.toString(), `)`);
     return encodedWorkflow;
   }
 
@@ -90,7 +90,7 @@ export class AdvancedPipeWorkflow<RunData extends { slippage: number } = { slipp
     amountOut: ethers.BigNumber,
     clipboard: string = Clipboard.encode([])
   ): Step<AdvancedPipePreparedResult> {
-    this.sdk.debug(`[Workflow][${this.name}][wrap]`, {
+    Workflow.sdk.debug(`[Workflow][${this.name}][wrap]`, {
       contract: `${contract.address} ${contract.constructor.name}`,
       method,
       args,
