@@ -4,7 +4,7 @@ import { FarmFromMode, FarmToMode } from "../types";
 import { Token } from "src/classes/Token";
 
 export class Deposit extends StepClass<BasicPreparedResult> {
-  public name: string = "Deposit";
+  public name: string = "deposit";
 
   constructor(private token: Token, private fromMode: FarmFromMode = FarmFromMode.INTERNAL_EXTERNAL) {
     super();
@@ -14,6 +14,7 @@ export class Deposit extends StepClass<BasicPreparedResult> {
     Deposit.sdk.debug(`[${this.name}.run()]`, {
       token: this.token.symbol,
       amountInStep: _amountInStep,
+      fromMode: this.fromMode,
       context
     });
     return {
@@ -23,6 +24,7 @@ export class Deposit extends StepClass<BasicPreparedResult> {
         Deposit.sdk.debug(`[${this.name}.prepare()]`, {
           token: this.token.symbol,
           amountInStep: _amountInStep,
+          fromMode: this.fromMode,
           context
         });
         if (!_amountInStep) throw new Error("Deposit: Missing _amountInStep");

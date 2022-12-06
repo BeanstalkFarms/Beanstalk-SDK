@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { BasicPreparedResult, RunContext, Step, StepClass, Workflow } from "src/classes/Workflow";
 import { CurveMetaPool__factory, CurvePlainPool__factory } from "src/constants/generated";
 import { assert } from "src/utils";
@@ -24,7 +24,8 @@ export class AddLiquidity extends StepClass<BasicPreparedResult> {
       amounts: this._amounts,
       amountInStep: _amountInStep,
       fromMode: this._fromMode,
-      toMode: this._toMode
+      toMode: this._toMode,
+      context
     });
 
     /// [0, 0, 1] => [0, 0, amountIn]
@@ -33,7 +34,7 @@ export class AddLiquidity extends StepClass<BasicPreparedResult> {
     /// Get amount out based on the selected pool
     const poolAddr = this._pool.toLowerCase();
     const pools = AddLiquidity.sdk.contracts.curve.pools;
-    let amountOut;
+    let amountOut: BigNumber = ethers.constants.NegativeOne;
 
     /// Case: tricrypto2
     if (poolAddr === pools.tricrypto2.address.toLowerCase()) {
@@ -74,9 +75,9 @@ export class AddLiquidity extends StepClass<BasicPreparedResult> {
       );
     }
 
-    if (!amountOut) throw new Error("No supported pool found");
+    if (amountOut.eq(ethers.constants.NegativeOne)) throw new Error("No supported pool found");
     AddLiquidity.sdk.debug("[step@addLiquidity] finish: ", {
-      amountInStep: amountInStep.toString(),
+      amountInStep: amountInStep,
       amountOut: amountOut.toString()
     });
 
@@ -84,14 +85,14 @@ export class AddLiquidity extends StepClass<BasicPreparedResult> {
       name: this.name,
       amountOut,
       // fixme: deprecated ?
-      data: {
-        pool: this._pool,
-        registry: this._registry,
-        fromMode: this._fromMode,
-        toMode: this._toMode
-      },
+      // data: {
+      //   pool: this._pool,
+      //   registry: this._registry,
+      //   fromMode: this._fromMode,
+      //   toMode: this._toMode
+      // },
       prepare: () => {
-        const minAmountOut = Workflow.slip(_amountInStep, context.data.slippage || 0);
+        const minAmountOut = Workflow.slip(amountOut, context.data.slippage || 0);
         AddLiquidity.sdk.debug(`[${this.name}.prepare()]`, {
           pool: this._pool,
           registry: this._registry,
