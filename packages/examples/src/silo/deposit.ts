@@ -23,7 +23,8 @@ async function main() {
   // await deposit(sdk.tokens.DAI, sdk.tokens.BEAN_CRV3_LP, 400, account, sdk);
   // await deposit(sdk.tokens.USDC, sdk.tokens.BEAN_CRV3_LP, 400, account, sdk);
   // await deposit(sdk.tokens.USDT, sdk.tokens.BEAN_CRV3_LP, 400, account, sdk);
-  await deposit(sdk.tokens.ETH, sdk.tokens.BEAN_CRV3_LP, 3, account, sdk);
+  // await deposit(sdk.tokens.ETH, sdk.tokens.BEAN_CRV3_LP, 3, account, sdk);
+  await deposit(sdk.tokens.UNRIPE_BEAN_CRV3, sdk.tokens.UNRIPE_BEAN_CRV3, 3, account, sdk);
 
   await stop();
 }
@@ -42,9 +43,9 @@ async function deposit(input: Token, target: Token, _amount: number, account: st
   const txr = await deposit.execute(amount, 0.1);
   await txr.wait();
 
-  // // Show summary of actions
-  // for (const s of await deposit.getSummary()) {
-  //   console.log(s);
-  // }
+  // Show summary of actions
+  for (const s of await deposit.getSummary()) {
+    console.log(s);
+  }
   console.log("DONE");
 }
