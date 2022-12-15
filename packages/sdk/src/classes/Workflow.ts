@@ -138,6 +138,11 @@ type StepGeneratorOptions = {
   onlyExecute?: boolean;
 
   /**
+   * This StepGenerator only runs locally. It does not add anything to the callData chain
+   */
+  onlyLocal?: boolean;
+
+  /**
    * Nametag for a particular step. Used for named lookup.
    */
   tag?: string;
@@ -436,6 +441,10 @@ export abstract class Workflow<
       // `callStatic`).
       const onlyExecute = options?.onlyExecute === true && this.isStaticRunMode(context.runMode) === false;
 
+      // Execute the step locally, but don't add anything to the resulting callData to be executed
+      // on chain.
+      const onlyLocal = options?.onlyLocal === true;
+
       // If `options.skip` is true, skip.
       // If `options.skip` is a function, call it and skip if the return value is true.
       const skip = options?.skip ? (typeof options.skip === "function" ? await options.skip(nextAmount, context) : options.skip) : false;
@@ -445,6 +454,11 @@ export abstract class Workflow<
       } else {
         Workflow.sdk.debug(`${prefix} BUILD`);
         const step = await this.buildStep(generator, nextAmount, context);
+
+        if (onlyLocal) {
+          // remove this step from this._steps (was added via this.buildStep())
+          this._steps.pop();
+        }
         nextAmount = step.amountOut;
 
         // use stepIndex from before `buildStep()`
