@@ -110,7 +110,7 @@ export class BlockchainUtils {
    * @param balance
    */
   async setAllBalances(account: string, amount: string) {
-    return Promise.allSettled([
+    await Promise.allSettled([
       this.setETHBalance(account, this.sdk.tokens.ETH.amount(amount)),
       this.setDAIBalance(account, this.sdk.tokens.DAI.amount(amount)),
       this.setUSDCBalance(account, this.sdk.tokens.USDC.amount(amount)),

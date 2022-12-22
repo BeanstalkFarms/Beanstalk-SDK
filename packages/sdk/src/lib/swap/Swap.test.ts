@@ -35,8 +35,8 @@ beforeAll(async () => {
   ]);
 });
 
-describe.only("Swap", function () {
-  describe.only.each([
+describe("Swap", function () {
+  describe.each([
     // ETH => x
     [sdk.tokens.ETH, sdk.tokens.WETH],
     [sdk.tokens.ETH, sdk.tokens.USDT],
