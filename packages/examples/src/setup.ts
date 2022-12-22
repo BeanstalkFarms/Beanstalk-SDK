@@ -7,8 +7,6 @@ export const { signer, account } = TestUtils.setupConnection(provider);
 
 export const sdk = new BeanstalkSDK({
   provider,
-  // signer: signer,
-  subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing",
   source: DataSource.LEDGER,
   DEBUG: true
 });
@@ -16,11 +14,10 @@ export const sdk = new BeanstalkSDK({
 export const impersonate = async (account) => {
   const stop = await chain.impersonate(account);
 
-  const provider = ethers.getDefaultProvider("http://localhost:8545") as Provider;
+  const provider = ethers.getDefaultProvider("http://127.0.0.1:8545") as Provider;
   const signer = await provider.getSigner(account);
   const sdk = new BeanstalkSDK({
     signer,
-    subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing",
     source: DataSource.LEDGER,
     DEBUG: true
   });

@@ -15,6 +15,7 @@ import { Swap } from "src/lib/swap/Swap";
 import { TokenValue } from "src/classes/TokenValue";
 import { Bean } from "./bean";
 import { Pools } from "./pools";
+import defaultSettings from "src/defaultSettings.json";
 
 export type Provider = ethers.providers.JsonRpcProvider;
 export type Signer = ethers.Signer;
@@ -41,6 +42,7 @@ export class BeanstalkSDK {
   public provider: Provider;
   public providerOrSigner: Signer | Provider;
   public source: DataSource;
+  public subgraphUrl: string;
 
   public readonly chainId: ChainId;
 
@@ -74,7 +76,7 @@ export class BeanstalkSDK {
     this.contracts = new Contracts(this);
     this.tokens = new Tokens(this);
     this.pools = new Pools(this);
-    this.graphql = new GraphQLClient(config?.subgraphUrl || "https://graph.node.bean.money/subgraphs/name/beanstalk");
+    this.graphql = new GraphQLClient(this.subgraphUrl);
     this.queries = getQueries(this.graphql);
 
     // Internal
@@ -111,9 +113,12 @@ export class BeanstalkSDK {
       this.provider = (config.signer?.provider as Provider) ?? config.provider!;
     }
     this.providerOrSigner = config.signer ?? config.provider!;
+
     this.DEBUG = config.DEBUG ?? false;
 
     this.source = DataSource.LEDGER; // FIXME
+
+    this.subgraphUrl = config.subgraphUrl || defaultSettings.subgraphUrl;
   }
 
   deriveSource<T extends { source?: DataSource }>(config?: T): DataSource {
