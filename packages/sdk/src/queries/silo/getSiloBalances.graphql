@@ -6,13 +6,13 @@ query getSiloBalances($account: ID!, $season: Int!) {
       orderDirection: asc
       where: {
         #amount_gt: 0
-        tokenAmount_gt: 0
+        amount_gt: 0
       }
     ) {
       season
       token
       #amount
-      amount: tokenAmount
+      amount
       bdv
     }
     # Withdrawn

@@ -7,13 +7,13 @@ query getSiloBalance($token: String, $account: ID!, $season: Int!) {
       where: {
         token: $token
         #amount_gt: 0
-        tokenAmount_gt: 0
+        amount_gt: 0
       }
     ) {
       season
       token
       #amount
-      amount: tokenAmount
+      amount
       bdv
     }
     # Withdrawn
