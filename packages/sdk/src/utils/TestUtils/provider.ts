@@ -27,8 +27,7 @@ export const setupConnection = (provider: ethers.providers.JsonRpcProvider = get
 export const getTestUtils = () => {
   const { signer, account } = setupConnection();
   const sdk = new BeanstalkSDK({
-    signer,
-    subgraphUrl: "https://graph.node.bean.money/subgraphs/name/beanstalk-testing"
+    signer
   });
 
   const utils = new BlockchainUtils(sdk);
