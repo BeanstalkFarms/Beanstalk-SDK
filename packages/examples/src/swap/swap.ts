@@ -1,5 +1,5 @@
 import { BeanstalkSDK, ERC20Token, FarmFromMode, FarmToMode, Token } from "@beanstalk/sdk";
-import { signer } from "./setup";
+import { signer } from "../setup";
 
 main()
   .catch((e) => {
