@@ -1,35 +1,30 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "npm",
-			"script": "dev",
-			"path": "packages/sdk",
-			"problemMatcher": {
-				"base": "$tsc-watch",
-				"fileLocation": [
-					"relative",
-					"${workspaceFolder}/packages/sdk"
-				]
-			},
-			"isBackground": true
-		},
-		{
-			"type": "npm",
-			"script": "build",
-			"path": "packages/sdk",
-			"problemMatcher": {
-				"base": "$tsc",
-				"fileLocation": [
-					"relative",
-					"${workspaceFolder}/packages/sdk"
-				]
-			},
-			"label": "yarn sdk:build - packages/sdk",
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "label": "sdk: dev",
+      "script": "dev",
+      "path": "projects/sdk",
+      "problemMatcher": {
+        "base": "$tsc-watch",
+        "fileLocation": ["relative", "${workspaceFolder}/projects/sdk"]
+      },
+      "isBackground": true
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "path": "projects/sdk",
+      "problemMatcher": {
+        "base": "$tsc",
+        "fileLocation": ["relative", "${workspaceFolder}/projects/sdk"]
+      },
+      "label": "yarn sdk:build - projects/sdk",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
 }
