@@ -6,4 +6,4 @@ The `src/play` folder's contents are git-ignored, any files there will rename on
 
 ### How to Run .ts files
 
-To execute the .ts files run `yarn x src/file.ts` from within this package's directory (root/packages/examples)
+To execute the .ts files run `yarn x src/file.ts` from within this package's directory (root/projects/examples)

@@ -6,7 +6,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/BeanstalkFarms/Beanstalk-SDK.git",
-    "directory": "packages/cli"
+    "directory": "projects/cli"
   },
   "packageManager": "yarn@3.2.3",
   "type": "module",

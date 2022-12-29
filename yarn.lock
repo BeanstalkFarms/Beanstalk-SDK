@@ -798,9 +798,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@beanstalk/cli@workspace:packages/cli":
+"@beanstalk/cli@workspace:projects/cli":
   version: 0.0.0-use.local
-  resolution: "@beanstalk/cli@workspace:packages/cli"
+  resolution: "@beanstalk/cli@workspace:projects/cli"
   dependencies:
     "@beanstalk/sdk": "workspace:*"
     "@types/command-line-args": ^5
@@ -819,9 +819,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@beanstalk/examples@workspace:packages/examples":
+"@beanstalk/examples@workspace:projects/examples":
   version: 0.0.0-use.local
-  resolution: "@beanstalk/examples@workspace:packages/examples"
+  resolution: "@beanstalk/examples@workspace:projects/examples"
   dependencies:
     "@beanstalk/sdk": "workspace:*"
     "@swc/core": 1.3.11
@@ -833,9 +833,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@beanstalk/sdk@workspace:*, @beanstalk/sdk@workspace:packages/sdk":
+"@beanstalk/sdk@workspace:*, @beanstalk/sdk@workspace:projects/sdk":
   version: 0.0.0-use.local
-  resolution: "@beanstalk/sdk@workspace:packages/sdk"
+  resolution: "@beanstalk/sdk@workspace:projects/sdk"
   dependencies:
     "@ethersproject/bytes": 5.7.0
     "@ethersproject/logger": 5.7.0
