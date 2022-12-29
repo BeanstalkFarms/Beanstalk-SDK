@@ -20,7 +20,7 @@ import { sdk, chain, account } from "../setup";
  *    `npx hardhat beanstalkV2_1 --network localhost`
  *
  * 3. Make sure the SDK is built: `yarn sdk:build` from root of this monorepo.
- * 4. `cd ./packages/examples`
+ * 4. `cd ./projects/examples`
  * 5. `yarn x ./src/root/from-circulating.ts`
  *
  */

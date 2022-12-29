@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "yarn@3.2.0",
   "workspaces": [
-    "packages/*"
+    "projects/*"
   ],
   "devDependencies": {
     "@types/prettier": "^2",
@@ -20,7 +20,7 @@
     "sdk:test": "jest --selectProjects sdk --silent --runInBand --",
     "sdk:testdev": "jest --selectProjects sdk --watch --runInBand --",
     "sdk:generate": "yarn workspace @beanstalk/sdk generate",
-    "sdk:prettier": "yarn prettier packages/sdk -w",
+    "sdk:prettier": "yarn prettier projects/sdk -w",
     "sdk:publish": "yarn workspace @beanstalk/sdk publish",
     "sdk:version": "yarn workspace @beanstalk/sdk version",
     "ex": "yarn workspace @beanstalk/examples x",

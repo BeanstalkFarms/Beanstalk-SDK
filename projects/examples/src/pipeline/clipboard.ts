@@ -23,7 +23,7 @@ function display(_data: string) {
     pad(data.substring(2, 4), "use ether?"),
     pad(data.substring(4, 4 + 2 * 32), "ether value"), // FIXME
     // ...todo...
-    "",
+    ""
   ]);
 }
 
