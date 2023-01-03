@@ -22,7 +22,7 @@ async function main() {
     { name: "account", alias: "a", defaultValue: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" },
     { name: "token", alias: "t" },
     { name: "amount", alias: "m", defaultValue: "50000" },
-    { name: "rpcUrl", alias: "r", defaultValue: "http://localhost:8545" }
+    { name: "rpcUrl", alias: "r", defaultValue: "http://127.0.0.1:8545" }
   ];
   const args = commandLineArgs(commands, { partial: true });
 
@@ -46,7 +46,7 @@ async function main() {
 }
 
 async function setupSDK(args: commandLineArgs.CommandLineOptions) {
-  const rpcUrl = args.rpc;
+  const rpcUrl = args.rpcUrl;
   const account = args.account;
 
   // const provider = ethers.getDefaultProvider(rpcUrl) as ethers.providers.JsonRpcProvider;
